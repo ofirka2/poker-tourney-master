@@ -15,7 +15,7 @@ import { TournamentLevel, PayoutPlace } from "@/types/types";
 
 export const TournamentSetup: React.FC = () => {
   const { state, dispatch } = useTournament();
-  const { settings } = state;
+  const { settings, currentLevel } = state;
   
   const [buyInAmount, setBuyInAmount] = useState(settings.buyInAmount);
   const [rebuyAmount, setRebuyAmount] = useState(settings.rebuyAmount);
@@ -86,6 +86,28 @@ export const TournamentSetup: React.FC = () => {
       [field]: value
     };
     setLevels(newLevels);
+  };
+  
+  // Apply current level duration change immediately
+  const updateCurrentLevelDuration = (duration: number) => {
+    if (currentLevel >= 0 && currentLevel < levels.length) {
+      const updatedLevels = [...levels];
+      updatedLevels[currentLevel] = {
+        ...updatedLevels[currentLevel],
+        duration
+      };
+      
+      dispatch({ 
+        type: 'UPDATE_CURRENT_LEVEL_DURATION', 
+        payload: { 
+          levelIndex: currentLevel, 
+          duration 
+        }
+      });
+      
+      setLevels(updatedLevels);
+      toast.success(`Current level duration updated to ${duration} minutes`);
+    }
   };
   
   // Add a payout place
@@ -167,6 +189,38 @@ export const TournamentSetup: React.FC = () => {
           Save Settings
         </Button>
       </div>
+      
+      {/* Current Level Duration Adjustment */}
+      {state.isRunning && (
+        <Card className="border-primary/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center text-lg">
+              <Clock className="mr-2 h-5 w-5" />
+              Current Level Duration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+              <div className="space-y-2">
+                <Label htmlFor="currentLevelDuration">Duration (minutes)</Label>
+                <Input
+                  id="currentLevelDuration"
+                  type="number"
+                  min="1"
+                  value={levels[currentLevel]?.duration || 0}
+                  onChange={(e) => updateLevel(currentLevel, 'duration', Number(e.target.value))}
+                />
+              </div>
+              <Button 
+                onClick={() => updateCurrentLevelDuration(levels[currentLevel]?.duration || 0)}
+                className="mt-4 sm:mt-0"
+              >
+                Apply Change
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <Tabs defaultValue="general">
         <TabsList className="grid w-full grid-cols-3">

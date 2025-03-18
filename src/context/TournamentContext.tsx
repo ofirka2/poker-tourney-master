@@ -48,7 +48,8 @@ const initialState: TournamentState = {
   players: [],
   tables: [],
   settings: defaultSettings,
-  totalPrizePool: 0
+  totalPrizePool: 0,
+  eliminationCounter: 0
 };
 
 function calculatePrizePool(players: Player[], settings: TournamentSettings): number {
@@ -235,15 +236,25 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
     }
     
     case 'MARK_ELIMINATED': {
+      // Increment elimination counter and assign position
+      const eliminationCounter = state.eliminationCounter + 1;
+      
       const newPlayers = state.players.map(player => 
         player.id === action.payload 
-          ? { ...player, eliminated: true, tableNumber: null, seatNumber: null } 
+          ? { 
+              ...player, 
+              eliminated: true, 
+              tableNumber: null, 
+              seatNumber: null,
+              eliminationPosition: eliminationCounter 
+            } 
           : player
       );
       
       return {
         ...state,
-        players: newPlayers
+        players: newPlayers,
+        eliminationCounter
       };
     }
     
@@ -342,6 +353,67 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
         ...state,
         players: updatedPlayers,
         tables: newTables
+      };
+    }
+    
+    case 'BALANCE_TABLES': {
+      if (state.tables.length <= 1) {
+        return state;
+      }
+      
+      // Balance the tables
+      const balancedTables = balanceTables([...state.tables]);
+      
+      // Update players with their new table assignments
+      const updatedPlayers = state.players.map(player => {
+        // Find this player in the balanced tables
+        for (const table of balancedTables) {
+          const tablePlayer = table.players.find(p => p.id === player.id);
+          if (tablePlayer) {
+            return {
+              ...player,
+              tableNumber: tablePlayer.tableNumber,
+              seatNumber: tablePlayer.seatNumber
+            };
+          }
+        }
+        return player;
+      });
+      
+      return {
+        ...state,
+        players: updatedPlayers,
+        tables: balancedTables
+      };
+    }
+
+    case 'UPDATE_CURRENT_LEVEL_DURATION': {
+      const { levelIndex, duration } = action.payload;
+      
+      // Validate that the level index is valid
+      if (levelIndex < 0 || levelIndex >= state.settings.levels.length) {
+        return state;
+      }
+      
+      // Update the level duration in settings
+      const updatedLevels = [...state.settings.levels];
+      updatedLevels[levelIndex] = {
+        ...updatedLevels[levelIndex],
+        duration
+      };
+      
+      // Update time remaining if this is the current level
+      const timeRemaining = levelIndex === state.currentLevel 
+        ? duration * 60 
+        : state.timeRemaining;
+      
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          levels: updatedLevels
+        },
+        timeRemaining
       };
     }
     
@@ -476,5 +548,6 @@ export const createEmptyPlayer = (name: string): Player => ({
   tableNumber: null,
   seatNumber: null,
   eliminated: false,
+  eliminationPosition: undefined,
   chips: 0 // Will be set based on settings when added
 });

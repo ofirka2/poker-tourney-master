@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { 
   Plus, Trash, Search, UserMinus, RefreshCcw, DollarSign, 
-  Edit, Check, X, ChevronDown, ChevronUp
+  Edit, Check, X, ChevronDown, ChevronUp, List, Shuffle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useTournament, createEmptyPlayer } from "@/context/TournamentContext";
 import { Player } from "@/types/types";
@@ -18,9 +19,11 @@ export const PlayerList: React.FC = () => {
   const { state, dispatch } = useTournament();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
+  const [isBulkImportDialogOpen, setIsBulkImportDialogOpen] = useState(false);
   const [isEditPlayerDialogOpen, setIsEditPlayerDialogOpen] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [newPlayerName, setNewPlayerName] = useState("");
+  const [bulkPlayerNames, setBulkPlayerNames] = useState("");
   const [sortField, setSortField] = useState<keyof Player | null>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   
@@ -86,6 +89,39 @@ export const PlayerList: React.FC = () => {
     setIsAddPlayerDialogOpen(false);
     
     toast.success(`Player ${newPlayerName} added`);
+  };
+
+  // Add players in bulk
+  const handleBulkImport = () => {
+    if (!bulkPlayerNames.trim()) {
+      toast.error("Please enter player names");
+      return;
+    }
+    
+    const names = bulkPlayerNames
+      .split('\n')
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+    
+    if (names.length === 0) {
+      toast.error("No valid player names found");
+      return;
+    }
+    
+    let addedCount = 0;
+    
+    names.forEach(name => {
+      const newPlayer = createEmptyPlayer(name);
+      newPlayer.chips = settings.initialChips; // Set initial chips
+      
+      dispatch({ type: 'ADD_PLAYER', payload: newPlayer });
+      addedCount++;
+    });
+    
+    setBulkPlayerNames("");
+    setIsBulkImportDialogOpen(false);
+    
+    toast.success(`${addedCount} players added`);
   };
   
   // Remove a player
@@ -169,6 +205,14 @@ export const PlayerList: React.FC = () => {
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Player
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => setIsBulkImportDialogOpen(true)}
+            className="w-full sm:w-auto"
+          >
+            <List className="w-4 h-4 mr-2" />
+            Bulk Import
           </Button>
         </div>
       </div>
@@ -394,6 +438,39 @@ export const PlayerList: React.FC = () => {
         </DialogContent>
       </Dialog>
       
+      {/* Bulk Import Dialog */}
+      <Dialog open={isBulkImportDialogOpen} onOpenChange={setIsBulkImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Import Players</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="bulkPlayerNames" className="text-sm font-medium">
+                Player Names (one per line)
+              </label>
+              <Textarea
+                id="bulkPlayerNames"
+                placeholder="John Doe&#10;Jane Smith&#10;Mike Johnson"
+                rows={8}
+                value={bulkPlayerNames}
+                onChange={(e) => setBulkPlayerNames(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBulkImportDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleBulkImport}>
+              Import Players
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
       {/* Edit Player Dialog */}
       <Dialog open={isEditPlayerDialogOpen} onOpenChange={setIsEditPlayerDialogOpen}>
         <DialogContent>
@@ -473,9 +550,41 @@ export const PlayerList: React.FC = () => {
                     )}
                   </div>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Active
-                  </span>
+                  <div className="flex items-center">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">
+                      Active
+                    </span>
+                    
+                    <div className="flex space-x-2">
+                      {state.currentLevel <= settings.lastRebuyLevel && selectedPlayer.rebuys < settings.maxRebuys && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            dispatch({ type: 'ADD_REBUY', payload: selectedPlayer.id });
+                            toast.success(`Rebuy for ${selectedPlayer.name} added`);
+                          }}
+                        >
+                          <RefreshCcw className="w-3 h-3 mr-1" />
+                          Rebuy
+                        </Button>
+                      )}
+                      
+                      {state.currentLevel <= settings.lastAddOnLevel && selectedPlayer.addOns < settings.maxAddOns && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            dispatch({ type: 'ADD_ADDON', payload: selectedPlayer.id });
+                            toast.success(`Add-on for ${selectedPlayer.name} added`);
+                          }}
+                        >
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          Add-on
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

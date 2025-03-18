@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTournament } from "@/context/TournamentContext";
 import PayoutCalculator from "@/components/payout/PayoutCalculator";
+import Scoreboard from "@/components/scoreboard/Scoreboard";
 
 const Index = () => {
   const { state } = useTournament();
@@ -20,6 +21,9 @@ const Index = () => {
   
   const activePlayers = players.filter(p => !p.eliminated);
   const currentLevelData = settings.levels[currentLevel];
+  const averageStack = activePlayers.length > 0 
+    ? Math.round(activePlayers.reduce((sum, p) => sum + p.chips, 0) / activePlayers.length) 
+    : 0;
   
   return (
     <Layout>
@@ -81,6 +85,11 @@ const Index = () => {
                     <div className="flex justify-between">
                       <div className="text-sm text-muted-foreground">Duration</div>
                       <div className="font-medium">{currentLevelData.duration} min</div>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <div className="text-sm text-muted-foreground">Average Stack</div>
+                      <div className="font-medium">{averageStack.toLocaleString()}</div>
                     </div>
                     
                     {/* Next level preview */}
@@ -175,6 +184,11 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
+      </div>
+      
+      {/* Scoreboard Section */}
+      <div className="mt-6">
+        <Scoreboard />
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">

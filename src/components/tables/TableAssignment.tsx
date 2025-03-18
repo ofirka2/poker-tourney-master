@@ -24,6 +24,12 @@ export const TableAssignment: React.FC = () => {
     toast.success("Players assigned to tables");
   };
   
+  // Handle balancing tables
+  const handleBalanceTables = () => {
+    dispatch({ type: 'BALANCE_TABLES' });
+    toast.success("Tables balanced");
+  };
+  
   // Handle eliminating a player
   const handleEliminatePlayer = (id: string) => {
     const player = players.find(p => p.id === id);
@@ -142,6 +148,15 @@ export const TableAssignment: React.FC = () => {
                 Show Eliminated
               </>
             )}
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={handleBalanceTables}
+            disabled={tables.length <= 1 || activePlayers.length === 0}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Balance Tables
           </Button>
           
           <Button 

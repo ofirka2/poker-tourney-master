@@ -8,6 +8,7 @@ export interface Player {
   tableNumber: number | null;
   seatNumber: number | null;
   eliminated: boolean;
+  eliminationPosition?: number;
   chips: number;
 }
 
@@ -58,6 +59,7 @@ export interface TournamentState {
   tables: Table[];
   settings: TournamentSettings;
   totalPrizePool: number;
+  eliminationCounter: number;
 }
 
 export type TournamentAction = 
@@ -72,6 +74,8 @@ export type TournamentAction =
   | { type: 'ADD_REBUY'; payload: string }
   | { type: 'ADD_ADDON'; payload: string }
   | { type: 'ASSIGN_TABLES'; payload?: void }
+  | { type: 'BALANCE_TABLES'; payload?: void }
+  | { type: 'UPDATE_CURRENT_LEVEL_DURATION'; payload: { levelIndex: number, duration: number } }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<TournamentSettings> }
   | { type: 'UPDATE_PLAYER'; payload: Player }
   | { type: 'RESET_TOURNAMENT' };
