@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import Players from "./pages/Players";
 import Tables from "./pages/Tables";
 import Setup from "./pages/Setup";
 import Timer from "./pages/Timer";
+import TournamentView from "./pages/TournamentView"; // Import the new view page
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +27,7 @@ const App = () => (
             <Route path="/tables" element={<Tables />} />
             <Route path="/setup" element={<Setup />} />
             <Route path="/timer" element={<Timer />} />
+            <Route path="/tournament/view" element={<TournamentView />} /> {/* Add the view route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

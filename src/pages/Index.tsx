@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { TimerDisplay } from "@/components/timer/Timer";
@@ -20,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { 
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from "@/components/ui/select";
+import ShareTournament from "@/components/share/ShareTournament";
 
 const Index = () => {
   const { state, dispatch } = useTournament();
@@ -201,22 +201,24 @@ const Index = () => {
           <CardHeader className="pb-0">
             <div className="flex justify-between items-center">
               <CardTitle className="text-xl">Tournament Status</CardTitle>
-              {isRunning ? (
-                <div className="flex items-center gap-2">
-                  <Badge variant="default" className="bg-poker-green">Running</Badge>
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    onClick={handleEndTournament}
-                    disabled={players.length === 0}
-                  >
-                    <X className="mr-1 h-4 w-4" />
-                    End Tournament
-                  </Button>
-                </div>
-              ) : (
-                <Badge variant="outline">Not Started</Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {isRunning ? (
+                  <>
+                    <Badge variant="default" className="bg-poker-green">Running</Badge>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={handleEndTournament}
+                      disabled={players.length === 0}
+                    >
+                      <X className="mr-1 h-4 w-4" />
+                      End Tournament
+                    </Button>
+                  </>
+                ) : (
+                  <Badge variant="outline">Not Started</Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
@@ -313,6 +315,12 @@ const Index = () => {
                       Settings
                     </Link>
                   </Button>
+                  
+                  {/* Share Tournament Button */}
+                  
+                    <div className="flex-1">
+                      <ShareTournament />
+                    </div>
                 </div>
               </div>
               
