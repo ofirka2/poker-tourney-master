@@ -7,30 +7,34 @@ const Scoreboard: React.FC = () => {
   const { state } = useTournament();
   const { players, totalPrizePool, settings } = state;
   
-  // Get remaining active players count
-  const activePlayersCount = players.filter(p => !p.eliminated).length;
+  // Get active players
+  const activePlayers = players.filter(p => !p.eliminated);
   
-  // Sort eliminated players by position (most recently eliminated first - descending order)
-  // The first player eliminated will have the highest elimination position number
-  const eliminatedPlayers = [...players]
+  // Total number of players in tournament
+  const totalPlayers = players.length;
+  
+  // Calculate position for each eliminated player
+  const eliminatedPlayersWithPositions = players
     .filter(p => p.eliminated)
-    .sort((a, b) => (b.eliminationPosition || 0) - (a.eliminationPosition || 0));
+    .map(player => {
+      // Calculate position based on total players and elimination order
+      // First eliminated = highest position number (e.g., 9th in a 9-player tournament)
+      const position = totalPlayers + 1 - (player.eliminationPosition || 0);
+      return { ...player, displayPosition: position };
+    });
   
-  // Calculate positions and potential payouts
-  const getPosition = (eliminationPosition: number | undefined): string => {
-    if (!eliminationPosition) return "N/A";
+  // Sort by position in ascending order (e.g., #6, #7, #8, #9)
+  const sortedPlayers = eliminatedPlayersWithPositions.sort((a, b) => a.displayPosition - b.displayPosition);
+  
+  // Calculate if a position is in the money (eligible for payout)
+  const isInTheMoney = (position: number): boolean => {
+    if (!settings.payoutStructure || !settings.payoutStructure.places) return false;
     
-    // Calculate finishing position (1st, 2nd, etc.) based on active players
-    const position = activePlayersCount + eliminationPosition;
-    
-    // Return appropriate suffix
-    if (position === 1) return "1st";
-    if (position === 2) return "2nd";
-    if (position === 3) return "3rd";
-    return `${position}th`;
+    // Check if this position has a payout defined
+    return settings.payoutStructure.places.some(p => p.position === position);
   };
   
-  // Calculate potential payout for a position
+  // Calculate payout for a position
   const calculatePayout = (position: number): number | null => {
     if (!settings.payoutStructure || !settings.payoutStructure.places) return null;
     
@@ -49,7 +53,7 @@ const Scoreboard: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-2">
-        {eliminatedPlayers.length === 0 ? (
+        {sortedPlayers.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">
             No players have been eliminated yet
           </div>
@@ -62,20 +66,17 @@ const Scoreboard: React.FC = () => {
             </div>
             
             <div className="max-h-[200px] overflow-y-auto pr-2">
-              {eliminatedPlayers.map((player) => {
-                // This calculates the actual finishing position number
-                // e.g., in a tournament with 10 players:
-                // - If 3 players are active and this player's eliminationPosition is 2,
-                //   their finishing position is 3+2 = 5th place
-                const position = activePlayersCount + (player.eliminationPosition || 0);
-                const payout = calculatePayout(position);
+              {sortedPlayers.map((player) => {
+                const position = player.displayPosition;
+                const inTheMoney = isInTheMoney(position);
+                const payout = inTheMoney ? calculatePayout(position) : null;
                 
                 return (
                   <div key={player.id} className="grid grid-cols-12 py-2 text-sm border-b border-dashed last:border-0">
-                    <div className="col-span-3">{getPosition(player.eliminationPosition)}</div>
+                    <div className="col-span-3">#{position}</div>
                     <div className="col-span-6 font-medium">{player.name}</div>
                     <div className="col-span-3 text-right">
-                      {payout !== null ? `$${payout.toFixed(2)}` : '-'}
+                      {inTheMoney && payout !== null ? `$${payout.toFixed(2)}` : '-'}
                     </div>
                   </div>
                 );
@@ -84,10 +85,10 @@ const Scoreboard: React.FC = () => {
           </div>
         )}
         
-        {activePlayersCount > 0 && (
+        {activePlayers.length > 0 && (
           <div className="mt-4 pt-3 border-t">
             <div className="text-sm font-medium">
-              {activePlayersCount} player{activePlayersCount !== 1 ? 's' : ''} remaining
+              {activePlayers.length} player{activePlayers.length !== 1 ? 's' : ''} remaining
             </div>
           </div>
         )}
