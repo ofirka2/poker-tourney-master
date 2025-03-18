@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { TimerDisplay } from "@/components/timer/Timer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,18 +8,20 @@ import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { 
   Timer, Users, LayoutGrid, Settings, ChevronRight, 
-  Play, Clock, Trophy, ArrowRight, UserMinus, Search
+  Play, Clock, Trophy, ArrowRight, UserMinus, Search, X, Check 
 } from "lucide-react";
 import { useTournament } from "@/context/TournamentContext";
 import PayoutCalculator from "@/components/payout/PayoutCalculator";
 import Scoreboard from "@/components/scoreboard/Scoreboard";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Index = () => {
   const { state, dispatch } = useTournament();
   const { players, settings, currentLevel, isRunning } = state;
   const [searchTerm, setSearchTerm] = useState("");
+  const [showSummary, setShowSummary] = useState(false);
   
   const activePlayers = players.filter(p => !p.eliminated);
   const currentLevelData = settings.levels[currentLevel];
@@ -28,18 +29,49 @@ const Index = () => {
     ? Math.round(activePlayers.reduce((sum, p) => sum + p.chips, 0) / activePlayers.length) 
     : 0;
 
-  // Filter players based on search term
+  useEffect(() => {
+    if (activePlayers.length === 1 && players.length > 1 && isRunning) {
+      handleEndTournament();
+    }
+  }, [activePlayers.length, isRunning]);
+
   const filteredPlayers = players.filter(player => 
     player.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Handle player elimination
   const handleEliminatePlayer = (id: string) => {
     const player = players.find(p => p.id === id);
     if (!player) return;
     
     dispatch({ type: 'MARK_ELIMINATED', payload: id });
     toast.info(`Player ${player.name} eliminated`);
+  };
+  
+  const handleEndTournament = () => {
+    if (activePlayers.length > 0) {
+      const remainingPlayers = [...activePlayers].sort((a, b) => a.chips - b.chips);
+      
+      for (let i = 0; i < remainingPlayers.length - 1; i++) {
+        dispatch({ type: 'MARK_ELIMINATED', payload: remainingPlayers[i].id });
+      }
+      
+      if (remainingPlayers.length > 0) {
+        const winner = remainingPlayers[remainingPlayers.length - 1];
+        toast.success(`🏆 ${winner.name} wins the tournament!`);
+      }
+    }
+    
+    dispatch({ type: 'PAUSE_TOURNAMENT' });
+    setShowSummary(true);
+  };
+  
+  const getPayoutTable = () => {
+    if (!settings.payoutStructure || !settings.payoutStructure.places) return [];
+    
+    return settings.payoutStructure.places.map(place => ({
+      position: place.position,
+      amount: (state.totalPrizePool * place.percentage) / 100
+    }));
   };
   
   return (
@@ -50,7 +82,18 @@ const Index = () => {
             <div className="flex justify-between items-center">
               <CardTitle className="text-xl">Tournament Status</CardTitle>
               {isRunning ? (
-                <Badge variant="default" className="bg-poker-green">Running</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="default" className="bg-poker-green">Running</Badge>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={handleEndTournament}
+                    disabled={players.length === 0}
+                  >
+                    <X className="mr-1 h-4 w-4" />
+                    End Tournament
+                  </Button>
+                </div>
               ) : (
                 <Badge variant="outline">Not Started</Badge>
               )}
@@ -109,7 +152,6 @@ const Index = () => {
                       <div className="font-medium">{averageStack.toLocaleString()}</div>
                     </div>
                     
-                    {/* Next level preview */}
                     {currentLevel < settings.levels.length - 1 && (
                       <>
                         <Separator />
@@ -159,12 +201,10 @@ const Index = () => {
         <div className="space-y-6">
           <PayoutCalculator />
           
-          {/* Scoreboard instead of Buy-In Info */}
           <Scoreboard />
         </div>
       </div>
       
-      {/* Player List Section (replaces Scoreboard) */}
       <div className="mt-6">
         <Card>
           <CardHeader className="pb-2">
@@ -241,7 +281,6 @@ const Index = () => {
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-        {/* Quick access cards */}
         <Card className="hover:border-primary/50 transition-colors">
           <Link to="/players" className="block p-6">
             <div className="flex items-center justify-between">
@@ -322,6 +361,65 @@ const Index = () => {
           </Link>
         </Card>
       </div>
+
+      <Dialog open={showSummary} onOpenChange={setShowSummary}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Trophy className="mr-2 h-5 w-5 text-amber-500" />
+              Tournament Complete
+            </DialogTitle>
+            <DialogDescription>
+              Tournament has ended. Here's the final summary.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-lg font-medium">{players.length}</div>
+                <div className="text-sm text-muted-foreground">Total Entries</div>
+              </div>
+              <div>
+                <div className="text-lg font-medium">${state.totalPrizePool}</div>
+                <div className="text-sm text-muted-foreground">Prize Pool</div>
+              </div>
+              <div>
+                <div className="text-lg font-medium">
+                  {players.reduce((total, p) => total + p.rebuys, 0)}
+                </div>
+                <div className="text-sm text-muted-foreground">Rebuys</div>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div>
+              <h3 className="text-sm font-medium mb-2">Payout Table</h3>
+              <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                {getPayoutTable().map((payout) => (
+                  <div key={payout.position} className="flex justify-between py-1 border-b border-dashed last:border-0">
+                    <div className="font-medium">
+                      {payout.position === 1 ? "1st" : 
+                       payout.position === 2 ? "2nd" :
+                       payout.position === 3 ? "3rd" : 
+                       `${payout.position}th`} Place
+                    </div>
+                    <div>${payout.amount.toFixed(2)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => setShowSummary(false)} className="w-full">
+              <Check className="mr-2 h-4 w-4" />
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };

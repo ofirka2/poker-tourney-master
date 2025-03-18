@@ -8,10 +8,10 @@ const Scoreboard: React.FC = () => {
   const { state } = useTournament();
   const { players, totalPrizePool, settings } = state;
   
-  // Sort eliminated players by position (most recently eliminated last)
+  // Sort eliminated players by position (most recently eliminated first - descending order)
   const eliminatedPlayers = [...players]
     .filter(p => p.eliminated)
-    .sort((a, b) => (a.eliminationPosition || Infinity) - (b.eliminationPosition || Infinity));
+    .sort((a, b) => (b.eliminationPosition || 0) - (a.eliminationPosition || 0));
   
   // Get remaining active players count
   const activePlayersCount = players.filter(p => !p.eliminated).length;
