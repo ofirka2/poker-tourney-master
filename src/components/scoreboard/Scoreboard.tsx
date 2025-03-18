@@ -63,21 +63,23 @@ const Scoreboard: React.FC = () => {
               <div className="col-span-3 text-right">Prize</div>
             </div>
             
-            {eliminatedPlayers.map((player, index) => {
-              const position = activePlayersCount + (player.eliminationPosition || 0);
-              const payout = calculatePayout(position);
-              
-              return (
-                <div key={player.id} className="grid grid-cols-12 py-2 text-sm border-b border-dashed last:border-0">
-                  <div className="col-span-1">{index + 1}</div>
-                  <div className="col-span-5 font-medium">{player.name}</div>
-                  <div className="col-span-3">{getPosition(player.eliminationPosition)}</div>
-                  <div className="col-span-3 text-right">
-                    {payout !== null ? `$${payout.toFixed(2)}` : '-'}
+            <div className="max-h-[200px] overflow-y-auto pr-2">
+              {eliminatedPlayers.map((player, index) => {
+                const position = activePlayersCount + (player.eliminationPosition || 0);
+                const payout = calculatePayout(position);
+                
+                return (
+                  <div key={player.id} className="grid grid-cols-12 py-2 text-sm border-b border-dashed last:border-0">
+                    <div className="col-span-1">{index + 1}</div>
+                    <div className="col-span-5 font-medium">{player.name}</div>
+                    <div className="col-span-3">{getPosition(player.eliminationPosition)}</div>
+                    <div className="col-span-3 text-right">
+                      {payout !== null ? `$${payout.toFixed(2)}` : '-'}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
         

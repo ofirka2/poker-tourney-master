@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { TimerDisplay } from "@/components/timer/Timer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,21 +9,38 @@ import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { 
   Timer, Users, LayoutGrid, Settings, ChevronRight, 
-  Play, Clock, DollarSign, Trophy, ArrowRight 
+  Play, Clock, Trophy, ArrowRight, UserMinus, Search
 } from "lucide-react";
 import { useTournament } from "@/context/TournamentContext";
 import PayoutCalculator from "@/components/payout/PayoutCalculator";
 import Scoreboard from "@/components/scoreboard/Scoreboard";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 const Index = () => {
-  const { state } = useTournament();
+  const { state, dispatch } = useTournament();
   const { players, settings, currentLevel, isRunning } = state;
+  const [searchTerm, setSearchTerm] = useState("");
   
   const activePlayers = players.filter(p => !p.eliminated);
   const currentLevelData = settings.levels[currentLevel];
   const averageStack = activePlayers.length > 0 
     ? Math.round(activePlayers.reduce((sum, p) => sum + p.chips, 0) / activePlayers.length) 
     : 0;
+
+  // Filter players based on search term
+  const filteredPlayers = players.filter(player => 
+    player.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Handle player elimination
+  const handleEliminatePlayer = (id: string) => {
+    const player = players.find(p => p.id === id);
+    if (!player) return;
+    
+    dispatch({ type: 'MARK_ELIMINATED', payload: id });
+    toast.info(`Player ${player.name} eliminated`);
+  };
   
   return (
     <Layout>
@@ -142,53 +159,85 @@ const Index = () => {
         <div className="space-y-6">
           <PayoutCalculator />
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-lg">
-                <DollarSign className="mr-2 h-5 w-5" />
-                Buy-In Info
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <div className="text-sm text-muted-foreground">Buy-in</div>
-                <div className="font-medium">${settings.buyInAmount}</div>
-              </div>
-              
-              <div className="flex justify-between">
-                <div className="text-sm text-muted-foreground">Rebuy</div>
-                <div className="font-medium">${settings.rebuyAmount}</div>
-              </div>
-              
-              <div className="flex justify-between">
-                <div className="text-sm text-muted-foreground">Add-on</div>
-                <div className="font-medium">${settings.addOnAmount}</div>
-              </div>
-              
-              <Separator />
-              
-              <div className="flex justify-between">
-                <div className="text-sm text-muted-foreground">Starting Stack</div>
-                <div className="font-medium">{settings.initialChips.toLocaleString()}</div>
-              </div>
-              
-              <div className="flex justify-between">
-                <div className="text-sm text-muted-foreground">Rebuy Chips</div>
-                <div className="font-medium">{settings.rebuyChips.toLocaleString()}</div>
-              </div>
-              
-              <div className="flex justify-between">
-                <div className="text-sm text-muted-foreground">Add-on Chips</div>
-                <div className="font-medium">{settings.addOnChips.toLocaleString()}</div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Scoreboard instead of Buy-In Info */}
+          <Scoreboard />
         </div>
       </div>
       
-      {/* Scoreboard Section */}
+      {/* Player List Section (replaces Scoreboard) */}
       <div className="mt-6">
-        <Scoreboard />
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="flex items-center text-lg">
+                <Users className="mr-2 h-5 w-5" />
+                Player Management
+              </CardTitle>
+              <Button asChild size="sm">
+                <Link to="/players">
+                  Manage All Players
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="mb-4 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              <Input
+                placeholder="Search players..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          
+            {filteredPlayers.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                {searchTerm ? "No players match your search" : "No players added yet"}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="grid grid-cols-12 text-xs font-medium text-muted-foreground pb-1 border-b">
+                  <div className="col-span-5">Player</div>
+                  <div className="col-span-2">Table</div>
+                  <div className="col-span-2">Chips</div>
+                  <div className="col-span-3 text-right">Actions</div>
+                </div>
+                
+                <div className="max-h-[400px] overflow-y-auto pr-2">
+                  {filteredPlayers.map((player) => (
+                    <div key={player.id} className={`grid grid-cols-12 py-2 text-sm border-b border-dashed last:border-0 items-center ${player.eliminated ? "text-muted-foreground" : ""}`}>
+                      <div className="col-span-5 font-medium">{player.name}</div>
+                      <div className="col-span-2">{player.tableNumber || "-"}</div>
+                      <div className="col-span-2">{player.chips.toLocaleString()}</div>
+                      <div className="col-span-3 text-right">
+                        <div className="flex justify-end space-x-2">
+                          {!player.eliminated && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="h-8"
+                              onClick={() => handleEliminatePlayer(player.id)}
+                            >
+                              <UserMinus className="h-3.5 w-3.5 mr-1" />
+                              Eliminate
+                            </Button>
+                          )}
+                          {player.eliminated && (
+                            <Badge variant="outline" className="text-xs">
+                              Eliminated
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
