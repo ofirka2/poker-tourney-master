@@ -15,7 +15,6 @@ const Scoreboard: React.FC = () => {
   
   // Get remaining active players count
   const activePlayersCount = players.filter(p => !p.eliminated).length;
-  const totalPlayers = players.length;
   
   // Calculate positions and potential payouts
   const getPosition = (eliminationPosition: number | undefined): string => {
@@ -57,22 +56,20 @@ const Scoreboard: React.FC = () => {
         ) : (
           <div className="space-y-1">
             <div className="grid grid-cols-12 text-xs font-medium text-muted-foreground pb-1 border-b">
-              <div className="col-span-1">#</div>
-              <div className="col-span-5">Player</div>
               <div className="col-span-3">Position</div>
+              <div className="col-span-6">Name</div>
               <div className="col-span-3 text-right">Prize</div>
             </div>
             
             <div className="max-h-[200px] overflow-y-auto pr-2">
-              {eliminatedPlayers.map((player, index) => {
+              {eliminatedPlayers.map((player) => {
                 const position = activePlayersCount + (player.eliminationPosition || 0);
                 const payout = calculatePayout(position);
                 
                 return (
                   <div key={player.id} className="grid grid-cols-12 py-2 text-sm border-b border-dashed last:border-0">
-                    <div className="col-span-1">{index + 1}</div>
-                    <div className="col-span-5 font-medium">{player.name}</div>
                     <div className="col-span-3">{getPosition(player.eliminationPosition)}</div>
+                    <div className="col-span-6 font-medium">{player.name}</div>
                     <div className="col-span-3 text-right">
                       {payout !== null ? `$${payout.toFixed(2)}` : '-'}
                     </div>
