@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +7,14 @@ const Scoreboard: React.FC = () => {
   const { state } = useTournament();
   const { players, totalPrizePool, settings } = state;
   
+  // Get remaining active players count
+  const activePlayersCount = players.filter(p => !p.eliminated).length;
+  
   // Sort eliminated players by position (most recently eliminated first - descending order)
+  // The first player eliminated will have the highest elimination position number
   const eliminatedPlayers = [...players]
     .filter(p => p.eliminated)
     .sort((a, b) => (b.eliminationPosition || 0) - (a.eliminationPosition || 0));
-  
-  // Get remaining active players count
-  const activePlayersCount = players.filter(p => !p.eliminated).length;
   
   // Calculate positions and potential payouts
   const getPosition = (eliminationPosition: number | undefined): string => {
@@ -63,6 +63,10 @@ const Scoreboard: React.FC = () => {
             
             <div className="max-h-[200px] overflow-y-auto pr-2">
               {eliminatedPlayers.map((player) => {
+                // This calculates the actual finishing position number
+                // e.g., in a tournament with 10 players:
+                // - If 3 players are active and this player's eliminationPosition is 2,
+                //   their finishing position is 3+2 = 5th place
                 const position = activePlayersCount + (player.eliminationPosition || 0);
                 const payout = calculatePayout(position);
                 
