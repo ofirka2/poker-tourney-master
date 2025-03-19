@@ -1,7 +1,9 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "poker-tourney-master",
+  "version": "0.1.0",
   "private": true,
-  "version": "0.0.0",
+  "homepage": "https://ofirka2.github.io/poker-tourney-master",
+
   "type": "module",
   "scripts": {
     "dev": "vite",
