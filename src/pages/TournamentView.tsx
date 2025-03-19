@@ -1,12 +1,96 @@
+// src/pages/TournamentView.tsx
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
-import { TimerDisplay } from "@/components/timer/Timer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Trophy, Clock, AlertTriangle } from "lucide-react";
 import { TournamentState, Player, Table } from "@/types/types";
+
+// Custom read-only timer display for the shared view
+const ReadOnlyTimerDisplay: React.FC<{ 
+  initialTime: number; 
+  isRunning: boolean;
+  isPaused?: boolean; 
+}> = ({ initialTime, isRunning, isPaused = false }) => {
+  const [timeRemaining, setTimeRemaining] = useState<number>(initialTime);
+  
+  // Format time as MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  // Only count down if the tournament is running and not paused in the shared view
+  useEffect(() => {
+    let timer: number | null = null;
+    
+    if (isRunning && !isPaused && timeRemaining > 0) {
+      timer = window.setInterval(() => {
+        setTimeRemaining(prev => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isRunning, isPaused, timeRemaining]);
+  
+  // Calculate progress percentage
+  const progress = (timeRemaining / (initialTime || 1)) * 100;
+  
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-48 h-48 flex items-center justify-center">
+        {/* Progress circle */}
+        <svg className="w-full h-full" viewBox="0 0 100 100">
+          {/* Background circle */}
+          <circle
+            className="text-muted stroke-current"
+            strokeWidth="4"
+            cx="50"
+            cy="50"
+            r="45"
+            fill="none"
+          />
+          
+          {/* Progress circle */}
+          <circle
+            className={`transition-all duration-1000 ${isBreak ? "text-poker-green" : "text-primary"}`}
+            strokeWidth="4"
+            strokeLinecap="round"
+            cx="50"
+            cy="50"
+            r="45"
+            fill="none"
+            stroke="currentColor"
+            strokeDasharray="283"
+            strokeDashoffset={283 - (283 * progress) / 100}
+            transform="rotate(-90 50 50)"
+          />
+        </svg>
+        
+        {/* Time text */}
+        <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold">
+          {formatTime(timeRemaining)}
+        </div>
+      </div>
+      
+      {/* Status indicator */}
+      <div className="mt-4 text-sm text-muted-foreground">
+        {isPaused ? (
+          <span className="text-yellow-500">Paused</span>
+        ) : isRunning ? (
+          <span className="text-poker-green">Running</span>
+        ) : (
+          <span>Not Started</span>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // Simplified version of the tournament state for the view-only mode
 interface SharedTournamentData {
@@ -32,8 +116,7 @@ const TournamentView: React.FC = () => {
   const location = useLocation();
   const [tournamentData, setTournamentData] = useState<SharedTournamentData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
   
   useEffect(() => {
     // Parse the shared data from URL
@@ -56,28 +139,39 @@ const TournamentView: React.FC = () => {
       }
       
       setTournamentData(parsedData);
-      setTimeRemaining(parsedData.tournament.timeRemaining);
-      setIsRunning(parsedData.tournament.isRunning);
+      
+      // Store the data in localStorage to persist after refresh
+      localStorage.setItem('sharedTournamentData', encodedData);
     } catch (err) {
       console.error("Error parsing tournament data:", err);
       setError("Failed to load tournament data");
+      
+      // Try to load from localStorage if URL parsing fails
+      const savedData = localStorage.getItem('sharedTournamentData');
+      if (savedData) {
+        try {
+          const decodedData = atob(savedData);
+          const parsedData = JSON.parse(decodedData) as SharedTournamentData;
+          setTournamentData(parsedData);
+        } catch (e) {
+          console.error("Error parsing saved tournament data:", e);
+        }
+      }
     }
   }, [location.search]);
   
-  // Create a timer effect for the countdown
+  // Handle page visibility changes to pause/resume timer when tab is inactive
   useEffect(() => {
-    let timer: number | null = null;
+    const handleVisibilityChange = () => {
+      setIsPaused(document.hidden);
+    };
     
-    if (isRunning && timeRemaining > 0) {
-      timer = window.setInterval(() => {
-        setTimeRemaining(prev => Math.max(0, prev - 1));
-      }, 1000);
-    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
-      if (timer) clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isRunning, timeRemaining]);
+  }, []);
   
   if (error) {
     return (
@@ -115,6 +209,7 @@ const TournamentView: React.FC = () => {
   
   const tournament = tournamentData.tournament;
   const currentLevel = tournament.settings.levels[tournament.currentLevel];
+  const isBreak = currentLevel.isBreak;
   const nextLevelIndex = tournament.currentLevel + 1;
   const nextLevel = nextLevelIndex < tournament.settings.levels.length 
     ? tournament.settings.levels[nextLevelIndex] 
@@ -134,7 +229,7 @@ const TournamentView: React.FC = () => {
       
       if (levelIdx === tournament.currentLevel) {
         // For current level, only count remaining time
-        timeUntilBreak += timeRemaining;
+        timeUntilBreak += tournament.timeRemaining;
       } else if (level.isBreak) {
         // We found a break, stop counting
         break;
@@ -277,7 +372,11 @@ const TournamentView: React.FC = () => {
             <CardContent>
               <div className="flex flex-col items-center">
                 <div className="my-6">
-                  <TimerDisplay />
+                  <ReadOnlyTimerDisplay 
+                    initialTime={tournament.timeRemaining} 
+                    isRunning={tournament.isRunning}
+                    isPaused={isPaused}
+                  />
                 </div>
                 
                 <div className="grid grid-cols-2 w-full gap-6 mt-4">
@@ -385,7 +484,7 @@ const TournamentView: React.FC = () => {
               <div>
                 <div className="text-sm text-muted-foreground">Status</div>
                 <div className="text-xl font-bold">
-                  {isRunning ? (
+                  {tournament.isRunning ? (
                     <span className="text-green-600">Running</span>
                   ) : (
                     <span className="text-yellow-600">Paused</span>

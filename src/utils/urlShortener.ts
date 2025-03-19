@@ -27,16 +27,17 @@ const generateShortId = (): string => {
  * @param longUrl The long URL to shorten
  * @returns A short URL
  */
-export const shortenUrl = (longUrl: string): string => {
   // Generate a short ID
-  const shortId = generateShortId();
+  export const shortenUrl = (longUrl: string): string => {
+    const shortId = generateShortId();
+    localStorage.setItem(STORAGE_PREFIX + shortId, longUrl);
   
   // Store the mapping in localStorage
   localStorage.setItem(STORAGE_PREFIX + shortId, longUrl);
   
   // Return the shortened URL (using the current origin)
-  const baseUrl = window.location.origin;
-  return `${baseUrl}/t/${shortId}`;
+  const baseUrl = window.location.origin + window.location.pathname;
+  return `${baseUrl}#/t/${shortId}`;
 };
 
 /**
