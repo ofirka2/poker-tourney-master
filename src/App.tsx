@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HashRouter as Router, Routes, Route, HashRouter } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { TournamentProvider } from "@/context/TournamentContext";
 import Index from "./pages/Index";
 import Players from "./pages/Players";
@@ -21,18 +21,18 @@ const App = () => (
       <TournamentProvider>
         <Toaster />
         <Sonner />
-        <Router>
+        <HashRouter>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/players" element={<Players />} />
             <Route path="/tables" element={<Tables />} />
             <Route path="/setup" element={<Setup />} />
             <Route path="/timer" element={<Timer />} />
-            <Route path="/tournament/view" element={<TournamentView />} /> {/* Add the view route */}
+            <Route path="/tournament/view" element={<TournamentView />} />
             <Route path="/t/:shortId" element={<ShortUrlRedirect />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </Router>
+        </HashRouter>
       </TournamentProvider>
     </TooltipProvider>
   </QueryClientProvider>
