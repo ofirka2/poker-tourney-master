@@ -1,6 +1,6 @@
 // src/components/share/ShareTournament.tsx
 import React, { useState } from "react";
-import { Share2, Copy, CheckCheck } from "lucide-react";
+import { Share2, Copy, CheckCheck, Link as LinkIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -12,6 +12,7 @@ import {
 import { useTournament } from "@/context/TournamentContext";
 import { toast } from "sonner";
 import { Player, Table, TournamentLevel, PayoutStructure } from "@/types/types";
+import { shortenUrl } from "@/utils/urlShortener";
 
 // Define interface for our shared tournament state
 interface SharedTournamentState {
@@ -36,6 +37,8 @@ interface SharedTournamentState {
 const ShareTournament: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shortUrl, setShortUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [shareOptions, setShareOptions] = useState({
     players: true,
     tables: false,
@@ -44,7 +47,7 @@ const ShareTournament: React.FC = () => {
   const { state } = useTournament();
   
   // Create a shareable URL with tournament state encoded
-  const generateShareUrl = () => {
+  const generateFullUrl = () => {
     // Create a simplified version of the tournament state for sharing
     const shareState: SharedTournamentState = {
       id: crypto.randomUUID(), // Generate a unique ID for this share
@@ -79,67 +82,116 @@ const ShareTournament: React.FC = () => {
     }
     
     // Generate the actual URL
-    // In a real implementation, we might use a server endpoint or localStorage
-    // Here we'll use base64 encoding of JSON for simplicity
     const encodedData = btoa(JSON.stringify(shareState));
     const baseUrl = window.location.origin;
     return `${baseUrl}/tournament/view?data=${encodedData}`;
   };
+
+  // Generate and return a shortened URL
+  const generateShareUrl = async () => {
+    setIsGenerating(true);
+    try {
+      // Generate the full URL first
+      const fullUrl = generateFullUrl();
+      
+      // If we already have a short URL for this configuration, return it
+      if (shortUrl) {
+        return shortUrl;
+      }
+      
+      // Otherwise, create a new short URL
+      const newShortUrl = shortenUrl(fullUrl);
+      setShortUrl(newShortUrl);
+      return newShortUrl;
+    } catch (error) {
+      console.error("Error generating share URL:", error);
+      toast.error("Failed to generate share link");
+      // Fall back to the full URL if shortening fails
+      return generateFullUrl();
+    } finally {
+      setIsGenerating(false);
+    }
+  };
   
   const copyToClipboard = async () => {
-    const url = generateShareUrl();
+    setIsGenerating(true);
     try {
+      const url = await generateShareUrl();
       await navigator.clipboard.writeText(url);
       setCopied(true);
       toast.success("Share link copied to clipboard");
       setTimeout(() => setCopied(false), 3000);
     } catch (err) {
       toast.error("Failed to copy link");
+    } finally {
+      setIsGenerating(false);
     }
   };
   
-  const shareViaChannel = (channel: 'whatsapp' | 'email' | 'message') => {
-    const url = generateShareUrl();
-    const text = `Check out my poker tournament: ${url}`;
-    
-    switch (channel) {
-      case 'whatsapp':
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
-        break;
-      case 'email':
-        window.open(`mailto:?subject=Poker Tournament&body=${encodeURIComponent(text)}`);
-        break;
-      case 'message':
-        // SMS sharing is limited on web, but we can try
-        if (navigator.share) {
-          navigator.share({
-            title: 'Poker Tournament',
-            text: 'Check out my poker tournament',
-            url: url
-          }).catch(err => {
-            console.error('Error sharing:', err);
-          });
-        } else {
-          toast.error("SMS sharing not supported on this device");
-        }
-        break;
+  const shareViaChannel = async (channel: 'whatsapp' | 'email' | 'message') => {
+    setIsGenerating(true);
+    try {
+      const url = await generateShareUrl();
+      const text = `Check out my poker tournament: ${url}`;
+      
+      switch (channel) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+          break;
+        case 'email':
+          window.open(`mailto:?subject=Poker Tournament&body=${encodeURIComponent(text)}`);
+          break;
+        case 'message':
+          // SMS sharing is limited on web, but we can try
+          if (navigator.share) {
+            navigator.share({
+              title: 'Poker Tournament',
+              text: 'Check out my poker tournament',
+              url: url
+            }).catch(err => {
+              console.error('Error sharing:', err);
+            });
+          } else {
+            toast.error("SMS sharing not supported on this device");
+          }
+          break;
+      }
+      
+      setOpen(false);
+    } catch (error) {
+      toast.error("Failed to share tournament");
+    } finally {
+      setIsGenerating(false);
     }
-    
-    setOpen(false);
+  };
+
+  // Reset short URL when share options change
+  const updateShareOptions = (newOptions: typeof shareOptions) => {
+    setShareOptions(newOptions);
+    setShortUrl(null); // Reset short URL as the content has changed
+  };
+
+  // Handle dialog open to pre-generate the short URL
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen) {
+      // Pre-generate the short URL when the dialog opens
+      generateShareUrl();
+    }
   };
   
   return (
-    <div className="flex-1"> {/* Added container div with flex-1 class */}
+    <div className="flex-1"> {/* Container div with flex-1 class */}
       <Button 
         variant="outline" 
-        onClick={() => setOpen(true)} 
+        onClick={() => handleOpenChange(true)} 
         className="w-full" // Make button take full width of container
       >
         <Share2 className="h-4 w-4 mr-2" />
         Share Tournament
       </Button>
       
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Share Tournament View</DialogTitle>
@@ -157,7 +209,7 @@ const ShareTournament: React.FC = () => {
                 <Switch 
                   id="players" 
                   checked={shareOptions.players}
-                  onCheckedChange={(checked) => setShareOptions({...shareOptions, players: checked})}
+                  onCheckedChange={(checked) => updateShareOptions({...shareOptions, players: checked})}
                 />
               </div>
               
@@ -166,7 +218,7 @@ const ShareTournament: React.FC = () => {
                 <Switch 
                   id="tables" 
                   checked={shareOptions.tables}
-                  onCheckedChange={(checked) => setShareOptions({...shareOptions, tables: checked})}
+                  onCheckedChange={(checked) => updateShareOptions({...shareOptions, tables: checked})}
                 />
               </div>
               
@@ -175,7 +227,7 @@ const ShareTournament: React.FC = () => {
                 <Switch 
                   id="payouts" 
                   checked={shareOptions.payouts}
-                  onCheckedChange={(checked) => setShareOptions({...shareOptions, payouts: checked})}
+                  onCheckedChange={(checked) => updateShareOptions({...shareOptions, payouts: checked})}
                 />
               </div>
             </div>
@@ -185,6 +237,7 @@ const ShareTournament: React.FC = () => {
                 variant="outline" 
                 onClick={() => shareViaChannel('whatsapp')}
                 className="col-span-2 sm:col-span-1"
+                disabled={isGenerating}
               >
                 WhatsApp
               </Button>
@@ -192,6 +245,7 @@ const ShareTournament: React.FC = () => {
                 variant="outline" 
                 onClick={() => shareViaChannel('email')}
                 className="col-span-2 sm:col-span-1"
+                disabled={isGenerating}
               >
                 Email
               </Button>
@@ -199,6 +253,7 @@ const ShareTournament: React.FC = () => {
                 variant="outline" 
                 onClick={() => shareViaChannel('message')}
                 className="col-span-2 sm:col-span-1"
+                disabled={isGenerating}
               >
                 Message
               </Button>
@@ -206,26 +261,47 @@ const ShareTournament: React.FC = () => {
                 variant="outline" 
                 onClick={copyToClipboard}
                 className="col-span-2 sm:col-span-1"
+                disabled={isGenerating}
               >
-                {copied ? <CheckCheck className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                {copied ? (
+                  <CheckCheck className="h-4 w-4 mr-1" />
+                ) : isGenerating ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Copy className="h-4 w-4 mr-1" />
+                )}
                 {copied ? "Copied" : "Copy"}
               </Button>
             </div>
             
             <div className="relative">
-              <Input 
-                value={generateShareUrl()} 
-                readOnly 
-                className="pr-10"
-              />
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="absolute right-0 top-0 h-full"
-                onClick={copyToClipboard}
-              >
-                {copied ? <CheckCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
+              <div className="flex items-center space-x-2">
+                <LinkIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-sm text-muted-foreground">Share link:</span>
+              </div>
+              <div className="relative mt-1">
+                <Input 
+                  value={shortUrl || "Generating short link..."}
+                  readOnly 
+                  className="pr-10"
+                  disabled={isGenerating || !shortUrl}
+                />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-0 top-0 h-full"
+                  onClick={copyToClipboard}
+                  disabled={isGenerating || !shortUrl}
+                >
+                  {copied ? (
+                    <CheckCheck className="h-4 w-4" />
+                  ) : isGenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
           
