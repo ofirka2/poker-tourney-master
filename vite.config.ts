@@ -4,7 +4,12 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/poker-tourney-master/', // Add this for GitHub Pages
+  base: './', // Use relative paths
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
