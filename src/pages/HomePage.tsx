@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Trophy, Users, Calendar, Eye } from "lucide-react";
 import { format } from "date-fns";
-import { MultiStepTournamentForm } from "@/components/home/MultiStepTournamentForm";
+import MultiStepTournamentForm from "@/components/home/MultiStepTournamentForm";
 
 const HomePage = () => {
   const [tournaments, setTournaments] = useState([]);
@@ -15,7 +14,6 @@ const HomePage = () => {
   const [showCreateTournament, setShowCreateTournament] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch tournaments from Supabase
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
@@ -37,13 +35,11 @@ const HomePage = () => {
   }, []);
 
   const handleTournamentCreated = () => {
-    // Refetch tournaments after creation
     setShowCreateTournament(false);
     navigate('/setup');
   };
 
   const viewTournament = (id) => {
-    // Navigate to tournament view
     navigate('/tournament');
   };
 
@@ -144,7 +140,6 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* Tournament Creation Dialog */}
         <MultiStepTournamentForm 
           open={showCreateTournament}
           onOpenChange={setShowCreateTournament}

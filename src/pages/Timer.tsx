@@ -7,7 +7,7 @@ const TimerPage = () => {
   return (
     <Layout>
       <div className="flex items-center justify-center min-h-[80vh]">
-        <Timer fullscreen={true} />
+        <Timer className="w-full max-w-xl" />
       </div>
     </Layout>
   );

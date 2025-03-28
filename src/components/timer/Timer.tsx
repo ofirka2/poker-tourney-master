@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTournament } from "@/context/TournamentContext";
 import { formatTime } from "@/lib/utils";
-import { Play, Pause, SkipForward, SkipBack, Refresh } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, RefreshCw } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
@@ -11,15 +11,19 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+  DialogTrigger,
+  DialogFooter
+} from "@/components/ui/dialog";
 
 interface TimerProps {
   className?: string;
+  fullscreen?: boolean;
 }
 
-const Timer: React.FC<TimerProps> = ({ className }) => {
+const Timer: React.FC<TimerProps> = ({ className, fullscreen }) => {
   const { state, dispatch } = useTournament();
-  const { levels, currentLevel, isRunning } = state;
+  const { currentLevel, isRunning } = state;
+  const levels = state.settings.levels;
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isPaused, setIsPaused] = useState(!isRunning);
   const [isResetting, setIsResetting] = useState(false);
@@ -233,7 +237,7 @@ const Timer: React.FC<TimerProps> = ({ className }) => {
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <DialogTrigger asChild>
           <Button variant="destructive">
-            <Refresh className="mr-2" />
+            <RefreshCw className="mr-2" />
             Reset Timer
           </Button>
         </DialogTrigger>

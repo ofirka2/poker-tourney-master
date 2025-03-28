@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { useTournament } from '@/context/TournamentContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -35,14 +35,15 @@ const formatOptions = [
 interface MultiStepTournamentFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onTournamentCreated?: () => void;
 }
 
 const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({ 
   open, 
-  onOpenChange 
+  onOpenChange,
+  onTournamentCreated 
 }) => {
   const navigate = useNavigate();
-  const supabase = useSupabaseClient();
   const { dispatch } = useTournament();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({

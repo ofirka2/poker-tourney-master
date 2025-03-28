@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import Timer from "@/components/timer/Timer";
+import TimerDisplay from "@/components/timer/TimerDisplay";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -316,11 +317,9 @@ const Index = () => {
                     </Link>
                   </Button>
                   
-                  {/* Share Tournament Button */}
-                  
-                    <div className="flex-1">
-                      <ShareTournament />
-                    </div>
+                  <div className="flex-1">
+                    <ShareTournament />
+                  </div>
                 </div>
               </div>
               

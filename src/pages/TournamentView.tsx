@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, SkipForward, SkipBack, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from 'date-fns';
-import { Timer as TimerComponent } from "@/components/timer/Timer";
+import Timer from "@/components/timer/Timer";
 import { toast } from "sonner";
 
 const TournamentView = () => {
@@ -98,7 +98,7 @@ const TournamentView = () => {
         </div>
 
         <div className="mb-4">
-          <TimerComponent />
+          <Timer />
         </div>
 
         <div>
