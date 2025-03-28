@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from "react";
 import { useTournament } from "@/context/TournamentContext";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, SkipForward, SkipBack, Stop } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, Square } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from 'date-fns';
 import { Timer as TimerComponent } from "@/components/timer/Timer";
@@ -10,7 +11,7 @@ import { toast } from "sonner";
 
 const TournamentView = () => {
   const { state, dispatch } = useTournament();
-  const { name, settings, isRunning, startDate, levels } = state;
+  const { currentLevel, isRunning, settings, players, timeRemaining } = state;
   const navigate = useNavigate();
 
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -47,13 +48,13 @@ const TournamentView = () => {
   };
 
   const resumeTournament = () => {
-    dispatch({ type: "RESUME_TOURNAMENT" });
+    dispatch({ type: "START_TOURNAMENT" });
     setStartTime(new Date(Date.now() - elapsedTime));
     toast.success("Tournament resumed!");
   };
 
   const stopTournament = () => {
-    dispatch({ type: "STOP_TOURNAMENT" });
+    dispatch({ type: "RESET_TOURNAMENT" });
     setStartTime(null);
     setElapsedTime(0);
     toast.warning("Tournament stopped.");
@@ -66,9 +67,9 @@ const TournamentView = () => {
   return (
     <Layout>
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">{name}</h1>
+        <h1 className="text-2xl font-bold mb-4">Tournament View</h1>
         <p className="text-gray-600 mb-2">
-          Start Date: {startDate ? format(new Date(startDate), 'MMMM d, yyyy h:mm a') : 'Not set'}
+          Current Level: {settings.levels[currentLevel]?.level || 1}
         </p>
 
         <div className="mb-4">
@@ -78,7 +79,7 @@ const TournamentView = () => {
                 <Pause className="mr-2" /> Pause Tournament
               </Button>
               <Button onClick={stopTournament} variant="destructive" className="ml-2">
-                <Stop className="mr-2" /> Stop Tournament
+                <Square className="mr-2" /> Stop Tournament
               </Button>
             </>
           ) : startTime ? (
@@ -112,7 +113,7 @@ const TournamentView = () => {
               </tr>
             </thead>
             <tbody>
-              {levels.map((level, index) => (
+              {settings.levels.map((level, index) => (
                 <tr key={index} className={level.isBreak ? 'bg-muted/30' : ''}>
                   <td className="p-2 border">{level.level}</td>
                   <td className="p-2 border">{level.isBreak ? 'Break' : `${level.smallBlind}/${level.bigBlind}`}</td>

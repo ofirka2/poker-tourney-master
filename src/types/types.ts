@@ -52,6 +52,8 @@ export interface PayoutPlace {
 }
 
 export interface TournamentState {
+  name?: string;
+  startDate?: string;
   isRunning: boolean;
   currentLevel: number;
   timeRemaining: number; // in seconds
@@ -65,8 +67,12 @@ export interface TournamentState {
 export type TournamentAction = 
   | { type: 'START_TOURNAMENT' }
   | { type: 'PAUSE_TOURNAMENT' }
+  | { type: 'RESUME_TOURNAMENT' }
+  | { type: 'STOP_TOURNAMENT' }
   | { type: 'NEXT_LEVEL' }
   | { type: 'PREVIOUS_LEVEL' }
+  | { type: 'PREV_LEVEL' }
+  | { type: 'END_TOURNAMENT' }
   | { type: 'SET_TIME'; payload: number }
   | { type: 'ADD_PLAYER'; payload: Player }
   | { type: 'REMOVE_PLAYER'; payload: string }
@@ -78,4 +84,6 @@ export type TournamentAction =
   | { type: 'UPDATE_CURRENT_LEVEL_DURATION'; payload: { levelIndex: number, duration: number } }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<TournamentSettings> }
   | { type: 'UPDATE_PLAYER'; payload: Player }
-  | { type: 'RESET_TOURNAMENT' };
+  | { type: 'RESET_TOURNAMENT' }
+  | { type: 'CREATE_TOURNAMENT'; payload: any }
+  | { type: 'LOAD_TOURNAMENT'; payload: any };

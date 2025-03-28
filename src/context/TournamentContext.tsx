@@ -176,6 +176,21 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
         ...state,
         isRunning: false
       };
+    
+    case 'RESUME_TOURNAMENT':
+      return {
+        ...state,
+        isRunning: true
+      };
+      
+    case 'STOP_TOURNAMENT':
+    case 'END_TOURNAMENT':
+      return {
+        ...state,
+        isRunning: false,
+        currentLevel: 0,
+        timeRemaining: state.settings.levels[0].duration * 60
+      };
       
     case 'NEXT_LEVEL': {
       if (state.currentLevel >= state.settings.levels.length - 1) {
@@ -192,7 +207,8 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
       };
     }
     
-    case 'PREVIOUS_LEVEL': {
+    case 'PREVIOUS_LEVEL':
+    case 'PREV_LEVEL': {
       if (state.currentLevel <= 0) {
         return state;
       }
@@ -447,6 +463,42 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
       return {
         ...state,
         players: newPlayers
+      };
+    }
+    
+    case 'CREATE_TOURNAMENT': {
+      const { name, startDate, settings } = action.payload;
+      return {
+        ...state,
+        name,
+        startDate,
+        settings: settings || state.settings,
+        isRunning: false,
+        currentLevel: 0,
+        timeRemaining: (settings?.levels[0]?.duration || state.settings.levels[0].duration) * 60,
+        players: [],
+        tables: [],
+        totalPrizePool: 0,
+        eliminationCounter: 0
+      };
+    }
+    
+    case 'LOAD_TOURNAMENT': {
+      const { name, startDate, settings, players, isRunning, currentLevel } = action.payload;
+      const loadedSettings = settings || state.settings;
+      
+      return {
+        ...state,
+        name: name || state.name,
+        startDate: startDate || state.startDate,
+        settings: loadedSettings,
+        isRunning: isRunning || false,
+        currentLevel: currentLevel || 0,
+        timeRemaining: loadedSettings.levels[currentLevel || 0].duration * 60,
+        players: players || [],
+        tables: [],
+        totalPrizePool: calculatePrizePool(players || [], loadedSettings),
+        eliminationCounter: players?.filter(p => p.eliminated)?.length || 0
       };
     }
     
