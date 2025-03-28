@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trophy, Users, Calendar, Eye } from "lucide-react";
+import { Plus, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import MultiStepTournamentForm from "@/components/home/MultiStepTournamentForm";
 
@@ -37,10 +38,6 @@ const HomePage = () => {
   const handleTournamentCreated = () => {
     setShowCreateTournament(false);
     navigate('/setup');
-  };
-
-  const viewTournament = (id) => {
-    navigate('/tournament');
   };
 
   return (
@@ -88,7 +85,6 @@ const HomePage = () => {
                         <th className="pb-2 text-left font-medium">Status</th>
                         <th className="pb-2 text-left font-medium">Players</th>
                         <th className="pb-2 text-left font-medium">Winner</th>
-                        <th className="pb-2 text-right font-medium">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -112,23 +108,10 @@ const HomePage = () => {
                             </span>
                           </td>
                           <td className="py-3 text-muted-foreground">
-                            <div className="flex items-center">
-                              <Users className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                              {tournament.no_of_players || 0}
-                            </div>
+                            {tournament.no_of_players || 0}
                           </td>
                           <td className="py-3 text-muted-foreground">
                             {tournament.winner || '-'}
-                          </td>
-                          <td className="py-3 text-right">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => viewTournament(tournament.id)}
-                            >
-                              <Eye className="h-3.5 w-3.5 mr-1" />
-                              View
-                            </Button>
                           </td>
                         </tr>
                       ))}

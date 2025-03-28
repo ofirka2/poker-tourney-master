@@ -50,7 +50,7 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
     name: '',
     startDate: new Date().toISOString().split('T')[0],
     playerCount: 9,
-    desiredDuration: 240, // 4 hours in minutes
+    desiredDuration: 4, // In hours now
     allowRebuy: true,
     allowAddon: true,
     format: 'rebuy',
@@ -90,9 +90,9 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
   };
 
   const generateBlindLevels = () => {
-    const { desiredDuration } = formData;
+    const desiredDurationMinutes = formData.desiredDuration * 60; // Convert hours to minutes
     const avgLevelDuration = 20; // minutes
-    const numLevels = Math.ceil(desiredDuration / avgLevelDuration);
+    const numLevels = Math.ceil(desiredDurationMinutes / avgLevelDuration);
     
     // Generate blind structure based on desired duration
     const blindLevels = [];
@@ -145,7 +145,7 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
         start_date: formData.startDate,
         status: 'Not Started',
         no_of_players: formData.playerCount,
-        desired_duration: formData.desiredDuration,
+        desired_duration: formData.desiredDuration * 60, // Convert hours to minutes for database
         allow_rebuy: formData.allowRebuy,
         allow_addon: formData.allowAddon,
         format: formData.format,
@@ -154,11 +154,7 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
         blind_levels: blindLevels,
         buy_in: 100, // Default values
         rebuy_amount: 100,
-        addon_amount: 100,
-        last_rebuy_level: formData.lastRebuyLevel,
-        last_addon_level: formData.lastAddonLevel,
-        max_rebuys: formData.maxRebuys,
-        max_addons: formData.maxAddons
+        addon_amount: 100
       }).select().single();
 
       if (error) {
@@ -259,7 +255,7 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="step-2" className="space-y-4">
+          <TabsContent value="step-2" className="space-y-4 pt-4">
             <div className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="playerCount">Number of Players</Label>
@@ -276,13 +272,13 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="desiredDuration">Desired Duration (minutes)</Label>
+                <Label htmlFor="desiredDuration">Desired Duration (hours)</Label>
                 <Input
                   id="desiredDuration"
                   name="desiredDuration"
                   type="number"
-                  min="60"
-                  max="720"
+                  min="1"
+                  max="12"
                   value={formData.desiredDuration}
                   onChange={handleInputChange}
                 />
@@ -324,7 +320,7 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="step-3" className="space-y-4">
+          <TabsContent value="step-3" className="space-y-4 pt-4">
             <div className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="format">Tournament Format</Label>
