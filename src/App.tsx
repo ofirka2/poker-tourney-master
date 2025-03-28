@@ -1,9 +1,11 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { TournamentProvider } from "@/context/TournamentContext";
+import HomePage from "./pages/HomePage";
 import Index from "./pages/Index";
 import Players from "./pages/Players";
 import Tables from "./pages/Tables";
@@ -23,7 +25,8 @@ const App = () => (
         <Sonner />
         <HashRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/tournament" element={<Index />} />
             <Route path="/players" element={<Players />} />
             <Route path="/tables" element={<Tables />} />
             <Route path="/setup" element={<Setup />} />
