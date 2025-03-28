@@ -19,7 +19,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
   
   const isActive = (path: string) => location.pathname === path;
-  
+  const isHomePage = location.pathname === "/";
+
   const navItems = [
     { path: "/", label: "Home", icon: Home },
     { path: "/timer", label: "Timer", icon: Timer },
@@ -37,54 +38,56 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border/60 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-xl font-semibold text-foreground tracking-tight">Poker Master</h1>
+      {/* Header - Show only for tournament pages, not home page */}
+      {!isHomePage && (
+        <header className="border-b border-border/60 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <h1 className="text-xl font-semibold text-foreground tracking-tight">Poker Master</h1>
+              
+              {/* Tournament status badge */}
+              {state.isRunning ? (
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-poker-green opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-poker-green"></span>
+                </span>
+              ) : null}
+            </div>
             
-            {/* Tournament status badge */}
-            {state.isRunning ? (
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-poker-green opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-poker-green"></span>
-              </span>
-            ) : null}
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            </Button>
+            
+            {/* Desktop navigation */}
+            <nav className="hidden md:flex items-center space-x-6">
+              {navItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center space-x-1 text-sm font-medium transition-colors hover:text-primary",
+                    isActive(item.path) 
+                      ? "text-primary" 
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon size={18} />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </nav>
           </div>
-          
-          {/* Mobile menu button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? <X size={20} /> : <Menu size={20} />}
-          </Button>
-          
-          {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center space-x-1 text-sm font-medium transition-colors hover:text-primary",
-                  isActive(item.path) 
-                    ? "text-primary" 
-                    : "text-muted-foreground"
-                )}
-              >
-                <item.icon size={18} />
-                <span>{item.label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </header>
+        </header>
+      )}
       
-      {/* Mobile navigation */}
-      {menuOpen && (
+      {/* Mobile navigation - Hide on home page */}
+      {!isHomePage && menuOpen && (
         <div className="md:hidden border-b border-border/60 bg-background/95 backdrop-blur-sm animate-fade-in">
           <nav className="container mx-auto px-4 py-4 flex flex-col space-y-4">
             {navItems.map((item) => (
@@ -107,8 +110,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       )}
       
-      {/* Tournament status bar */}
-      {state.players.length > 0 && (
+      {/* Tournament status bar - Hide on home page */}
+      {!isHomePage && state.players.length > 0 && (
         <div className="bg-muted/30 border-b border-border/30">
           <div className="container mx-auto px-4 py-2 flex flex-wrap justify-between items-center gap-y-2 text-sm">
             <div className="flex items-center space-x-6">
@@ -156,7 +159,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
       
       {/* Main content */}
-      <main className="flex-1 container mx-auto px-4 py-6 md:py-8 lg:py-10">
+      <main className={cn(
+        "flex-1 container mx-auto px-4",
+        isHomePage ? "py-6" : "py-6 md:py-8 lg:py-10"
+      )}>
         <div className="animate-fade-in">
           {children}
         </div>
