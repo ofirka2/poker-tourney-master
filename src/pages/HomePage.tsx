@@ -5,7 +5,7 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trophy } from "lucide-react";
+import { Plus, Trophy, Eye } from "lucide-react";
 import { format } from "date-fns";
 import MultiStepTournamentForm from "@/components/home/MultiStepTournamentForm";
 
@@ -38,6 +38,11 @@ const HomePage = () => {
   const handleTournamentCreated = () => {
     setShowCreateTournament(false);
     navigate('/setup');
+  };
+
+  const handleViewTournament = (tournamentId) => {
+    // Navigate to setup page with tournament ID
+    navigate(`/setup?id=${tournamentId}`);
   };
 
   return (
@@ -85,6 +90,7 @@ const HomePage = () => {
                         <th className="pb-2 text-left font-medium">Status</th>
                         <th className="pb-2 text-left font-medium">Players</th>
                         <th className="pb-2 text-left font-medium">Winner</th>
+                        <th className="pb-2 text-left font-medium">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -112,6 +118,17 @@ const HomePage = () => {
                           </td>
                           <td className="py-3 text-muted-foreground">
                             {tournament.winner || '-'}
+                          </td>
+                          <td className="py-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleViewTournament(tournament.id)}
+                              className="flex items-center"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
                           </td>
                         </tr>
                       ))}

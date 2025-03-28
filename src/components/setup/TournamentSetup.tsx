@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Save, Plus, Trash, Clock, DollarSign, 
   Banknote, Percent, ArrowRight 
@@ -12,8 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTournament } from "@/context/TournamentContext";
 import { toast } from "sonner";
 import { TournamentLevel, PayoutPlace } from "@/types/types";
+import { supabase } from "@/integrations/supabase/client";
 
-export const TournamentSetup: React.FC = () => {
+interface TournamentSetupProps {
+  tournamentId?: string | null;
+}
+
+export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }) => {
   const { state, dispatch } = useTournament();
   const { settings, currentLevel } = state;
   
@@ -29,6 +34,24 @@ export const TournamentSetup: React.FC = () => {
   const [lastAddOnLevel, setLastAddOnLevel] = useState(settings.lastAddOnLevel);
   const [levels, setLevels] = useState<TournamentLevel[]>(settings.levels);
   const [payoutPlaces, setPayoutPlaces] = useState<PayoutPlace[]>(settings.payoutStructure.places);
+  const [tournamentName, setTournamentName] = useState(state.name || "");
+  
+  // Update local state when settings change (e.g., when a tournament is loaded)
+  useEffect(() => {
+    setBuyInAmount(settings.buyInAmount);
+    setRebuyAmount(settings.rebuyAmount);
+    setAddOnAmount(settings.addOnAmount);
+    setInitialChips(settings.initialChips);
+    setRebuyChips(settings.rebuyChips);
+    setAddOnChips(settings.addOnChips);
+    setMaxRebuys(settings.maxRebuys);
+    setMaxAddOns(settings.maxAddOns);
+    setLastRebuyLevel(settings.lastRebuyLevel);
+    setLastAddOnLevel(settings.lastAddOnLevel);
+    setLevels(settings.levels);
+    setPayoutPlaces(settings.payoutStructure.places);
+    setTournamentName(state.name || "");
+  }, [settings, state.name]);
   
   // Function to add a new blind level
   const addLevel = () => {
@@ -148,7 +171,7 @@ export const TournamentSetup: React.FC = () => {
   const totalPayoutPercentage = payoutPlaces.reduce((sum, place) => sum + place.percentage, 0);
   
   // Save tournament settings
-  const saveSettings = () => {
+  const saveSettings = async () => {
     // Validate payout percentages
     if (Math.abs(totalPayoutPercentage - 100) > 0.01) {
       toast.error("Payout percentages must sum to 100%");
@@ -172,8 +195,41 @@ export const TournamentSetup: React.FC = () => {
       }
     };
     
+    // Update local state first
     dispatch({ type: 'UPDATE_SETTINGS', payload: updatedSettings });
-    toast.success("Tournament settings saved");
+    
+    // If we have a tournament ID, save to Supabase as well
+    if (tournamentId) {
+      try {
+        // Prepare data for Supabase
+        const tournamentData = {
+          name: tournamentName,
+          buy_in: buyInAmount,
+          rebuy_amount: rebuyAmount,
+          addon_amount: addOnAmount,
+          starting_chips: initialChips,
+          max_rebuys: maxRebuys,
+          max_addons: maxAddOns,
+          last_rebuy_level: lastRebuyLevel,
+          last_addon_level: lastAddOnLevel,
+          blind_levels: JSON.stringify(levels)
+        };
+        
+        const { error } = await supabase
+          .from('tournaments')
+          .update(tournamentData)
+          .eq('id', tournamentId);
+        
+        if (error) throw error;
+        
+        toast.success("Tournament updated in database");
+      } catch (error) {
+        console.error('Error updating tournament:', error);
+        toast.error("Failed to update tournament in database");
+      }
+    } else {
+      toast.success("Tournament settings saved locally");
+    }
   };
   
   return (
@@ -189,6 +245,24 @@ export const TournamentSetup: React.FC = () => {
           Save Settings
         </Button>
       </div>
+      
+      {/* Tournament Name Input */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Tournament Name</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="tournamentName">Name</Label>
+            <Input
+              id="tournamentName"
+              value={tournamentName}
+              onChange={(e) => setTournamentName(e.target.value)}
+              placeholder="Enter tournament name"
+            />
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Current Level Duration Adjustment */}
       {state.isRunning && (

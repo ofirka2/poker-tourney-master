@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
@@ -63,38 +62,32 @@ function calculatePrizePool(players: Player[], settings: TournamentSettings): nu
 }
 
 function assignPlayersToTables(players: Player[], numTables: number): Table[] {
-  // Create an array to hold our tables
   const tables: Table[] = Array.from({ length: numTables }, (_, i) => ({
     id: i + 1,
     players: [],
     maxSeats: 9
   }));
 
-  // Shuffle players for random seat assignment
   const shuffledPlayers = [...players]
     .filter(player => !player.eliminated)
     .sort(() => Math.random() - 0.5);
   
-  // Round-robin seat assignment
   shuffledPlayers.forEach((player, index) => {
     const tableIndex = index % numTables;
     const table = tables[tableIndex];
     
-    // Find first available seat at this table (1-9)
     const takenSeats = new Set(table.players.map(p => p.seatNumber));
     let seatNumber = 1;
     while (takenSeats.has(seatNumber) && seatNumber <= 9) {
       seatNumber++;
     }
     
-    // Update player with table and seat assignment
     const updatedPlayer = { 
       ...player, 
       tableNumber: table.id, 
       seatNumber 
     };
     
-    // Add updated player to the table
     tables[tableIndex].players.push(updatedPlayer);
   });
   
@@ -102,25 +95,20 @@ function assignPlayersToTables(players: Player[], numTables: number): Table[] {
 }
 
 function balanceTables(tables: Table[]): Table[] {
-  // If we have no tables or only one table, no balancing needed
   if (tables.length <= 1) return tables;
   
-  // Count active players at each table
   const tableCounts = tables.map(table => ({
     tableId: table.id,
     count: table.players.filter(p => !p.eliminated).length
   }));
   
-  // Find min and max table counts
   const minTable = tableCounts.reduce((min, table) => 
     table.count < min.count ? table : min, tableCounts[0]);
   
   const maxTable = tableCounts.reduce((max, table) => 
     table.count > max.count ? table : max, tableCounts[0]);
   
-  // If difference is more than 1, balance needed
   if (maxTable.count - minTable.count > 1) {
-    // We need to move players from the largest table to the smallest
     const playersToMove = Math.floor((maxTable.count - minTable.count) / 2);
     
     if (playersToMove > 0) {
@@ -128,19 +116,15 @@ function balanceTables(tables: Table[]): Table[] {
       const minTableObj = tables.find(t => t.id === minTable.tableId);
       
       if (maxTableObj && minTableObj) {
-        // Find players to move (choose ones without a seat preference)
         const playersToReassign = maxTableObj.players
           .filter(p => !p.eliminated)
           .slice(0, playersToMove);
         
-        // Remove them from max table
         maxTableObj.players = maxTableObj.players
           .filter(p => !playersToReassign.includes(p));
         
-        // Find available seats at min table
         const takenSeats = new Set(minTableObj.players.map(p => p.seatNumber));
         
-        // Assign new seats and add to min table
         playersToReassign.forEach(player => {
           let seat = 1;
           while (takenSeats.has(seat) && seat <= 9) {
@@ -252,7 +236,6 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
     }
     
     case 'MARK_ELIMINATED': {
-      // Increment elimination counter and assign position
       const eliminationCounter = state.eliminationCounter + 1;
       
       const newPlayers = state.players.map(player => 
@@ -275,7 +258,6 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
     }
     
     case 'ADD_REBUY': {
-      // Check if we're past the last rebuy level
       if (state.currentLevel > state.settings.lastRebuyLevel) {
         toast.error("Rebuys are no longer allowed at this level");
         return state;
@@ -302,7 +284,6 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
     }
     
     case 'ADD_ADDON': {
-      // Check if we're past the last add-on level
       if (state.currentLevel > state.settings.lastAddOnLevel) {
         toast.error("Add-ons are no longer allowed at this level");
         return state;
@@ -310,7 +291,6 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
       
       const player = state.players.find(p => p.id === action.payload);
       
-      // Check if player has reached max add-ons
       if (player && player.addOns >= state.settings.maxAddOns) {
         toast.error(`Maximum ${state.settings.maxAddOns} add-ons reached`);
         return state;
@@ -338,15 +318,11 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
     case 'ASSIGN_TABLES': {
       const activePlayers = state.players.filter(p => !p.eliminated);
       
-      // Calculate number of tables needed (1 table per 9 players, minimum 1)
       const numTables = Math.max(1, Math.ceil(activePlayers.length / 9));
       
-      // Assign players to tables
       const newTables = assignPlayersToTables(state.players, numTables);
       
-      // Update the players with their new table and seat assignments
       const updatedPlayers = state.players.map(player => {
-        // Find this player in the new tables
         for (const table of newTables) {
           const tablePlayer = table.players.find(p => p.id === player.id);
           if (tablePlayer) {
@@ -357,12 +333,7 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
             };
           }
         }
-        // If player wasn't assigned (likely eliminated), reset table and seat
-        return {
-          ...player,
-          tableNumber: null,
-          seatNumber: null
-        };
+        return player;
       });
       
       return {
@@ -377,12 +348,9 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
         return state;
       }
       
-      // Balance the tables
       const balancedTables = balanceTables([...state.tables]);
       
-      // Update players with their new table assignments
       const updatedPlayers = state.players.map(player => {
-        // Find this player in the balanced tables
         for (const table of balancedTables) {
           const tablePlayer = table.players.find(p => p.id === player.id);
           if (tablePlayer) {
@@ -406,19 +374,16 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
     case 'UPDATE_CURRENT_LEVEL_DURATION': {
       const { levelIndex, duration } = action.payload;
       
-      // Validate that the level index is valid
       if (levelIndex < 0 || levelIndex >= state.settings.levels.length) {
         return state;
       }
       
-      // Update the level duration in settings
       const updatedLevels = [...state.settings.levels];
       updatedLevels[levelIndex] = {
         ...updatedLevels[levelIndex],
         duration
       };
       
-      // Update time remaining if this is the current level
       const timeRemaining = levelIndex === state.currentLevel 
         ? duration * 60 
         : state.timeRemaining;
@@ -439,10 +404,8 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
         ...action.payload
       };
       
-      // Recalculate prize pool with new settings
       const totalPrizePool = calculatePrizePool(state.players, newSettings);
       
-      // If currently at level 0, update the time remaining to match new duration
       const timeRemaining = state.currentLevel === 0 
         ? newSettings.levels[0].duration * 60 
         : state.timeRemaining;
@@ -508,6 +471,9 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
         settings: state.settings // Preserve settings
       };
       
+    case 'GET_DEFAULT_LEVELS':
+      return state;
+      
     default:
       return state;
   }
@@ -521,7 +487,6 @@ const TournamentContext = createContext<{
 export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(tournamentReducer, initialState);
   
-  // Timer effect - countdown when tournament is running
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     
@@ -530,29 +495,23 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         dispatch({ type: 'SET_TIME', payload: state.timeRemaining - 1 });
       }, 1000);
     } else if (state.timeRemaining === 0 && state.isRunning) {
-      // Auto-advance to next level when timer reaches zero
       dispatch({ type: 'NEXT_LEVEL' });
       toast.info(`Level ${state.currentLevel + 1} complete`);
     }
     
-    // Cleanup timer on unmount or state change
     return () => {
       if (timer) clearInterval(timer);
     };
   }, [state.isRunning, state.timeRemaining, state.currentLevel]);
   
-  // Periodic table balancing when players are eliminated
   useEffect(() => {
     if (state.tables.length > 1) {
       const balancedTables = balanceTables(state.tables);
       
-      // Check if tables changed during balancing
       const tablesChanged = JSON.stringify(balancedTables) !== JSON.stringify(state.tables);
       
       if (tablesChanged) {
-        // Update players with their new table assignments
         const updatedPlayers = state.players.map(player => {
-          // Find this player in the balanced tables
           for (const table of balancedTables) {
             const tablePlayer = table.players.find(p => p.id === player.id);
             if (tablePlayer) {
