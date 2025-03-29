@@ -14,6 +14,7 @@ import Timer from "./pages/Timer";
 import TournamentView from "./pages/TournamentView"; 
 import ShortUrlRedirect from "./pages/ShortUrlRedirect"; 
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/tournament" element={<Index />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/players" element={<Players />} />
             <Route path="/tables" element={<Tables />} />
             <Route path="/setup" element={<Setup />} />

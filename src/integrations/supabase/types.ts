@@ -344,6 +344,7 @@ export type Database = {
           id: string
           is_house_percentage: boolean | null
           last_addon_level: number | null
+          last_rebuy_level: number | null
           max_addons: number | null
           max_rebuys: number | null
           name: string
@@ -373,6 +374,7 @@ export type Database = {
           id?: string
           is_house_percentage?: boolean | null
           last_addon_level?: number | null
+          last_rebuy_level?: number | null
           max_addons?: number | null
           max_rebuys?: number | null
           name: string
@@ -402,6 +404,7 @@ export type Database = {
           id?: string
           is_house_percentage?: boolean | null
           last_addon_level?: number | null
+          last_rebuy_level?: number | null
           max_addons?: number | null
           max_rebuys?: number | null
           name?: string

@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   Timer, Users, LayoutGrid, Settings, Home, 
-  ChevronRight, Menu, X 
+  ChevronRight, Menu, X, LayoutDashboard 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navItems = [
     { path: "/", label: "Home", icon: Home },
+    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/timer", label: "Timer", icon: Timer },
     { path: "/players", label: "Players", icon: Users },
     { path: "/tables", label: "Tables", icon: LayoutGrid },
