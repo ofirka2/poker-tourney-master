@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useTournament } from "@/context/TournamentContext";
 import { formatTime } from "@/lib/utils";
-import { Play, Pause, SkipForward, SkipBack, RefreshCw } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, RefreshCw, Clock, Plus, Minus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
+import { playCountdownSequence, playLevelUpSound } from "@/utils/sounds";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +16,17 @@ import {
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
 
 interface TimerProps {
   className?: string;
@@ -28,6 +41,9 @@ const Timer: React.FC<TimerProps> = ({ className, fullscreen }) => {
   const [isPaused, setIsPaused] = useState(!isRunning);
   const [isResetting, setIsResetting] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [timeAdjustmentOpen, setTimeAdjustmentOpen] = useState(false);
+  const [minutesToAdjust, setMinutesToAdjust] = useState(0);
+  const [secondsToAdjust, setSecondsToAdjust] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Calculate the total duration of all levels
@@ -56,8 +72,15 @@ const Timer: React.FC<TimerProps> = ({ className, fullscreen }) => {
     timerRef.current = setInterval(() => {
       setTimeRemaining((prevTime) => {
         if (prevTime > 0) {
+          // Play sound for the last 5 seconds
+          if (prevTime <= 5) {
+            playCountdownSequence(prevTime);
+          }
           return prevTime - 1;
         } else {
+          // Play level up sound
+          playLevelUpSound();
+          
           // Move to the next level
           if (currentLevel < levels.length - 1) {
             dispatch({ type: 'NEXT_LEVEL' });
@@ -141,6 +164,35 @@ const Timer: React.FC<TimerProps> = ({ className, fullscreen }) => {
     }
   };
   
+  // Function to manually adjust the timer
+  const adjustTime = () => {
+    const totalSecondsToAdd = (minutesToAdjust * 60) + secondsToAdjust;
+    
+    // Get current time remaining in seconds
+    let newTimeRemaining = timeRemaining + totalSecondsToAdd;
+    
+    // Make sure it doesn't go below 0
+    if (newTimeRemaining < 0) newTimeRemaining = 0;
+    
+    setTimeRemaining(newTimeRemaining);
+    toast.success(`Timer adjusted by ${minutesToAdjust}m ${secondsToAdjust}s`);
+    setTimeAdjustmentOpen(false);
+    
+    // Reset adjustment values
+    setMinutesToAdjust(0);
+    setSecondsToAdjust(0);
+  };
+  
+  // Helper function to increment/decrement time
+  const quickAdjustTime = (seconds: number) => {
+    let newTimeRemaining = timeRemaining + seconds;
+    if (newTimeRemaining < 0) newTimeRemaining = 0;
+    setTimeRemaining(newTimeRemaining);
+    
+    const sign = seconds > 0 ? '+' : '';
+    toast.success(`Timer adjusted by ${sign}${seconds}s`);
+  };
+  
   // useEffect to initialize the timer when the component mounts
   useEffect(() => {
     if (levels.length > 0) {
@@ -175,10 +227,146 @@ const Timer: React.FC<TimerProps> = ({ className, fullscreen }) => {
         </p>
       </div>
       
-      <div className="flex items-center justify-center mb-4">
-        <h3 className="text-5xl font-semibold">
-          {formatTime(timeRemaining)}
-        </h3>
+      <div className="flex items-center justify-center mb-4 relative">
+        <div className="text-center">
+          <h3 className="text-6xl md:text-7xl font-bold font-mono tracking-wider py-4 px-6 bg-gradient-to-b from-background to-background/80 shadow-inner rounded-xl border border-border/30">
+            {formatTime(timeRemaining)}
+          </h3>
+          
+          <div className="flex justify-center mt-2 space-x-1">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => quickAdjustTime(-10)}
+              className="h-8 w-8"
+            >
+              <Minus size={14} />
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => quickAdjustTime(-60)}
+              className="h-8 w-8"
+            >
+              <span className="text-xs">-1m</span>
+            </Button>
+            
+            <Drawer open={timeAdjustmentOpen} onOpenChange={setTimeAdjustmentOpen}>
+              <DrawerTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8">
+                  <Clock className="mr-2 h-4 w-4" />
+                  Adjust
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <div className="mx-auto w-full max-w-sm">
+                  <DrawerHeader>
+                    <DrawerTitle>Adjust Timer</DrawerTitle>
+                    <DrawerDescription>
+                      Manually adjust the remaining time for this level.
+                    </DrawerDescription>
+                  </DrawerHeader>
+                  <div className="p-4 pb-0">
+                    <div className="flex flex-col space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="minutes" className="text-sm font-medium mb-1 block">
+                            Minutes
+                          </label>
+                          <div className="flex">
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => setMinutesToAdjust(prev => prev - 1)}
+                              className="rounded-r-none"
+                            >
+                              <Minus size={16} />
+                            </Button>
+                            <Input
+                              id="minutes"
+                              type="number"
+                              value={minutesToAdjust}
+                              onChange={(e) => setMinutesToAdjust(parseInt(e.target.value) || 0)}
+                              className="rounded-none text-center"
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => setMinutesToAdjust(prev => prev + 1)}
+                              className="rounded-l-none"
+                            >
+                              <Plus size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                        <div>
+                          <label htmlFor="seconds" className="text-sm font-medium mb-1 block">
+                            Seconds
+                          </label>
+                          <div className="flex">
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => setSecondsToAdjust(prev => prev - 15)}
+                              className="rounded-r-none"
+                            >
+                              <Minus size={16} />
+                            </Button>
+                            <Input
+                              id="seconds"
+                              type="number"
+                              value={secondsToAdjust}
+                              onChange={(e) => setSecondsToAdjust(parseInt(e.target.value) || 0)}
+                              className="rounded-none text-center"
+                              step={15}
+                              min={-59}
+                              max={59}
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => setSecondsToAdjust(prev => prev + 15)}
+                              className="rounded-l-none"
+                            >
+                              <Plus size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground text-center">
+                        Current time: {formatTime(timeRemaining)}<br />
+                        New time: {formatTime(timeRemaining + (minutesToAdjust * 60) + secondsToAdjust)}
+                      </p>
+                    </div>
+                  </div>
+                  <DrawerFooter>
+                    <Button onClick={adjustTime}>Apply Changes</Button>
+                    <DrawerClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DrawerClose>
+                  </DrawerFooter>
+                </div>
+              </DrawerContent>
+            </Drawer>
+            
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => quickAdjustTime(60)}
+              className="h-8 w-8"
+            >
+              <span className="text-xs">+1m</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => quickAdjustTime(10)}
+              className="h-8 w-8"
+            >
+              <Plus size={14} />
+            </Button>
+          </div>
+        </div>
       </div>
       
       <div className="mb-4">
