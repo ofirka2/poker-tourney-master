@@ -86,4 +86,5 @@ export type TournamentAction =
   | { type: 'UPDATE_PLAYER'; payload: Player }
   | { type: 'RESET_TOURNAMENT' }
   | { type: 'CREATE_TOURNAMENT'; payload: any }
-  | { type: 'LOAD_TOURNAMENT'; payload: any };
+  | { type: 'LOAD_TOURNAMENT'; payload: any }
+  | { type: 'GET_DEFAULT_LEVELS' };

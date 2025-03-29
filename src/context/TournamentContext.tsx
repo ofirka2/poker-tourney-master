@@ -472,7 +472,10 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
       };
       
     case 'GET_DEFAULT_LEVELS':
-      return state;
+      return {
+        ...state,
+        // Return the current state, no changes needed
+      };
       
     default:
       return state;

@@ -10,7 +10,7 @@ import { useTournament } from "@/context/TournamentContext";
 const Setup = () => {
   const [searchParams] = useSearchParams();
   const tournamentId = searchParams.get("id");
-  const { dispatch } = useTournament();
+  const { dispatch, state } = useTournament();
 
   useEffect(() => {
     const loadTournament = async () => {
@@ -42,7 +42,7 @@ const Setup = () => {
             lastRebuyLevel: data.last_rebuy_level || 6,
             lastAddOnLevel: data.last_addon_level || 6,
             // Use blind levels from JSON or default
-            levels: blindLevels || dispatch({ type: 'GET_DEFAULT_LEVELS' }).levels,
+            levels: blindLevels || state.settings.levels,
             payoutStructure: {
               places: [
                 { position: 1, percentage: 50 },
@@ -74,7 +74,7 @@ const Setup = () => {
     };
 
     loadTournament();
-  }, [tournamentId, dispatch]);
+  }, [tournamentId, dispatch, state.settings.levels]);
 
   return (
     <Layout>
