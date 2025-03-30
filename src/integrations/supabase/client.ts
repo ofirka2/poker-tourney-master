@@ -9,16 +9,16 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Check if required configuration is available
 if (!SUPABASE_URL) {
-  console.error('ERROR: Missing VITE_SUPABASE_URL environment variable');
+  console.warn('Missing VITE_SUPABASE_URL environment variable. Supabase client will be null.');
 }
 
 if (!SUPABASE_ANON_KEY) {
-  console.error('ERROR: Missing VITE_SUPABASE_ANON_KEY environment variable');
+  console.warn('Missing VITE_SUPABASE_ANON_KEY environment variable. Supabase client will be null.');
 }
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = SUPABASE_URL 
+export const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
   ? createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null as any; // Fallback to avoid runtime crashes, but will show clear console error
+  : null as any; // Fallback to avoid runtime crashes, but will show clear console warning

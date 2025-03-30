@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useTournament } from "@/context/TournamentContext";
 import Layout from "@/components/layout/Layout";
@@ -31,6 +30,12 @@ const TournamentView = () => {
       setLoading(true);
       
       try {
+        // Check if supabase client is available
+        if (!supabase) {
+          console.warn("Supabase client not available, skipping tournament load");
+          return;
+        }
+        
         const { data, error } = await supabase
           .from('tournaments')
           .select('*')
@@ -94,7 +99,7 @@ const TournamentView = () => {
     };
 
     loadTournament();
-  }, [tournamentId, dispatch, state.settings.levels, loadedId]);
+  }, [tournamentId, loadedId]);
 
   useEffect(() => {
     if (isRunning && startTime) {

@@ -22,6 +22,12 @@ const Setup = () => {
       setLoading(true);
       
       try {
+        // Check if supabase client is available
+        if (!supabase) {
+          console.warn("Supabase client not available, skipping tournament load");
+          return;
+        }
+        
         const { data, error } = await supabase
           .from('tournaments')
           .select('*')
