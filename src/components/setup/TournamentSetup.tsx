@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Save, Plus, Trash, Clock, DollarSign, 
@@ -38,6 +39,7 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
   const [playerCount, setPlayerCount] = useState(9);
   const [durationHours, setDurationHours] = useState(4);
   const [tournamentFormat, setTournamentFormat] = useState("Rebuy");
+  const [activeTab, setActiveTab] = useState("general");
   
   useEffect(() => {
     setBuyInAmount(settings.buyInAmount);
@@ -65,6 +67,120 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
       }
     }
   }, [settings, state.name, state.chipset]);
+  
+  // Function to round to the nearest denomination
+  const roundToDenom = (value: number, denominations: number[]): number => {
+    if (!denominations.length) return value;
+    return denominations.reduce((prev, curr) => 
+      Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+    );
+  };
+  
+  // Generate blind structure based on provided logic
+  const generateBlindStructure = (
+    denominations: number[],
+    startingStack: number,
+    durationHrs: number,
+    players: number,
+    format: string,
+    rebuyLimit: number
+  ): TournamentLevel[] => {
+    const levelDuration = 20;
+    let numLevels = Math.floor(durationHrs * 60 / levelDuration);
+    // Ensure we have at least 6 levels
+    numLevels = Math.max(numLevels, 6);
+    
+    const totalChips = startingStack * players * (format === "Rebuy" ? (1 + rebuyLimit) : 1);
+    const startingBB = startingStack / (format === "Deep Stack" ? 200 : 100);
+    
+    let blinds: TournamentLevel[] = [{
+      level: 1,
+      smallBlind: roundToDenom(startingBB / 2, denominations),
+      bigBlind: roundToDenom(startingBB, denominations),
+      ante: 0,
+      duration: levelDuration,
+      isBreak: false
+    }];
+
+    const rates: any = {
+      "Freezeout": 1.5,
+      "Rebuy": [1.25, 1.5], // Rebuy period, post-rebuy
+      "Deep Stack": 1.25,
+      "Bounty": 1.5
+    };
+    
+    const rebuyEnd = format === "Rebuy" ? Math.floor(numLevels / 2) : numLevels;
+    let totalLevelsWithBreaks = numLevels;
+
+    for (let i = 1; i < numLevels; i++) {
+      // Add a break every 4 levels
+      if (i > 0 && i % 4 === 0) {
+        blinds.push({
+          level: blinds.length + 1,
+          smallBlind: 0,
+          bigBlind: 0,
+          ante: 0,
+          duration: 15,
+          isBreak: true
+        });
+        totalLevelsWithBreaks++;
+      }
+      
+      const prevBB = blinds[blinds.length - 1].isBreak ? 
+                     blinds[blinds.length - 2].bigBlind : 
+                     blinds[blinds.length - 1].bigBlind;
+                     
+      const rate = (format === "Rebuy" && i < rebuyEnd) ? 
+                   rates[format][0] : 
+                   (rates[format][1] || rates[format]);
+                   
+      const newBB = roundToDenom(prevBB * rate, denominations);
+      const ante = i > 3 ? Math.round(newBB * 0.1) : 0; // Add antes after level 3
+      
+      blinds.push({
+        level: blinds.length + 1,
+        smallBlind: roundToDenom(newBB / 2, denominations),
+        bigBlind: newBB,
+        ante: ante,
+        duration: levelDuration,
+        isBreak: false
+      });
+    }
+
+    // Adjust final level to hit target BB
+    const targetBB = totalChips / 15;
+    const finalIndex = blinds.length - 1;
+    blinds[finalIndex].bigBlind = roundToDenom(targetBB, denominations);
+    blinds[finalIndex].smallBlind = roundToDenom(blinds[finalIndex].bigBlind / 2, denominations);
+
+    // Renumber levels to ensure sequential ordering
+    return blinds.map((blind, index) => ({
+      ...blind,
+      level: index + 1
+    }));
+  };
+  
+  // Update initial stack based on chipset
+  const calculateOptimalStartingStack = (denominations: number[]): number => {
+    // Find a starting stack that works well with the chipset
+    // Base on 100 BB to start
+    const biggestChip = Math.max(...denominations);
+    let startingStack = 0;
+    
+    if (biggestChip >= 1000) {
+      // For large chips, make stack size multiple of biggest chip
+      startingStack = Math.round(biggestChip * 10 / 1000) * 1000;
+    } else if (biggestChip >= 100) {
+      // For medium chips
+      startingStack = Math.round(biggestChip * 100 / 1000) * 1000;
+    } else {
+      // For small chips
+      startingStack = 5000; // Default
+    }
+    
+    // Ensure stack is at least 5000 and divisible by 1000
+    return Math.max(startingStack, 5000);
+  };
   
   const addLevel = () => {
     const lastLevel = levels[levels.length - 1];
@@ -171,83 +287,29 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
   
   const totalPayoutPercentage = payoutPlaces.reduce((sum, place) => sum + place.percentage, 0);
   
-  const roundToDenom = (value: number, denominations: number[]) => {
-    return denominations.reduce((prev, curr) => 
-      Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
-    );
-  };
-  
-  const generateInitialBlindStructure = () => {
-    const totalChips = initialChips * playerCount * (tournamentFormat === "Rebuy" ? (1 + maxRebuys) : 1);
-    const levelDuration = 20;
-    let numLevels = Math.floor(durationHours * 60 / levelDuration);
-    const startingBB = initialChips / (tournamentFormat === "Deep Stack" ? 200 : 100);
-    
-    let blinds = [{ 
-      level: 1, 
-      smallBlind: roundToDenom(startingBB / 2, chipset),
-      bigBlind: roundToDenom(startingBB, chipset),
-      ante: 0,
-      duration: levelDuration,
-      isBreak: false
-    }];
-
-    const rates: any = { 
-      "Freezeout": 1.5, 
-      "Rebuy": [1.25, 1.5], 
-      "Deep Stack": 1.25,
-      "Bounty": 1.5
-    };
-    
-    const rebuyEnd = tournamentFormat === "Rebuy" ? Math.floor(numLevels / 2) : numLevels;
-    let totalLevelsWithBreaks = numLevels;
-
-    for (let i = 1; i < numLevels; i++) {
-      let prevBB = blinds[i - 1].bigBlind;
-      let rate = (tournamentFormat === "Rebuy" && i < rebuyEnd) 
-        ? rates[tournamentFormat][0] 
-        : (rates[tournamentFormat][1] || rates[tournamentFormat]);
-      
-      let newBB = roundToDenom(prevBB * rate, chipset);
-      let ante = i > 3 ? Math.round(newBB * 0.1) : 0; // Add antes after level 3
-      
-      if (i > 0 && i % 4 === 0) {
-        blinds.push({
-          level: i + 1,
-          smallBlind: 0,
-          bigBlind: 0,
-          ante: 0,
-          duration: 15,
-          isBreak: true
-        });
-        totalLevelsWithBreaks++;
-        i++;
-      }
-
-      if (i < numLevels) {
-        blinds.push({
-          level: i + 1,
-          smallBlind: roundToDenom(newBB / 2, chipset),
-          bigBlind: newBB,
-          ante: ante,
-          duration: levelDuration,
-          isBreak: false
-        });
-      }
-    }
-
-    const targetBB = totalChips / 15;
-    const finalIndex = blinds.length - 1;
-    blinds[finalIndex].bigBlind = roundToDenom(targetBB, chipset);
-    blinds[finalIndex].smallBlind = roundToDenom(blinds[finalIndex].bigBlind / 2, chipset);
-
-    return blinds;
-  };
-  
   const handleGenerateBlindStructure = () => {
     try {
-      const newLevels = generateInitialBlindStructure();
+      // Update initial stack first based on chipset
+      const optimalStack = calculateOptimalStartingStack(chipset);
+      setInitialChips(optimalStack);
+      setRebuyChips(optimalStack);
+      setAddOnChips(optimalStack);
+      
+      // Generate blind structure
+      const newLevels = generateBlindStructure(
+        chipset, 
+        optimalStack,
+        durationHours,
+        playerCount,
+        tournamentFormat,
+        maxRebuys
+      );
+      
       setLevels(newLevels);
+      
+      // Switch to the blinds tab to show the user the generated structure
+      setActiveTab("blinds");
+      
       toast.success("Blind structure generated successfully");
     } catch (error) {
       console.error("Error generating blind structure:", error);
@@ -388,7 +450,7 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
         </Card>
       )}
       
-      <Tabs defaultValue="general">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General Settings</TabsTrigger>
           <TabsTrigger value="blinds">Blind Structure</TabsTrigger>
