@@ -31,9 +31,10 @@ import { Input } from "@/components/ui/input";
 interface TimerProps {
   className?: string;
   fullscreen?: boolean;
+  showDurationEditor?: boolean;
 }
 
-const Timer: React.FC<TimerProps> = ({ className, fullscreen }) => {
+const Timer: React.FC<TimerProps> = ({ className, fullscreen, showDurationEditor = true }) => {
   const { state, dispatch } = useTournament();
   const { currentLevel, isRunning } = state;
   const levels = state.settings.levels;
@@ -233,29 +234,12 @@ const Timer: React.FC<TimerProps> = ({ className, fullscreen }) => {
             {formatTime(timeRemaining)}
           </h3>
           
-          <div className="flex justify-center mt-2 space-x-1">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => quickAdjustTime(-10)}
-              className="h-8 w-8"
-            >
-              <Minus size={14} />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => quickAdjustTime(-60)}
-              className="h-8 w-8"
-            >
-              <span className="text-xs">-1m</span>
-            </Button>
-            
+          <div className="flex justify-center mt-2 space-x-2">
             <Drawer open={timeAdjustmentOpen} onOpenChange={setTimeAdjustmentOpen}>
               <DrawerTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8">
                   <Clock className="mr-2 h-4 w-4" />
-                  Adjust
+                  Adjust Timer
                 </Button>
               </DrawerTrigger>
               <DrawerContent>
@@ -349,22 +333,40 @@ const Timer: React.FC<TimerProps> = ({ className, fullscreen }) => {
               </DrawerContent>
             </Drawer>
             
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => quickAdjustTime(60)}
-              className="h-8 w-8"
-            >
-              <span className="text-xs">+1m</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => quickAdjustTime(10)}
-              className="h-8 w-8"
-            >
-              <Plus size={14} />
-            </Button>
+            <div className="flex space-x-1">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => quickAdjustTime(-60)}
+                className="h-8 w-8"
+              >
+                <span className="text-xs">-1m</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => quickAdjustTime(-10)}
+                className="h-8 w-8"
+              >
+                <Minus size={14} />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => quickAdjustTime(10)}
+                className="h-8 w-8"
+              >
+                <Plus size={14} />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => quickAdjustTime(60)}
+                className="h-8 w-8"
+              >
+                <span className="text-xs">+1m</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -402,25 +404,27 @@ const Timer: React.FC<TimerProps> = ({ className, fullscreen }) => {
         </Button>
       </div>
       
-      <div className="mb-4">
-        <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
-          Level Duration (minutes)
-        </label>
-        <div className="mt-1 flex rounded-md shadow-sm">
-          <input
-            type="number"
-            name="duration"
-            id="duration"
-            className="flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full min-w-0 rounded-none rounded-l-md sm:text-sm border-gray-300"
-            placeholder="Enter duration"
-            value={levels[currentLevel]?.duration || 0}
-            onChange={(e) => updateLevelDuration(Number(e.target.value))}
-          />
-          <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
-            min
-          </span>
+      {showDurationEditor && (
+        <div className="mb-4">
+          <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
+            Level Duration (minutes)
+          </label>
+          <div className="mt-1 flex rounded-md shadow-sm">
+            <input
+              type="number"
+              name="duration"
+              id="duration"
+              className="flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full min-w-0 rounded-none rounded-l-md sm:text-sm border-gray-300"
+              placeholder="Enter duration"
+              value={levels[currentLevel]?.duration || 0}
+              onChange={(e) => updateLevelDuration(Number(e.target.value))}
+            />
+            <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+              min
+            </span>
+          </div>
         </div>
-      </div>
+      )}
       
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <DialogTrigger asChild>

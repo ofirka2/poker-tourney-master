@@ -7,7 +7,7 @@ const TimerPage = () => {
   return (
     <Layout>
       <div className="flex items-center justify-center min-h-[80vh]">
-        <Timer className="w-full max-w-xl" />
+        <Timer className="w-full max-w-xl" showDurationEditor={true} />
       </div>
     </Layout>
   );
