@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Save, Plus, Trash, Clock, DollarSign, 
@@ -9,10 +8,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTournament } from "@/context/TournamentContext";
 import { toast } from "sonner";
 import { TournamentLevel, PayoutPlace } from "@/types/types";
 import { supabase } from "@/integrations/supabase/client";
+
+// Chip set options from MultiStepTournamentForm
+const chipsetOptions = [
+  { value: '25,100,500,1000,5000', label: '25, 100, 500, 1000, 5000' },
+  { value: '25,50,100,500,1000', label: '25, 50, 100, 500, 1000' },
+  { value: '5,25,100,500,1000', label: '5, 25, 100, 500, 1000' },
+  { value: '1,2,5,10,25,50', label: '1, 2, 5, 10, 25, 50' },
+  { value: 'custom', label: 'Custom Chipset...' }
+];
+
+const formatOptions = [
+  { value: 'Freezeout', label: 'Freezeout' },
+  { value: 'Rebuy', label: 'Rebuy' },
+  { value: 'Bounty', label: 'Bounty' },
+  { value: 'Deep Stack', label: 'Deep Stack' }
+];
 
 interface TournamentSetupProps {
   tournamentId?: string | null;
@@ -35,11 +52,15 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
   const [levels, setLevels] = useState<TournamentLevel[]>(settings.levels);
   const [payoutPlaces, setPayoutPlaces] = useState<PayoutPlace[]>(settings.payoutStructure.places);
   const [tournamentName, setTournamentName] = useState(state.name || "");
-  const [chipset, setChipset] = useState<number[]>([25, 100, 500, 1000, 5000]);
+  const [chipset, setChipset] = useState(state.chipset || '25,100,500,1000,5000');
+  const [isCustomChipset, setIsCustomChipset] = useState(false);
+  const [chipsetValues, setChipsetValues] = useState<number[]>([25, 100, 500, 1000, 5000]);
   const [playerCount, setPlayerCount] = useState(9);
   const [durationHours, setDurationHours] = useState(4);
   const [tournamentFormat, setTournamentFormat] = useState("Rebuy");
   const [activeTab, setActiveTab] = useState("general");
+  const [allowRebuy, setAllowRebuy] = useState(true);
+  const [allowAddon, setAllowAddon] = useState(true);
   
   useEffect(() => {
     setBuyInAmount(settings.buyInAmount);
@@ -57,10 +78,21 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setTournamentName(state.name || "");
     
     if (state.chipset) {
+      setChipset(state.chipset);
+      // Check if the chipset matches any predefined option
+      const matchedOption = chipsetOptions.find(option => option.value === state.chipset);
+      setIsCustomChipset(!matchedOption || matchedOption.value === 'custom');
+      
       try {
         const chipValues = state.chipset.split(',').map(val => parseInt(val.trim()));
         if (chipValues.length > 0 && !chipValues.some(isNaN)) {
-          setChipset(chipValues);
+          setChipsetValues(chipValues);
+          
+          // Update initial stack based on chipset values
+          const optimalStack = calculateOptimalStartingStack(chipValues);
+          setInitialChips(optimalStack);
+          setRebuyChips(optimalStack);
+          setAddOnChips(optimalStack);
         }
       } catch (error) {
         console.error("Error parsing chipset:", error);
@@ -287,18 +319,54 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
   
   const totalPayoutPercentage = payoutPlaces.reduce((sum, place) => sum + place.percentage, 0);
   
+  const handleChipsetChange = (selectedChipsetValue: string) => {
+    setChipset(selectedChipsetValue);
+    
+    if (selectedChipsetValue === 'custom') {
+      setIsCustomChipset(true);
+    } else {
+      setIsCustomChipset(false);
+      
+      try {
+        const values = selectedChipsetValue.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+        setChipsetValues(values);
+        
+        // Update initial stack based on new chipset
+        const optimalStack = calculateOptimalStartingStack(values);
+        setInitialChips(optimalStack);
+        setRebuyChips(optimalStack);
+        setAddOnChips(optimalStack);
+      } catch (error) {
+        console.error("Error parsing chipset:", error);
+      }
+    }
+  };
+  
+  const handleCustomChipsetChange = (customChipsetValue: string) => {
+    setChipset(customChipsetValue);
+    
+    try {
+      const values = customChipsetValue.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+      if (values.length > 0) {
+        setChipsetValues(values);
+        
+        // Update initial stack based on new chipset
+        const optimalStack = calculateOptimalStartingStack(values);
+        setInitialChips(optimalStack);
+        setRebuyChips(optimalStack);
+        setAddOnChips(optimalStack);
+      }
+    } catch (error) {
+      console.error("Error parsing custom chipset:", error);
+    }
+  };
+  
   const handleGenerateBlindStructure = () => {
     try {
-      // Update initial stack first based on chipset
-      const optimalStack = calculateOptimalStartingStack(chipset);
-      setInitialChips(optimalStack);
-      setRebuyChips(optimalStack);
-      setAddOnChips(optimalStack);
-      
       // Generate blind structure
       const newLevels = generateBlindStructure(
-        chipset, 
-        optimalStack,
+        chipsetValues, 
+        initialChips,
         durationHours,
         playerCount,
         tournamentFormat,
@@ -306,10 +374,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
       );
       
       setLevels(newLevels);
-      
-      // Switch to the blinds tab to show the user the generated structure
-      setActiveTab("blinds");
-      
       toast.success("Blind structure generated successfully");
     } catch (error) {
       console.error("Error generating blind structure:", error);
@@ -352,7 +416,7 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     
     dispatch({
       type: 'UPDATE_TOURNAMENT_CHIPSET',
-      payload: chipset.join(',')
+      payload: chipset
     });
     
     if (tournamentId) {
@@ -368,7 +432,7 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
           last_rebuy_level: lastRebuyLevel,
           last_addon_level: lastAddOnLevel,
           blind_levels: JSON.stringify(levels),
-          chipset: chipset.join(',')
+          chipset: chipset
         };
         
         const { error } = await supabase
@@ -477,25 +541,47 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="rebuyAmount">Rebuy Amount ($)</Label>
-                  <Input
-                    id="rebuyAmount"
-                    type="number"
-                    value={rebuyAmount}
-                    onChange={(e) => setRebuyAmount(Number(e.target.value))}
+                <div className="flex items-center space-x-2 pt-2">
+                  <Checkbox
+                    id="allowRebuy"
+                    checked={allowRebuy}
+                    onCheckedChange={(checked) => setAllowRebuy(!!checked)}
                   />
+                  <Label htmlFor="allowRebuy">Allow Rebuys</Label>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="addOnAmount">Add-on Amount ($)</Label>
-                  <Input
-                    id="addOnAmount"
-                    type="number"
-                    value={addOnAmount}
-                    onChange={(e) => setAddOnAmount(Number(e.target.value))}
+                {allowRebuy && (
+                  <div className="space-y-2">
+                    <Label htmlFor="rebuyAmount">Rebuy Amount ($)</Label>
+                    <Input
+                      id="rebuyAmount"
+                      type="number"
+                      value={rebuyAmount}
+                      onChange={(e) => setRebuyAmount(Number(e.target.value))}
+                    />
+                  </div>
+                )}
+                
+                <div className="flex items-center space-x-2 pt-2">
+                  <Checkbox
+                    id="allowAddon"
+                    checked={allowAddon}
+                    onCheckedChange={(checked) => setAllowAddon(!!checked)}
                   />
+                  <Label htmlFor="allowAddon">Allow Add-ons</Label>
                 </div>
+                
+                {allowAddon && (
+                  <div className="space-y-2">
+                    <Label htmlFor="addOnAmount">Add-on Amount ($)</Label>
+                    <Input
+                      id="addOnAmount"
+                      type="number"
+                      value={addOnAmount}
+                      onChange={(e) => setAddOnAmount(Number(e.target.value))}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
             
@@ -508,20 +594,36 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="chipset">Chipset (comma separated values)</Label>
-                  <Input
-                    id="chipset"
-                    value={chipset.join(',')}
-                    onChange={(e) => {
-                      try {
-                        const values = e.target.value.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
-                        setChipset(values.length ? values : [25, 100, 500, 1000, 5000]);
-                      } catch (error) {
-                        console.error("Error parsing chipset:", error);
-                      }
-                    }}
-                    placeholder="25,100,500,1000,5000"
-                  />
+                  <Label htmlFor="chipset">Chipset</Label>
+                  <Select
+                    value={isCustomChipset ? 'custom' : chipset}
+                    onValueChange={handleChipsetChange}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select chipset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {chipsetOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {isCustomChipset && (
+                    <div className="mt-2">
+                      <Input
+                        id="customChipset"
+                        value={chipset}
+                        onChange={(e) => handleCustomChipsetChange(e.target.value)}
+                        placeholder="Enter comma-separated chip values (e.g., 25,100,500,1000,5000)"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Enter comma-separated chip values
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -534,82 +636,100 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="rebuyChips">Rebuy Chips</Label>
-                  <Input
-                    id="rebuyChips"
-                    type="number"
-                    value={rebuyChips}
-                    onChange={(e) => setRebuyChips(Number(e.target.value))}
-                  />
-                </div>
+                {allowRebuy && (
+                  <div className="space-y-2">
+                    <Label htmlFor="rebuyChips">Rebuy Chips</Label>
+                    <Input
+                      id="rebuyChips"
+                      type="number"
+                      value={rebuyChips}
+                      onChange={(e) => setRebuyChips(Number(e.target.value))}
+                    />
+                  </div>
+                )}
                 
-                <div className="space-y-2">
-                  <Label htmlFor="addOnChips">Add-on Chips</Label>
-                  <Input
-                    id="addOnChips"
-                    type="number"
-                    value={addOnChips}
-                    onChange={(e) => setAddOnChips(Number(e.target.value))}
-                  />
-                </div>
+                {allowAddon && (
+                  <div className="space-y-2">
+                    <Label htmlFor="addOnChips">Add-on Chips</Label>
+                    <Input
+                      id="addOnChips"
+                      type="number"
+                      value={addOnChips}
+                      onChange={(e) => setAddOnChips(Number(e.target.value))}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Clock className="mr-2 h-5 w-5" />
-                  Rebuy & Add-on Rules
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="maxRebuys">Max Rebuys Per Player</Label>
-                  <Input
-                    id="maxRebuys"
-                    type="number"
-                    value={maxRebuys}
-                    onChange={(e) => setMaxRebuys(Number(e.target.value))}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="lastRebuyLevel">Last Rebuy Level</Label>
-                  <Input
-                    id="lastRebuyLevel"
-                    type="number"
-                    min="1"
-                    max={levels.length}
-                    value={lastRebuyLevel}
-                    onChange={(e) => setLastRebuyLevel(Number(e.target.value))}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="maxAddOns">Max Add-ons Per Player</Label>
-                  <Input
-                    id="maxAddOns"
-                    type="number"
-                    value={maxAddOns}
-                    onChange={(e) => setMaxAddOns(Number(e.target.value))}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="lastAddOnLevel">Last Add-on Level</Label>
-                  <Input
-                    id="lastAddOnLevel"
-                    type="number"
-                    min="1"
-                    max={levels.length}
-                    value={lastAddOnLevel}
-                    onChange={(e) => setLastAddOnLevel(Number(e.target.value))}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            
+            {allowRebuy || allowAddon ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Clock className="mr-2 h-5 w-5" />
+                    Rebuy & Add-on Rules
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {allowRebuy && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="maxRebuys">Max Rebuys Per Player</Label>
+                        <Input
+                          id="maxRebuys"
+                          type="number"
+                          value={maxRebuys}
+                          onChange={(e) => setMaxRebuys(Number(e.target.value))}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="lastRebuyLevel">Last Rebuy Level</Label>
+                        <Input
+                          id="lastRebuyLevel"
+                          type="number"
+                          min="1"
+                          max={levels.length}
+                          value={lastRebuyLevel}
+                          onChange={(e) => setLastRebuyLevel(Number(e.target.value))}
+                        />
+                      </div>
+                    </>
+                  )}
+                  
+                  {allowAddon && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="maxAddOns">Max Add-ons Per Player</Label>
+                        <Input
+                          id="maxAddOns"
+                          type="number"
+                          value={maxAddOns}
+                          onChange={(e) => setMaxAddOns(Number(e.target.value))}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="lastAddOnLevel">Last Add-on Level</Label>
+                        <Input
+                          id="lastAddOnLevel"
+                          type="number"
+                          min="1"
+                          max={levels.length}
+                          value={lastAddOnLevel}
+                          onChange={(e) => setLastAddOnLevel(Number(e.target.value))}
+                        />
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="blinds" className="space-y-4 pt-4">
+          <div className="mb-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -618,43 +738,49 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="playerCount">Number of Players</Label>
-                  <Input
-                    id="playerCount"
-                    type="number"
-                    min="2"
-                    value={playerCount}
-                    onChange={(e) => setPlayerCount(Number(e.target.value))}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="durationHours">Tournament Duration (hours)</Label>
-                  <Input
-                    id="durationHours"
-                    type="number"
-                    min="1"
-                    max="12"
-                    step="0.5"
-                    value={durationHours}
-                    onChange={(e) => setDurationHours(Number(e.target.value))}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="tournamentFormat">Tournament Format</Label>
-                  <select
-                    id="tournamentFormat"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={tournamentFormat}
-                    onChange={(e) => setTournamentFormat(e.target.value)}
-                  >
-                    <option value="Freezeout">Freezeout</option>
-                    <option value="Rebuy">Rebuy</option>
-                    <option value="Deep Stack">Deep Stack</option>
-                    <option value="Bounty">Bounty</option>
-                  </select>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="playerCount">Number of Players</Label>
+                    <Input
+                      id="playerCount"
+                      type="number"
+                      min="2"
+                      value={playerCount}
+                      onChange={(e) => setPlayerCount(Number(e.target.value))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="durationHours">Tournament Duration (hours)</Label>
+                    <Input
+                      id="durationHours"
+                      type="number"
+                      min="1"
+                      max="12"
+                      step="0.5"
+                      value={durationHours}
+                      onChange={(e) => setDurationHours(Number(e.target.value))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="tournamentFormat">Tournament Format</Label>
+                    <Select
+                      value={tournamentFormat}
+                      onValueChange={(value) => setTournamentFormat(value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select format" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {formatOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 
                 <Button 
@@ -667,9 +793,7 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="blinds" className="space-y-4 pt-4">
+                
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={addLevel}>
               <Plus className="mr-2 h-4 w-4" />
