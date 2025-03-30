@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Save, Plus, Trash, Clock, DollarSign, 
@@ -40,7 +39,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
   const [durationHours, setDurationHours] = useState(4);
   const [tournamentFormat, setTournamentFormat] = useState("Rebuy");
   
-  // Update local state when settings change (e.g., when a tournament is loaded)
   useEffect(() => {
     setBuyInAmount(settings.buyInAmount);
     setRebuyAmount(settings.rebuyAmount);
@@ -56,7 +54,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setPayoutPlaces(settings.payoutStructure.places);
     setTournamentName(state.name || "");
     
-    // Parse chipset from string if available
     if (state.chipset) {
       try {
         const chipValues = state.chipset.split(',').map(val => parseInt(val.trim()));
@@ -69,7 +66,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     }
   }, [settings, state.name, state.chipset]);
   
-  // Function to add a new blind level
   const addLevel = () => {
     const lastLevel = levels[levels.length - 1];
     const newLevel: TournamentLevel = {
@@ -84,7 +80,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setLevels([...levels, newLevel]);
   };
   
-  // Function to add a break
   const addBreak = () => {
     const lastLevel = levels[levels.length - 1];
     const newBreak: TournamentLevel = {
@@ -99,16 +94,13 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setLevels([...levels, newBreak]);
   };
   
-  // Function to remove a level
   const removeLevel = (levelIndex: number) => {
-    // Don't allow removing the first level
     if (levelIndex === 0) {
       toast.error("Cannot remove the first level");
       return;
     }
     
     const newLevels = levels.filter((_, index) => index !== levelIndex);
-    // Renumber levels
     const renumberedLevels = newLevels.map((level, index) => ({
       ...level,
       level: index + 1
@@ -117,7 +109,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setLevels(renumberedLevels);
   };
   
-  // Update a level
   const updateLevel = (index: number, field: keyof TournamentLevel, value: number | boolean) => {
     const newLevels = [...levels];
     newLevels[index] = {
@@ -127,7 +118,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setLevels(newLevels);
   };
   
-  // Apply current level duration change immediately
   const updateCurrentLevelDuration = (duration: number) => {
     if (currentLevel >= 0 && currentLevel < levels.length) {
       const updatedLevels = [...levels];
@@ -149,7 +139,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     }
   };
   
-  // Add a payout place
   const addPayoutPlace = () => {
     const lastPosition = payoutPlaces.length > 0 
       ? payoutPlaces[payoutPlaces.length - 1].position 
@@ -163,10 +152,8 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setPayoutPlaces([...payoutPlaces, newPlace]);
   };
   
-  // Remove a payout place
   const removePayoutPlace = (position: number) => {
     const newPayoutPlaces = payoutPlaces.filter(place => place.position !== position);
-    // Renumber positions
     const renumberedPlaces = newPayoutPlaces.map((place, index) => ({
       ...place,
       position: index + 1
@@ -175,7 +162,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setPayoutPlaces(renumberedPlaces);
   };
   
-  // Update a payout place percentage
   const updatePayoutPercentage = (position: number, percentage: number) => {
     const newPayoutPlaces = payoutPlaces.map(place => 
       place.position === position ? { ...place, percentage } : place
@@ -183,10 +169,8 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setPayoutPlaces(newPayoutPlaces);
   };
   
-  // Calculate total payout percentage
   const totalPayoutPercentage = payoutPlaces.reduce((sum, place) => sum + place.percentage, 0);
   
-  // Helper functions for blind structure generation
   const roundToDenom = (value: number, denominations: number[]) => {
     return denominations.reduce((prev, curr) => 
       Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
@@ -196,7 +180,7 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
   const generateInitialBlindStructure = () => {
     const totalChips = initialChips * playerCount * (tournamentFormat === "Rebuy" ? (1 + maxRebuys) : 1);
     const levelDuration = 20;
-    const numLevels = Math.floor(durationHours * 60 / levelDuration);
+    let numLevels = Math.floor(durationHours * 60 / levelDuration);
     const startingBB = initialChips / (tournamentFormat === "Deep Stack" ? 200 : 100);
     
     let blinds = [{ 
@@ -216,6 +200,7 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     };
     
     const rebuyEnd = tournamentFormat === "Rebuy" ? Math.floor(numLevels / 2) : numLevels;
+    let totalLevelsWithBreaks = numLevels;
 
     for (let i = 1; i < numLevels; i++) {
       let prevBB = blinds[i - 1].bigBlind;
@@ -226,7 +211,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
       let newBB = roundToDenom(prevBB * rate, chipset);
       let ante = i > 3 ? Math.round(newBB * 0.1) : 0; // Add antes after level 3
       
-      // Add break every 4 levels
       if (i > 0 && i % 4 === 0) {
         blinds.push({
           level: i + 1,
@@ -236,8 +220,11 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
           duration: 15,
           isBreak: true
         });
-        numLevels++; // Extend to account for break
-      } else {
+        totalLevelsWithBreaks++;
+        i++;
+      }
+
+      if (i < numLevels) {
         blinds.push({
           level: i + 1,
           smallBlind: roundToDenom(newBB / 2, chipset),
@@ -249,7 +236,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
       }
     }
 
-    // Adjust final level
     const targetBB = totalChips / 15;
     const finalIndex = blinds.length - 1;
     blinds[finalIndex].bigBlind = roundToDenom(targetBB, chipset);
@@ -258,7 +244,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     return blinds;
   };
   
-  // Generate blind structure based on parameters
   const handleGenerateBlindStructure = () => {
     try {
       const newLevels = generateInitialBlindStructure();
@@ -270,9 +255,7 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     }
   };
   
-  // Save tournament settings
   const saveSettings = async () => {
-    // Validate payout percentages
     if (Math.abs(totalPayoutPercentage - 100) > 0.01) {
       toast.error("Payout percentages must sum to 100%");
       return;
@@ -295,28 +278,23 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
       }
     };
     
-    // Update local state first
     dispatch({ 
       type: 'UPDATE_SETTINGS', 
       payload: updatedSettings 
     });
     
-    // Update tournament name
     dispatch({
       type: 'UPDATE_TOURNAMENT_NAME',
       payload: tournamentName
     });
     
-    // Update chipset
     dispatch({
       type: 'UPDATE_TOURNAMENT_CHIPSET',
       payload: chipset.join(',')
     });
     
-    // If we have a tournament ID, save to Supabase as well
     if (tournamentId) {
       try {
-        // Prepare data for Supabase
         const tournamentData = {
           name: tournamentName,
           buy_in: buyInAmount,
@@ -362,7 +340,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
         </Button>
       </div>
       
-      {/* Tournament Name Input */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg">Tournament Name</CardTitle>
@@ -380,7 +357,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
         </CardContent>
       </Card>
       
-      {/* Current Level Duration Adjustment */}
       {state.isRunning && (
         <Card className="border-primary/50">
           <CardHeader className="pb-2">
@@ -419,7 +395,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
           <TabsTrigger value="payouts">Payout Structure</TabsTrigger>
         </TabsList>
         
-        {/* General Settings Tab */}
         <TabsContent value="general" className="space-y-4 pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
@@ -632,7 +607,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
           </div>
         </TabsContent>
         
-        {/* Blind Structure Tab */}
         <TabsContent value="blinds" className="space-y-4 pt-4">
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={addLevel}>
@@ -736,7 +710,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
           </div>
         </TabsContent>
         
-        {/* Payout Structure Tab */}
         <TabsContent value="payouts" className="space-y-4 pt-4">
           <div className="flex justify-between items-center">
             <div className="text-sm">

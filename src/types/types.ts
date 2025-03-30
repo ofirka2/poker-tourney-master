@@ -1,4 +1,3 @@
-
 // Add types for the tournament state
 export interface TournamentState {
   isRunning: boolean;
@@ -95,6 +94,10 @@ export interface PayoutPlace {
   percentage: number;
 }
 
+export interface PayoutStructure {
+  places: PayoutPlace[];
+}
+
 export interface TournamentSettings {
   buyInAmount: number;
   rebuyAmount: number;
@@ -107,7 +110,5 @@ export interface TournamentSettings {
   lastRebuyLevel: number;
   lastAddOnLevel: number;
   levels: TournamentLevel[];
-  payoutStructure: {
-    places: PayoutPlace[];
-  };
+  payoutStructure: PayoutStructure;
 }
