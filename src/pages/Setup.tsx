@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,10 +11,15 @@ const Setup = () => {
   const [searchParams] = useSearchParams();
   const tournamentId = searchParams.get("id");
   const { dispatch, state } = useTournament();
+  const [loading, setLoading] = useState(false);
+  const [loadedId, setLoadedId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTournament = async () => {
-      if (!tournamentId) return;
+      // If we already loaded this tournament or there's no ID, don't reload
+      if (!tournamentId || tournamentId === loadedId) return;
+      
+      setLoading(true);
       
       try {
         const { data, error } = await supabase
@@ -59,22 +64,28 @@ const Setup = () => {
               name: data.name,
               startDate: data.start_date,
               settings,
+              chipset: data.chipset,
               players: [], // We'd load players separately if needed
               isRunning: false,
               currentLevel: 0
             }
           });
           
+          // Store the loaded tournament ID to prevent re-fetching
+          setLoadedId(tournamentId);
+          
           toast.success(`Loaded tournament: ${data.name}`);
         }
       } catch (error) {
         console.error('Error loading tournament:', error);
         toast.error('Failed to load tournament data');
+      } finally {
+        setLoading(false);
       }
     };
 
     loadTournament();
-  }, [tournamentId, dispatch, state.settings.levels]);
+  }, [tournamentId, dispatch, state.settings.levels, loadedId]);
 
   return (
     <Layout>

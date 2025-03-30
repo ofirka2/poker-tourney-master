@@ -218,7 +218,7 @@ const TimerDisplay: React.FC<TimerDisplayProps> = ({
         
         <Button
           variant="ghost"
-          size={fullscreen ? "icon" : "icon"}
+          size="icon"
           onClick={toggleSound}
           className="rounded-full"
         >

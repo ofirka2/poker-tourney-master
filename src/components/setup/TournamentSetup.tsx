@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Save, Plus, Trash, Clock, DollarSign, 
-  Banknote, Percent, ArrowRight 
+  Banknote, Percent, ArrowRight, Wand2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,10 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
   const [levels, setLevels] = useState<TournamentLevel[]>(settings.levels);
   const [payoutPlaces, setPayoutPlaces] = useState<PayoutPlace[]>(settings.payoutStructure.places);
   const [tournamentName, setTournamentName] = useState(state.name || "");
+  const [chipset, setChipset] = useState<number[]>([25, 100, 500, 1000, 5000]);
+  const [playerCount, setPlayerCount] = useState(9);
+  const [durationHours, setDurationHours] = useState(4);
+  const [tournamentFormat, setTournamentFormat] = useState("Rebuy");
   
   // Update local state when settings change (e.g., when a tournament is loaded)
   useEffect(() => {
@@ -51,7 +55,19 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     setLevels(settings.levels);
     setPayoutPlaces(settings.payoutStructure.places);
     setTournamentName(state.name || "");
-  }, [settings, state.name]);
+    
+    // Parse chipset from string if available
+    if (state.chipset) {
+      try {
+        const chipValues = state.chipset.split(',').map(val => parseInt(val.trim()));
+        if (chipValues.length > 0 && !chipValues.some(isNaN)) {
+          setChipset(chipValues);
+        }
+      } catch (error) {
+        console.error("Error parsing chipset:", error);
+      }
+    }
+  }, [settings, state.name, state.chipset]);
   
   // Function to add a new blind level
   const addLevel = () => {
@@ -170,6 +186,90 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
   // Calculate total payout percentage
   const totalPayoutPercentage = payoutPlaces.reduce((sum, place) => sum + place.percentage, 0);
   
+  // Helper functions for blind structure generation
+  const roundToDenom = (value: number, denominations: number[]) => {
+    return denominations.reduce((prev, curr) => 
+      Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+    );
+  };
+  
+  const generateInitialBlindStructure = () => {
+    const totalChips = initialChips * playerCount * (tournamentFormat === "Rebuy" ? (1 + maxRebuys) : 1);
+    const levelDuration = 20;
+    const numLevels = Math.floor(durationHours * 60 / levelDuration);
+    const startingBB = initialChips / (tournamentFormat === "Deep Stack" ? 200 : 100);
+    
+    let blinds = [{ 
+      level: 1, 
+      smallBlind: roundToDenom(startingBB / 2, chipset),
+      bigBlind: roundToDenom(startingBB, chipset),
+      ante: 0,
+      duration: levelDuration,
+      isBreak: false
+    }];
+
+    const rates: any = { 
+      "Freezeout": 1.5, 
+      "Rebuy": [1.25, 1.5], 
+      "Deep Stack": 1.25,
+      "Bounty": 1.5
+    };
+    
+    const rebuyEnd = tournamentFormat === "Rebuy" ? Math.floor(numLevels / 2) : numLevels;
+
+    for (let i = 1; i < numLevels; i++) {
+      let prevBB = blinds[i - 1].bigBlind;
+      let rate = (tournamentFormat === "Rebuy" && i < rebuyEnd) 
+        ? rates[tournamentFormat][0] 
+        : (rates[tournamentFormat][1] || rates[tournamentFormat]);
+      
+      let newBB = roundToDenom(prevBB * rate, chipset);
+      let ante = i > 3 ? Math.round(newBB * 0.1) : 0; // Add antes after level 3
+      
+      // Add break every 4 levels
+      if (i > 0 && i % 4 === 0) {
+        blinds.push({
+          level: i + 1,
+          smallBlind: 0,
+          bigBlind: 0,
+          ante: 0,
+          duration: 15,
+          isBreak: true
+        });
+        numLevels++; // Extend to account for break
+      } else {
+        blinds.push({
+          level: i + 1,
+          smallBlind: roundToDenom(newBB / 2, chipset),
+          bigBlind: newBB,
+          ante: ante,
+          duration: levelDuration,
+          isBreak: false
+        });
+      }
+    }
+
+    // Adjust final level
+    const targetBB = totalChips / 15;
+    const finalIndex = blinds.length - 1;
+    blinds[finalIndex].bigBlind = roundToDenom(targetBB, chipset);
+    blinds[finalIndex].smallBlind = roundToDenom(blinds[finalIndex].bigBlind / 2, chipset);
+
+    return blinds;
+  };
+  
+  // Generate blind structure based on parameters
+  const handleGenerateBlindStructure = () => {
+    try {
+      const newLevels = generateInitialBlindStructure();
+      setLevels(newLevels);
+      toast.success("Blind structure generated successfully");
+    } catch (error) {
+      console.error("Error generating blind structure:", error);
+      toast.error("Failed to generate blind structure");
+    }
+  };
+  
   // Save tournament settings
   const saveSettings = async () => {
     // Validate payout percentages
@@ -196,7 +296,22 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     };
     
     // Update local state first
-    dispatch({ type: 'UPDATE_SETTINGS', payload: updatedSettings });
+    dispatch({ 
+      type: 'UPDATE_SETTINGS', 
+      payload: updatedSettings 
+    });
+    
+    // Update tournament name
+    dispatch({
+      type: 'UPDATE_TOURNAMENT_NAME',
+      payload: tournamentName
+    });
+    
+    // Update chipset
+    dispatch({
+      type: 'UPDATE_TOURNAMENT_CHIPSET',
+      payload: chipset.join(',')
+    });
     
     // If we have a tournament ID, save to Supabase as well
     if (tournamentId) {
@@ -212,7 +327,8 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
           max_addons: maxAddOns,
           last_rebuy_level: lastRebuyLevel,
           last_addon_level: lastAddOnLevel,
-          blind_levels: JSON.stringify(levels)
+          blind_levels: JSON.stringify(levels),
+          chipset: chipset.join(',')
         };
         
         const { error } = await supabase
@@ -355,6 +471,23 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="chipset">Chipset (comma separated values)</Label>
+                  <Input
+                    id="chipset"
+                    value={chipset.join(',')}
+                    onChange={(e) => {
+                      try {
+                        const values = e.target.value.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+                        setChipset(values.length ? values : [25, 100, 500, 1000, 5000]);
+                      } catch (error) {
+                        console.error("Error parsing chipset:", error);
+                      }
+                    }}
+                    placeholder="25,100,500,1000,5000"
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="initialChips">Initial Chips</Label>
                   <Input
                     id="initialChips"
@@ -437,6 +570,63 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
                     onChange={(e) => setLastAddOnLevel(Number(e.target.value))}
                   />
                 </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Wand2 className="mr-2 h-5 w-5" />
+                  Blind Structure Generator
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="playerCount">Number of Players</Label>
+                  <Input
+                    id="playerCount"
+                    type="number"
+                    min="2"
+                    value={playerCount}
+                    onChange={(e) => setPlayerCount(Number(e.target.value))}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="durationHours">Tournament Duration (hours)</Label>
+                  <Input
+                    id="durationHours"
+                    type="number"
+                    min="1"
+                    max="12"
+                    step="0.5"
+                    value={durationHours}
+                    onChange={(e) => setDurationHours(Number(e.target.value))}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tournamentFormat">Tournament Format</Label>
+                  <select
+                    id="tournamentFormat"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={tournamentFormat}
+                    onChange={(e) => setTournamentFormat(e.target.value)}
+                  >
+                    <option value="Freezeout">Freezeout</option>
+                    <option value="Rebuy">Rebuy</option>
+                    <option value="Deep Stack">Deep Stack</option>
+                    <option value="Bounty">Bounty</option>
+                  </select>
+                </div>
+                
+                <Button 
+                  onClick={handleGenerateBlindStructure}
+                  className="w-full mt-2"
+                >
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Generate Blind Structure
+                </Button>
               </CardContent>
             </Card>
           </div>

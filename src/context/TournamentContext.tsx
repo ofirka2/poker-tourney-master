@@ -48,7 +48,9 @@ const initialState: TournamentState = {
   tables: [],
   settings: defaultSettings,
   totalPrizePool: 0,
-  eliminationCounter: 0
+  eliminationCounter: 0,
+  name: "New Tournament",
+  chipset: "25,100,500,1000,5000"
 };
 
 function calculatePrizePool(players: Player[], settings: TournamentSettings): number {
@@ -446,8 +448,22 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
       };
     }
     
+    case 'UPDATE_TOURNAMENT_NAME': {
+      return {
+        ...state,
+        name: action.payload
+      };
+    }
+    
+    case 'UPDATE_TOURNAMENT_CHIPSET': {
+      return {
+        ...state,
+        chipset: action.payload
+      };
+    }
+    
     case 'LOAD_TOURNAMENT': {
-      const { name, startDate, settings, players, isRunning, currentLevel } = action.payload;
+      const { name, startDate, settings, players, isRunning, currentLevel, chipset } = action.payload;
       const loadedSettings = settings || state.settings;
       
       return {
@@ -461,20 +477,21 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
         players: players || [],
         tables: [],
         totalPrizePool: calculatePrizePool(players || [], loadedSettings),
-        eliminationCounter: players?.filter(p => p.eliminated)?.length || 0
+        eliminationCounter: players?.filter(p => p.eliminated)?.length || 0,
+        chipset: chipset || state.chipset
       };
     }
     
     case 'RESET_TOURNAMENT':
       return {
         ...initialState,
-        settings: state.settings // Preserve settings
+        settings: state.settings,
+        name: state.name
       };
       
     case 'GET_DEFAULT_LEVELS':
       return {
         ...state,
-        // Return the current state, no changes needed
       };
       
     default:
@@ -507,37 +524,8 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [state.isRunning, state.timeRemaining, state.currentLevel]);
   
-  useEffect(() => {
-    if (state.tables.length > 1) {
-      const balancedTables = balanceTables(state.tables);
-      
-      const tablesChanged = JSON.stringify(balancedTables) !== JSON.stringify(state.tables);
-      
-      if (tablesChanged) {
-        const updatedPlayers = state.players.map(player => {
-          for (const table of balancedTables) {
-            const tablePlayer = table.players.find(p => p.id === player.id);
-            if (tablePlayer) {
-              return {
-                ...player,
-                tableNumber: tablePlayer.tableNumber,
-                seatNumber: tablePlayer.seatNumber
-              };
-            }
-          }
-          return player;
-        });
-        
-        // We're not dispatching here to avoid infinite loop
-        // Just directly update the state (though this isn't ideal)
-      }
-    }
-  }, [state.players.filter(p => p.eliminated).length]);
-  
-  const value = { state, dispatch };
-  
   return (
-    <TournamentContext.Provider value={value}>
+    <TournamentContext.Provider value={{ state, dispatch }}>
       {children}
     </TournamentContext.Provider>
   );
