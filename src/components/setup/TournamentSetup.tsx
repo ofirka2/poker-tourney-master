@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { 
   Save, Plus, Trash, Clock, DollarSign, 
@@ -231,7 +232,7 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     }
     
     const targetBB = Math.round(totalChips / 15);
-    const finalIndex = blinds.filter(b => !b.isBreak).length - 1;
+    // Fix: removed the duplicate finalIndex declaration
     const finalIndex = blinds.length - 1;
     
     let lastPlayingLevelIndex = finalIndex;
