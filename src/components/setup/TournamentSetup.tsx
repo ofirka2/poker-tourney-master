@@ -99,9 +99,59 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
   
   const roundToDenom = (value: number, denominations: number[]): number => {
     if (!denominations.length) return value;
-    return denominations.reduce((prev, curr) => 
+    
+    const closest = denominations.reduce((prev, curr) => 
       Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
     );
+    
+    if (closest === value || value < denominations[0] / 2) {
+      return closest;
+    }
+    
+    const sortedDenoms = [...denominations].sort((a, b) => a - b);
+    
+    let lowerIndex = -1;
+    for (let i = 0; i < sortedDenoms.length; i++) {
+      if (sortedDenoms[i] <= value) {
+        lowerIndex = i;
+      } else {
+        break;
+      }
+    }
+    
+    if (lowerIndex === sortedDenoms.length - 1) {
+      const highestDenom = sortedDenoms[lowerIndex];
+      const multiple = Math.round(value / highestDenom);
+      return multiple * highestDenom;
+    }
+    
+    if (lowerIndex >= 0) {
+      const lower = sortedDenoms[lowerIndex];
+      const upper = sortedDenoms[lowerIndex + 1];
+      
+      if (value % lower === 0 && value / lower <= 5) {
+        return value;
+      }
+      
+      return closest;
+    }
+    
+    return closest;
+  };
+  
+  const calculateOptimalStartingStack = (denominations: number[]): number => {
+    const biggestChip = Math.max(...denominations);
+    let startingStack = 0;
+    
+    if (biggestChip >= 1000) {
+      startingStack = Math.round(biggestChip * 10 / 1000) * 1000;
+    } else if (biggestChip >= 100) {
+      startingStack = Math.round(biggestChip * 100 / 1000) * 1000;
+    } else {
+      startingStack = 5000;
+    }
+    
+    return Math.max(startingStack, 5000);
   };
   
   const generateInitialBlindStructure = (
@@ -111,23 +161,32 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     players: number,
     format: string,
     rebuyLimit: number
-  ) => {
+  ): TournamentLevel[] => {
+    if (!denominations.length || startingStack <= 0 || durationHours <= 0 || players <= 0) {
+      toast.error("Invalid input parameters for blind structure generation");
+      return [];
+    }
+    
+    const sortedDenoms = [...denominations].sort((a, b) => a - b);
+    
     const totalChips = startingStack * players * (format === "Rebuy" ? (1 + rebuyLimit) : 1);
+    
     const levelDuration = 20;
     let numLevels = Math.floor(durationHours * 60 / levelDuration);
     numLevels = Math.max(numLevels, 6);
     
     const startingBB = startingStack / (format === "Deep Stack" ? 200 : 100);
-    let blinds = [{
+    
+    let blinds: TournamentLevel[] = [{
       level: 1,
-      smallBlind: roundToDenom(startingBB / 2, denominations),
-      bigBlind: roundToDenom(startingBB, denominations),
+      smallBlind: roundToDenom(startingBB / 2, sortedDenoms),
+      bigBlind: roundToDenom(startingBB, sortedDenoms),
       ante: 0,
       duration: levelDuration,
       isBreak: false
     }];
-
-    const rates: any = {
+    
+    const rates: Record<string, number | number[]> = {
       "Freezeout": 1.5,
       "Rebuy": [1.25, 1.5],
       "Deep Stack": 1.25,
@@ -135,12 +194,12 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     };
     
     const rebuyEnd = format === "Rebuy" ? Math.floor(numLevels / 2) : numLevels;
-    let totalLevelsWithBreaks = numLevels;
-
+    let totalLevelsWithBreaks = 1;
+    
     for (let i = 1; i < numLevels; i++) {
       if (i > 0 && i % 4 === 0) {
         blinds.push({
-          level: blinds.length + 1,
+          level: totalLevelsWithBreaks + 1,
           smallBlind: 0,
           bigBlind: 0,
           ante: 0,
@@ -158,24 +217,33 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
                    rates[format][0] : 
                    (rates[format][1] || rates[format]);
                    
-      const newBB = roundToDenom(prevBB * rate, denominations);
+      const newBB = roundToDenom(prevBB * rate, sortedDenoms);
       const ante = i > 3 ? Math.round(newBB * 0.1) : 0;
       
       blinds.push({
-        level: blinds.length + 1,
-        smallBlind: roundToDenom(newBB / 2, denominations),
+        level: totalLevelsWithBreaks + 1,
+        smallBlind: roundToDenom(newBB / 2, sortedDenoms),
         bigBlind: newBB,
         ante: ante,
         duration: levelDuration,
         isBreak: false
       });
     }
-
-    const targetBB = totalChips / 15;
+    
+    const targetBB = Math.round(totalChips / 15);
+    const finalIndex = blinds.filter(b => !b.isBreak).length - 1;
     const finalIndex = blinds.length - 1;
-    blinds[finalIndex].bigBlind = roundToDenom(targetBB, denominations);
-    blinds[finalIndex].smallBlind = roundToDenom(blinds[finalIndex].bigBlind / 2, denominations);
-
+    
+    let lastPlayingLevelIndex = finalIndex;
+    while (lastPlayingLevelIndex >= 0 && blinds[lastPlayingLevelIndex].isBreak) {
+      lastPlayingLevelIndex--;
+    }
+    
+    if (lastPlayingLevelIndex >= 0) {
+      blinds[lastPlayingLevelIndex].bigBlind = roundToDenom(targetBB, sortedDenoms);
+      blinds[lastPlayingLevelIndex].smallBlind = roundToDenom(blinds[lastPlayingLevelIndex].bigBlind / 2, sortedDenoms);
+    }
+    
     return blinds.map((blind, index) => ({
       ...blind,
       level: index + 1
@@ -188,13 +256,16 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     newLevelDuration: number,
     denominations: number[],
     totalChips: number
-  ) => {
+  ): TournamentLevel[] => {
     const playingLevels = existingBlinds.filter(level => !level.isBreak);
     if (playingLevels.length < 2) return existingBlinds;
     
+    const sortedDenoms = [...denominations].sort((a, b) => a - b);
+    
     const numLevels = Math.floor(durationHours * 60 / newLevelDuration);
+    
     const startingBB = playingLevels[0].bigBlind;
-    const targetBB = totalChips / 15;
+    const targetBB = Math.round(totalChips / 15);
     const rate = Math.pow(targetBB / startingBB, 1 / (numLevels - 1));
     
     let updatedBlinds: TournamentLevel[] = [{
@@ -224,12 +295,12 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
                      updatedBlinds[updatedBlinds.length - 2].bigBlind : 
                      updatedBlinds[updatedBlinds.length - 1].bigBlind;
                    
-      const newBB = roundToDenom(prevBB * rate, denominations);
+      const newBB = roundToDenom(prevBB * rate, sortedDenoms);
       const ante = i > 3 ? Math.round(newBB * 0.1) : 0;
       
       updatedBlinds.push({
         level: ++levelCount,
-        smallBlind: roundToDenom(newBB / 2, denominations),
+        smallBlind: roundToDenom(newBB / 2, sortedDenoms),
         bigBlind: newBB,
         ante: ante,
         duration: newLevelDuration,
@@ -238,28 +309,22 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     }
     
     const finalIndex = updatedBlinds.length - 1;
-    updatedBlinds[finalIndex].bigBlind = roundToDenom(targetBB, denominations);
-    updatedBlinds[finalIndex].smallBlind = roundToDenom(updatedBlinds[finalIndex].bigBlind / 2, denominations);
+    
+    let lastPlayingLevelIndex = finalIndex;
+    while (lastPlayingLevelIndex >= 0 && updatedBlinds[lastPlayingLevelIndex].isBreak) {
+      lastPlayingLevelIndex--;
+    }
+    
+    if (lastPlayingLevelIndex >= 0) {
+      updatedBlinds[lastPlayingLevelIndex].bigBlind = roundToDenom(targetBB, sortedDenoms);
+      updatedBlinds[lastPlayingLevelIndex].smallBlind = 
+        roundToDenom(updatedBlinds[lastPlayingLevelIndex].bigBlind / 2, sortedDenoms);
+    }
     
     return updatedBlinds.map((blind, index) => ({
       ...blind,
       level: index + 1
     }));
-  };
-  
-  const calculateOptimalStartingStack = (denominations: number[]): number => {
-    const biggestChip = Math.max(...denominations);
-    let startingStack = 0;
-    
-    if (biggestChip >= 1000) {
-      startingStack = Math.round(biggestChip * 10 / 1000) * 1000;
-    } else if (biggestChip >= 100) {
-      startingStack = Math.round(biggestChip * 100 / 1000) * 1000;
-    } else {
-      startingStack = 5000;
-    }
-    
-    return Math.max(startingStack, 5000);
   };
   
   const handleGenerateBlindStructure = () => {
