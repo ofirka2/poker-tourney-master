@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { 
   Save, Plus, Trash, Clock, DollarSign, 
@@ -837,6 +836,70 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
               </CardContent>
             </Card>
             
+            {/* Moved Blind Structure Generator Card here */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Wand2 className="mr-2 h-5 w-5" />
+                  Blind Structure Generator
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="playerCount">Number of Players</Label>
+                    <Input
+                      id="playerCount"
+                      type="number"
+                      min="2"
+                      value={playerCount}
+                      onChange={(e) => setPlayerCount(Number(e.target.value))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="durationHours">Tournament Duration (hours)</Label>
+                    <Input
+                      id="durationHours"
+                      type="number"
+                      min="1"
+                      max="12"
+                      step="0.5"
+                      value={durationHours}
+                      onChange={(e) => setDurationHours(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tournamentFormat">Tournament Format</Label>
+                  <Select
+                    value={tournamentFormat}
+                    onValueChange={(value) => setTournamentFormat(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formatOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Button 
+                  onClick={handleGenerateBlindStructure}
+                  className="w-full mt-2"
+                >
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Generate Blind Structure
+                </Button>
+              </CardContent>
+            </Card>
+            
             {allowRebuy || allowAddon ? (
               <Card>
                 <CardHeader>
@@ -904,69 +967,19 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
         </TabsContent>
         
         <TabsContent value="blinds" className="space-y-4 pt-4">
-          <div className="mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Wand2 className="mr-2 h-5 w-5" />
-                  Blind Structure Generator
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="playerCount">Number of Players</Label>
-                    <Input
-                      id="playerCount"
-                      type="number"
-                      min="2"
-                      value={playerCount}
-                      onChange={(e) => setPlayerCount(Number(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="durationHours">Tournament Duration (hours)</Label>
-                    <Input
-                      id="durationHours"
-                      type="number"
-                      min="1"
-                      max="12"
-                      step="0.5"
-                      value={durationHours}
-                      onChange={(e) => setDurationHours(Number(e.target.value))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="tournamentFormat">Tournament Format</Label>
-                    <Select
-                      value={tournamentFormat}
-                      onValueChange={(value) => setTournamentFormat(value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select format" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formatOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={handleGenerateBlindStructure}
-                  className="w-full mt-2"
-                >
-                  <Wand2 className="mr-2 h-4 w-4" />
-                  Generate Blind Structure
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="text-lg font-medium">Blind Structure</h3>
+              <p className="text-sm text-muted-foreground">Configure the tournament blind levels</p>
+            </div>
+            
+            <Button 
+              onClick={handleGenerateBlindStructure}
+              variant="outline"
+            >
+              <Wand2 className="mr-2 h-4 w-4" />
+              Generate Blind Structure
+            </Button>
           </div>
                 
           <div className="flex justify-end space-x-2">
