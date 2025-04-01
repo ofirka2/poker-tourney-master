@@ -97,48 +97,19 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     }
   }, [settings, state.name, state.chipset]);
   
-  const roundToDenom = (value: number, denominations: number[]): number => {
-    if (!denominations.length) return value;
+  const roundToDenom = (value: number, denomArray: number[], prevValue: number = 0): number => {
+    if (!denomArray.length) return value;
     
-    const sortedDenoms = [...denominations].sort((a, b) => a - b);
+    const closest = denomArray.reduce((prev, curr) => 
+      Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+    );
     
-    // Find the closest denomination that's equal to or greater than the value
-    let closestHigherDenom = null;
-    for (const denom of sortedDenoms) {
-      if (denom >= value) {
-        closestHigherDenom = denom;
-        break;
-      }
+    if (closest <= prevValue && prevValue !== 0) {
+      const nextDenom = denomArray.find(d => d > prevValue);
+      return nextDenom || closest;
     }
     
-    // If we couldn't find a higher denomination, use the highest one
-    if (closestHigherDenom === null) {
-      closestHigherDenom = sortedDenoms[sortedDenoms.length - 1];
-      
-      // For large values, use multiples of the highest denomination
-      if (value > closestHigherDenom) {
-        const multiple = Math.ceil(value / closestHigherDenom);
-        return multiple * closestHigherDenom;
-      }
-    }
-    
-    // Find the closest denomination that's less than the value
-    let closestLowerDenom = null;
-    for (let i = sortedDenoms.length - 1; i >= 0; i--) {
-      if (sortedDenoms[i] < value) {
-        closestLowerDenom = sortedDenoms[i];
-        break;
-      }
-    }
-    
-    // If we have both higher and lower, pick the closer one
-    if (closestLowerDenom !== null) {
-      if (value - closestLowerDenom < closestHigherDenom - value) {
-        return closestLowerDenom;
-      }
-    }
-    
-    return closestHigherDenom;
+    return closest;
   };
   
   const calculateOptimalStartingStack = (denominations: number[]): number => {
@@ -169,63 +140,56 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
       return [];
     }
     
-    const sortedDenoms = [...denominations].sort((a, b) => a - b);
+    const denomArray = [...denominations].sort((a, b) => a - b);
     
-    // Calculate total chips in play at the end of the tournament
     const totalChips = startingStack * players * (format === "Rebuy" ? (1 + rebuyLimit) : 1);
     
-    // Set level duration and calculate number of levels
-    const levelDuration = 20; // minutes per level
-    let numLevels = Math.floor(durationHours * 60 / levelDuration);
-    numLevels = Math.max(numLevels, 6); // Ensure at least 6 levels
+    const levelDuration = 20;
+    const numLevels = Math.floor(durationHours * 60 / levelDuration);
     
-    // Calculate starting blinds based on format
-    // Deep Stack starts with smaller blinds relative to stack size
     const startingBB = startingStack / (format === "Deep Stack" ? 200 : 100);
+    const targetBB = totalChips / 15;
+    const baseRate = numLevels > 1 ? Math.pow(targetBB / startingBB, 1 / (numLevels - 1)) : 1;
     
-    // Create first level
     let blinds: TournamentLevel[] = [{
       level: 1,
-      smallBlind: roundToDenom(startingBB / 2, sortedDenoms),
-      bigBlind: roundToDenom(startingBB, sortedDenoms),
+      smallBlind: roundToDenom(startingBB / 2, denomArray),
+      bigBlind: roundToDenom(startingBB, denomArray),
       ante: 0,
       duration: levelDuration,
       isBreak: false
     }];
     
-    // Set increase rates based on tournament format
     const rates: Record<string, number | [number, number]> = {
       "Freezeout": 1.5,
-      "Rebuy": [1.25, 1.5], // [during rebuy period, after rebuy period]
+      "Rebuy": [1.25, baseRate],
       "Deep Stack": 1.25,
       "Bounty": 1.5
     };
     
-    // For Rebuy tournaments, rebuy period is first half of levels
     const rebuyEnd = format === "Rebuy" ? Math.floor(numLevels / 2) : numLevels;
-    let totalLevelsWithBreaks = 1;
+    let levelCount = 1;
     
-    // Generate all levels with appropriate blind increases
     for (let i = 1; i < numLevels; i++) {
-      // Add breaks every 4 levels
       if (i > 0 && i % 4 === 0) {
         blinds.push({
-          level: totalLevelsWithBreaks + 1,
+          level: ++levelCount,
           smallBlind: 0,
           bigBlind: 0,
           ante: 0,
           duration: 15,
           isBreak: true
         });
-        totalLevelsWithBreaks++;
       }
       
-      // Get previous big blind, skipping breaks
-      const prevLevel = blinds[blinds.length - 1].isBreak ? 
-                     blinds[blinds.length - 2] : 
-                     blinds[blinds.length - 1];
+      const prevBB = blinds[blinds.length - 1].isBreak ? 
+                 blinds[blinds.length - 2].bigBlind : 
+                 blinds[blinds.length - 1].bigBlind;
+                 
+      const prevSB = blinds[blinds.length - 1].isBreak ? 
+                 blinds[blinds.length - 2].smallBlind : 
+                 blinds[blinds.length - 1].smallBlind;
       
-      // Apply appropriate increase rate
       let rate: number;
       if (format === "Rebuy") {
         const rateArray = rates[format] as [number, number];
@@ -234,46 +198,36 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
         rate = rates[format] as number;
       }
       
-      // Calculate new blinds and ante
-      const newBB = Math.round(prevLevel.bigBlind * rate);
-      // Round to a denomination, but ensure it actually increases
-      const roundedBB = roundToDenom(newBB, sortedDenoms);
-      const finalBB = roundedBB <= prevLevel.bigBlind ? 
-                     roundToDenom(prevLevel.bigBlind * 1.5, sortedDenoms) : 
-                     roundedBB;
+      const newBB = prevBB * rate;
+      const roundedBB = roundToDenom(newBB, denomArray, prevBB);
       
-      // Calculate ante (typically 10-20% of big blind, starting after a few levels)
-      const ante = i > 3 ? Math.round(finalBB * 0.1) : 0;
+      const newSB = roundToDenom(roundedBB / 2, denomArray, prevSB);
+      const ante = i > 3 ? Math.round(roundedBB * 0.1) : 0;
       
       blinds.push({
-        level: totalLevelsWithBreaks + 1,
-        smallBlind: Math.round(finalBB / 2),
-        bigBlind: finalBB,
+        level: ++levelCount,
+        smallBlind: newSB,
+        bigBlind: roundedBB,
         ante: ante,
         duration: levelDuration,
         isBreak: false
       });
-      
-      totalLevelsWithBreaks++;
     }
     
-    // Adjust final level to target average stack of about 15 big blinds
-    const targetBB = Math.round(totalChips / 15);
     const finalIndex = blinds.length - 1;
-    
     let lastPlayingLevelIndex = finalIndex;
+    
     while (lastPlayingLevelIndex >= 0 && blinds[lastPlayingLevelIndex].isBreak) {
       lastPlayingLevelIndex--;
     }
     
-    if (lastPlayingLevelIndex >= 0) {
-      const adjustedBB = roundToDenom(targetBB, sortedDenoms);
+    if (lastPlayingLevelIndex >= 0 && blinds[lastPlayingLevelIndex].bigBlind < targetBB) {
+      const adjustedBB = roundToDenom(targetBB, denomArray);
       blinds[lastPlayingLevelIndex].bigBlind = adjustedBB;
-      blinds[lastPlayingLevelIndex].smallBlind = Math.round(adjustedBB / 2);
+      blinds[lastPlayingLevelIndex].smallBlind = roundToDenom(adjustedBB / 2, denomArray);
       blinds[lastPlayingLevelIndex].ante = Math.round(adjustedBB * 0.1);
     }
     
-    // Renumber levels sequentially
     return blinds.map((blind, index) => ({
       ...blind,
       level: index + 1
@@ -285,38 +239,44 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     durationHours: number,
     newLevelDuration: number,
     denominations: number[],
-    totalChips: number
+    startingStack: number,
+    players: number,
+    format: string,
+    rebuyLimit: number
   ): TournamentLevel[] => {
     const playingLevels = existingBlinds.filter(level => !level.isBreak);
     if (playingLevels.length < 2) return existingBlinds;
     
-    const sortedDenoms = [...denominations].sort((a, b) => a - b);
+    const denomArray = [...denominations].sort((a, b) => a - b);
     
-    // Calculate number of levels based on new duration
+    const totalChips = startingStack * players * (format === "Rebuy" ? (1 + rebuyLimit) : 1);
+    
     const numLevels = Math.floor(durationHours * 60 / newLevelDuration);
     
-    // Get starting and target big blind values
     const startingBB = playingLevels[0].bigBlind;
-    const targetBB = Math.round(totalChips / 15);
+    const targetBB = totalChips / 15;
+    const baseRate = numLevels > 1 ? Math.pow(targetBB / startingBB, 1 / (numLevels - 1)) : 1;
     
-    // Calculate required growth rate to reach target BB over numLevels
-    const rate = Math.pow(targetBB / startingBB, 1 / (numLevels - 1));
-    
-    // Create first level
     let updatedBlinds: TournamentLevel[] = [{
       level: 1,
       smallBlind: playingLevels[0].smallBlind,
       bigBlind: startingBB,
-      ante: 0,
+      ante: playingLevels[0].ante || 0,
       duration: newLevelDuration,
       isBreak: false
     }];
     
+    const rates: Record<string, number | [number, number]> = {
+      "Freezeout": 1.5,
+      "Rebuy": [1.25, baseRate],
+      "Deep Stack": 1.25,
+      "Bounty": 1.5
+    };
+    
+    const rebuyEnd = format === "Rebuy" ? Math.floor(numLevels / 2) : numLevels;
     let levelCount = 1;
     
-    // Generate remaining levels
     for (let i = 1; i < numLevels; i++) {
-      // Add breaks every 4 levels
       if (i > 0 && i % 4 === 0) {
         updatedBlinds.push({
           level: ++levelCount,
@@ -328,47 +288,52 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
         });
       }
       
-      // Get previous level blinds, skipping breaks
-      const prevLevel = updatedBlinds[updatedBlinds.length - 1].isBreak ? 
-                     updatedBlinds[updatedBlinds.length - 2] : 
-                     updatedBlinds[updatedBlinds.length - 1];
+      const prevBB = updatedBlinds[updatedBlinds.length - 1].isBreak ? 
+                 updatedBlinds[updatedBlinds.length - 2].bigBlind : 
+                 updatedBlinds[updatedBlinds.length - 1].bigBlind;
+                 
+      const prevSB = updatedBlinds[updatedBlinds.length - 1].isBreak ? 
+                 updatedBlinds[updatedBlinds.length - 2].smallBlind : 
+                 updatedBlinds[updatedBlinds.length - 1].smallBlind;
       
-      // Calculate new big blind with the growth rate
-      const newBB = Math.round(prevLevel.bigBlind * rate);
-      const roundedBB = roundToDenom(newBB, sortedDenoms);
-      const finalBB = roundedBB <= prevLevel.bigBlind ? 
-                     roundToDenom(prevLevel.bigBlind * 1.2, sortedDenoms) : 
-                     roundedBB;
+      let rate: number;
+      if (format === "Rebuy") {
+        const rateArray = rates[format] as [number, number];
+        rate = i < rebuyEnd ? rateArray[0] : rateArray[1];
+      } else {
+        rate = rates[format] as number;
+      }
       
-      // Add ante after a few levels
-      const ante = i > 3 ? Math.round(finalBB * 0.1) : 0;
+      const newBB = prevBB * rate;
+      const roundedBB = roundToDenom(newBB, denomArray, prevBB);
+      
+      const newSB = roundToDenom(roundedBB / 2, denomArray, prevSB);
+      const ante = i > 3 ? Math.round(roundedBB * 0.1) : 0;
       
       updatedBlinds.push({
         level: ++levelCount,
-        smallBlind: Math.round(finalBB / 2),
-        bigBlind: finalBB,
+        smallBlind: newSB,
+        bigBlind: roundedBB,
         ante: ante,
         duration: newLevelDuration,
         isBreak: false
       });
     }
     
-    // Adjust final level
     const finalIndex = updatedBlinds.length - 1;
-    
     let lastPlayingLevelIndex = finalIndex;
+    
     while (lastPlayingLevelIndex >= 0 && updatedBlinds[lastPlayingLevelIndex].isBreak) {
       lastPlayingLevelIndex--;
     }
     
-    if (lastPlayingLevelIndex >= 0) {
-      const adjustedBB = roundToDenom(targetBB, sortedDenoms);
+    if (lastPlayingLevelIndex >= 0 && updatedBlinds[lastPlayingLevelIndex].bigBlind < targetBB) {
+      const adjustedBB = roundToDenom(targetBB, denomArray);
       updatedBlinds[lastPlayingLevelIndex].bigBlind = adjustedBB;
-      updatedBlinds[lastPlayingLevelIndex].smallBlind = Math.round(adjustedBB / 2);
+      updatedBlinds[lastPlayingLevelIndex].smallBlind = roundToDenom(adjustedBB / 2, denomArray);
       updatedBlinds[lastPlayingLevelIndex].ante = Math.round(adjustedBB * 0.1);
     }
     
-    // Renumber levels
     return updatedBlinds.map((blind, index) => ({
       ...blind,
       level: index + 1
@@ -381,9 +346,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
         toast.error("Invalid chipset values");
         return;
       }
-      
-      const totalChips = initialChips * playerCount * 
-                        (tournamentFormat === "Rebuy" ? (1 + maxRebuys) : 1);
       
       const newLevels = generateInitialBlindStructure(
         chipsetValues, 
@@ -836,7 +798,6 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
               </CardContent>
             </Card>
             
-            {/* Moved Blind Structure Generator Card here */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
