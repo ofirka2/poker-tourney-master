@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -5,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import TournamentSetup from "@/components/setup/TournamentSetup";
 import { useTournament } from "@/context/TournamentContext";
+import { suggestPayoutStructure } from "@/utils/payoutCalculator";
 
 const Setup = () => {
   const [searchParams] = useSearchParams();
@@ -36,6 +38,12 @@ const Setup = () => {
         if (data) {
           const blindLevels = data.blind_levels ? JSON.parse(data.blind_levels) : null;
           
+          // Generate default payout structure based on expected participants
+          const expectedPlayers = data.expected_players || 9;
+          const defaultPayoutStructure = {
+            places: suggestPayoutStructure(expectedPlayers)
+          };
+          
           const settings = {
             buyInAmount: data.buy_in || 100,
             rebuyAmount: data.rebuy_amount || 100,
@@ -49,13 +57,8 @@ const Setup = () => {
             lastAddOnLevel: data.last_addon_level || 6,
             levels: blindLevels || state.settings.levels,
             tournamentFormat: data.tournament_format || 'standard',
-            payoutStructure: {
-              places: [
-                { position: 1, percentage: 50 },
-                { position: 2, percentage: 30 },
-                { position: 3, percentage: 20 },
-              ]
-            }
+            payoutStructure: data.payout_structure ? 
+              JSON.parse(data.payout_structure) : defaultPayoutStructure
           };
           
           dispatch({ 

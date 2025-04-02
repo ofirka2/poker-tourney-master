@@ -1,24 +1,48 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy } from "lucide-react";
 import { useTournament } from "@/context/TournamentContext";
+import { calculatePrizePoolAndPayouts, suggestPayoutStructure } from "@/utils/payoutCalculator";
 
 export const PayoutCalculator: React.FC = () => {
   const { state } = useTournament();
-  const { totalPrizePool, settings } = state;
+  const { totalPrizePool, settings, players } = state;
   const { payoutStructure } = settings;
   
-  // Calculate payouts
-  const calculatePayouts = () => {
-    return payoutStructure.places.map(place => ({
-      position: place.position,
-      percentage: place.percentage,
-      amount: Math.round((place.percentage / 100) * totalPrizePool)
-    }));
-  };
+  const [payouts, setPayouts] = useState<{ position: number; percentage: number; amount: number }[]>([]);
   
-  const payouts = calculatePayouts();
+  useEffect(() => {
+    // Count total buy-ins, rebuys, and add-ons
+    const totalBuyIns = players.filter(p => p.buyIn).length;
+    const totalRebuys = players.reduce((sum, player) => sum + player.rebuys, 0);
+    const totalAddOns = players.reduce((sum, player) => sum + player.addOns, 0);
+    
+    // Get payout structure (use existing or suggest new one)
+    let payoutPlaces = payoutStructure.places.map(place => ({
+      position: place.position,
+      percentage: place.percentage
+    }));
+    
+    // If no structure defined, suggest one based on participant count
+    if (!payoutPlaces.length) {
+      const totalParticipants = totalBuyIns + totalRebuys + totalAddOns;
+      payoutPlaces = suggestPayoutStructure(totalParticipants);
+    }
+    
+    // Calculate payouts
+    const result = calculatePrizePoolAndPayouts({
+      totalBuyIns,
+      buyInAmount: settings.buyInAmount,
+      totalRebuys,
+      rebuyAmount: settings.rebuyAmount,
+      totalAddons: totalAddOns,
+      addonAmount: settings.addOnAmount,
+      payoutPlaces
+    });
+    
+    setPayouts(result.payoutDetails);
+  }, [totalPrizePool, settings, players, payoutStructure]);
   
   return (
     <Card>

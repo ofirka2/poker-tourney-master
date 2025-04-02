@@ -494,6 +494,20 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
         ...state,
       };
       
+    case 'UPDATE_PAYOUT_STRUCTURE': {
+      const newSettings = {
+        ...state.settings,
+        payoutStructure: {
+          places: action.payload
+        }
+      };
+      
+      return {
+        ...state,
+        settings: newSettings
+      };
+    }
+      
     default:
       return state;
   }
