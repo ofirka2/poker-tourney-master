@@ -1,3 +1,4 @@
+
 // Add types for the tournament state
 export interface TournamentState {
   isRunning: boolean;
@@ -59,7 +60,8 @@ export type TournamentAction =
   | { type: 'UPDATE_TOURNAMENT_NAME'; payload: string }
   | { type: 'UPDATE_TOURNAMENT_CHIPSET'; payload: string }
   | { type: 'RESET_TOURNAMENT' }
-  | { type: 'GET_DEFAULT_LEVELS' };
+  | { type: 'GET_DEFAULT_LEVELS' }
+  | { type: 'UPDATE_PAYOUT_STRUCTURE'; payload: PayoutPlace[] };
 
 export interface Player {
   id: string;

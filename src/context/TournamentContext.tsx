@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from "sonner";
-import { TournamentState, TournamentAction, Player, Table, TournamentSettings } from "@/types/types";
+import { TournamentState, TournamentAction, Player, Table, TournamentSettings, PayoutPlace } from "@/types/types";
 
 const defaultSettings: TournamentSettings = {
   buyInAmount: 100,

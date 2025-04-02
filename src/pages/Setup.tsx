@@ -7,6 +7,7 @@ import Layout from "@/components/layout/Layout";
 import TournamentSetup from "@/components/setup/TournamentSetup";
 import { useTournament } from "@/context/TournamentContext";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
+import { PayoutPlace } from "@/types/types";
 
 const Setup = () => {
   const [searchParams] = useSearchParams();
@@ -41,7 +42,7 @@ const Setup = () => {
           // Generate default payout structure based on expected participants
           const expectedPlayers = data.expected_players || 9;
           const defaultPayoutStructure = {
-            places: suggestPayoutStructure(expectedPlayers)
+            places: suggestPayoutStructure(expectedPlayers) as PayoutPlace[]
           };
           
           const settings = {

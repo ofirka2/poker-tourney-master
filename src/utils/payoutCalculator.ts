@@ -79,7 +79,7 @@ export function suggestPayoutStructure(numParticipants: number): { position: num
   return structure;
 }
 
-interface PayoutData {
+export interface PayoutData {
   totalBuyIns?: number;
   buyInAmount?: number;
   totalRebuys?: number;
@@ -91,7 +91,7 @@ interface PayoutData {
   payoutPlaces: { position: number; percentage: number }[];
 }
 
-interface PayoutResult {
+export interface PayoutResult {
   isValidStructure: boolean;
   validationMessage: string;
   grossPrizePool: number;

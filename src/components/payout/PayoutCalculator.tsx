@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy } from "lucide-react";
 import { useTournament } from "@/context/TournamentContext";
 import { calculatePrizePoolAndPayouts, suggestPayoutStructure } from "@/utils/payoutCalculator";
+import { PayoutPlace } from "@/types/types";
 
 export const PayoutCalculator: React.FC = () => {
   const { state } = useTournament();
