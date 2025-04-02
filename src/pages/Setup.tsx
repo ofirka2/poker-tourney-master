@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,13 +15,11 @@ const Setup = () => {
 
   useEffect(() => {
     const loadTournament = async () => {
-      // If we already loaded this tournament or there's no ID, don't reload
       if (!tournamentId || tournamentId === loadedId) return;
       
       setLoading(true);
       
       try {
-        // Check if supabase client is available
         if (!supabase) {
           console.warn("Supabase client not available, skipping tournament load");
           return;
@@ -37,22 +34,19 @@ const Setup = () => {
         if (error) throw error;
         
         if (data) {
-          // Parse blind levels from JSON if available
           const blindLevels = data.blind_levels ? JSON.parse(data.blind_levels) : null;
           
-          // Create settings object from tournament data
           const settings = {
             buyInAmount: data.buy_in || 100,
             rebuyAmount: data.rebuy_amount || 100,
             addOnAmount: data.addon_amount || 100,
             initialChips: data.starting_chips || 10000,
-            rebuyChips: data.starting_chips || 10000, // Using same as starting chips if not specified
-            addOnChips: data.starting_chips || 10000, // Using same as starting chips if not specified
+            rebuyChips: data.rebuy_chips || data.starting_chips || 10000,
+            addOnChips: data.addon_chips || data.starting_chips || 10000,
             maxRebuys: data.max_rebuys || 2,
             maxAddOns: data.max_addons || 1,
             lastRebuyLevel: data.last_rebuy_level || 6,
             lastAddOnLevel: data.last_addon_level || 6,
-            // Use blind levels from JSON or default
             levels: blindLevels || state.settings.levels,
             payoutStructure: {
               places: [
@@ -63,7 +57,6 @@ const Setup = () => {
             }
           };
           
-          // Load tournament into context
           dispatch({ 
             type: 'LOAD_TOURNAMENT', 
             payload: {
@@ -71,13 +64,12 @@ const Setup = () => {
               startDate: data.start_date,
               settings,
               chipset: data.chipset,
-              players: [], // We'd load players separately if needed
+              players: [],
               isRunning: false,
               currentLevel: 0
             }
           });
           
-          // Store the loaded tournament ID to prevent re-fetching
           setLoadedId(tournamentId);
           
           toast.success(`Loaded tournament: ${data.name}`);

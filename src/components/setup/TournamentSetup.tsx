@@ -14,6 +14,7 @@ import { useTournament } from "@/context/TournamentContext";
 import { toast } from "sonner";
 import { TournamentLevel, PayoutPlace } from "@/types/types";
 import { supabase } from "@/integrations/supabase/client";
+import { generateDynamicBlinds } from "@/utils/blindStructureGenerator";
 
 const chipsetOptions = [
   { value: '25,100,500,1000,5000', label: '25, 100, 500, 1000, 5000' },
@@ -127,234 +128,31 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
     return Math.max(startingStack, 5000);
   };
   
-  const generateInitialBlindStructure = (
-    denominations: number[],
-    startingStack: number,
-    durationHours: number,
-    players: number,
-    format: string,
-    rebuyLimit: number
-  ): TournamentLevel[] => {
-    if (!denominations.length || startingStack <= 0 || durationHours <= 0 || players <= 0) {
-      toast.error("Invalid input parameters for blind structure generation");
-      return [];
-    }
-    
-    const denomArray = [...denominations].sort((a, b) => a - b);
-    
-    const totalChips = startingStack * players * (format === "Rebuy" ? (1 + rebuyLimit) : 1);
-    
-    const levelDuration = 20;
-    const numLevels = Math.floor(durationHours * 60 / levelDuration);
-    
-    const startingBB = startingStack / (format === "Deep Stack" ? 200 : 100);
-    const targetBB = totalChips / 15;
-    const baseRate = numLevels > 1 ? Math.pow(targetBB / startingBB, 1 / (numLevels - 1)) : 1;
-    
-    let blinds: TournamentLevel[] = [{
-      level: 1,
-      smallBlind: roundToDenom(startingBB / 2, denomArray),
-      bigBlind: roundToDenom(startingBB, denomArray),
-      ante: 0,
-      duration: levelDuration,
-      isBreak: false
-    }];
-    
-    const rates: Record<string, number | [number, number]> = {
-      "Freezeout": 1.5,
-      "Rebuy": [1.25, baseRate],
-      "Deep Stack": 1.25,
-      "Bounty": 1.5
-    };
-    
-    const rebuyEnd = format === "Rebuy" ? Math.floor(numLevels / 2) : numLevels;
-    let levelCount = 1;
-    
-    for (let i = 1; i < numLevels; i++) {
-      if (i > 0 && i % 4 === 0) {
-        blinds.push({
-          level: ++levelCount,
-          smallBlind: 0,
-          bigBlind: 0,
-          ante: 0,
-          duration: 15,
-          isBreak: true
-        });
-      }
-      
-      const prevBB = blinds[blinds.length - 1].isBreak ? 
-                 blinds[blinds.length - 2].bigBlind : 
-                 blinds[blinds.length - 1].bigBlind;
-                 
-      const prevSB = blinds[blinds.length - 1].isBreak ? 
-                 blinds[blinds.length - 2].smallBlind : 
-                 blinds[blinds.length - 1].smallBlind;
-      
-      let rate: number;
-      if (format === "Rebuy") {
-        const rateArray = rates[format] as [number, number];
-        rate = i < rebuyEnd ? rateArray[0] : rateArray[1];
-      } else {
-        rate = rates[format] as number;
-      }
-      
-      const newBB = prevBB * rate;
-      const roundedBB = roundToDenom(newBB, denomArray, prevBB);
-      
-      const newSB = roundToDenom(roundedBB / 2, denomArray, prevSB);
-      const ante = i > 3 ? Math.round(roundedBB * 0.1) : 0;
-      
-      blinds.push({
-        level: ++levelCount,
-        smallBlind: newSB,
-        bigBlind: roundedBB,
-        ante: ante,
-        duration: levelDuration,
-        isBreak: false
-      });
-    }
-    
-    const finalIndex = blinds.length - 1;
-    let lastPlayingLevelIndex = finalIndex;
-    
-    while (lastPlayingLevelIndex >= 0 && blinds[lastPlayingLevelIndex].isBreak) {
-      lastPlayingLevelIndex--;
-    }
-    
-    if (lastPlayingLevelIndex >= 0 && blinds[lastPlayingLevelIndex].bigBlind < targetBB) {
-      const adjustedBB = roundToDenom(targetBB, denomArray);
-      blinds[lastPlayingLevelIndex].bigBlind = adjustedBB;
-      blinds[lastPlayingLevelIndex].smallBlind = roundToDenom(adjustedBB / 2, denomArray);
-      blinds[lastPlayingLevelIndex].ante = Math.round(adjustedBB * 0.1);
-    }
-    
-    return blinds.map((blind, index) => ({
-      ...blind,
-      level: index + 1
-    }));
-  };
-  
-  const updateBlindStructure = (
-    existingBlinds: TournamentLevel[],
-    durationHours: number,
-    newLevelDuration: number,
-    denominations: number[],
-    startingStack: number,
-    players: number,
-    format: string,
-    rebuyLimit: number
-  ): TournamentLevel[] => {
-    const playingLevels = existingBlinds.filter(level => !level.isBreak);
-    if (playingLevels.length < 2) return existingBlinds;
-    
-    const denomArray = [...denominations].sort((a, b) => a - b);
-    
-    const totalChips = startingStack * players * (format === "Rebuy" ? (1 + rebuyLimit) : 1);
-    
-    const numLevels = Math.floor(durationHours * 60 / newLevelDuration);
-    
-    const startingBB = playingLevels[0].bigBlind;
-    const targetBB = totalChips / 15;
-    const baseRate = numLevels > 1 ? Math.pow(targetBB / startingBB, 1 / (numLevels - 1)) : 1;
-    
-    let updatedBlinds: TournamentLevel[] = [{
-      level: 1,
-      smallBlind: playingLevels[0].smallBlind,
-      bigBlind: startingBB,
-      ante: playingLevels[0].ante || 0,
-      duration: newLevelDuration,
-      isBreak: false
-    }];
-    
-    const rates: Record<string, number | [number, number]> = {
-      "Freezeout": 1.5,
-      "Rebuy": [1.25, baseRate],
-      "Deep Stack": 1.25,
-      "Bounty": 1.5
-    };
-    
-    const rebuyEnd = format === "Rebuy" ? Math.floor(numLevels / 2) : numLevels;
-    let levelCount = 1;
-    
-    for (let i = 1; i < numLevels; i++) {
-      if (i > 0 && i % 4 === 0) {
-        updatedBlinds.push({
-          level: ++levelCount,
-          smallBlind: 0,
-          bigBlind: 0,
-          ante: 0,
-          duration: 15,
-          isBreak: true
-        });
-      }
-      
-      const prevBB = updatedBlinds[updatedBlinds.length - 1].isBreak ? 
-                 updatedBlinds[updatedBlinds.length - 2].bigBlind : 
-                 updatedBlinds[updatedBlinds.length - 1].bigBlind;
-                 
-      const prevSB = updatedBlinds[updatedBlinds.length - 1].isBreak ? 
-                 updatedBlinds[updatedBlinds.length - 2].smallBlind : 
-                 updatedBlinds[updatedBlinds.length - 1].smallBlind;
-      
-      let rate: number;
-      if (format === "Rebuy") {
-        const rateArray = rates[format] as [number, number];
-        rate = i < rebuyEnd ? rateArray[0] : rateArray[1];
-      } else {
-        rate = rates[format] as number;
-      }
-      
-      const newBB = prevBB * rate;
-      const roundedBB = roundToDenom(newBB, denomArray, prevBB);
-      
-      const newSB = roundToDenom(roundedBB / 2, denomArray, prevSB);
-      const ante = i > 3 ? Math.round(roundedBB * 0.1) : 0;
-      
-      updatedBlinds.push({
-        level: ++levelCount,
-        smallBlind: newSB,
-        bigBlind: roundedBB,
-        ante: ante,
-        duration: newLevelDuration,
-        isBreak: false
-      });
-    }
-    
-    const finalIndex = updatedBlinds.length - 1;
-    let lastPlayingLevelIndex = finalIndex;
-    
-    while (lastPlayingLevelIndex >= 0 && updatedBlinds[lastPlayingLevelIndex].isBreak) {
-      lastPlayingLevelIndex--;
-    }
-    
-    if (lastPlayingLevelIndex >= 0 && updatedBlinds[lastPlayingLevelIndex].bigBlind < targetBB) {
-      const adjustedBB = roundToDenom(targetBB, denomArray);
-      updatedBlinds[lastPlayingLevelIndex].bigBlind = adjustedBB;
-      updatedBlinds[lastPlayingLevelIndex].smallBlind = roundToDenom(adjustedBB / 2, denomArray);
-      updatedBlinds[lastPlayingLevelIndex].ante = Math.round(adjustedBB * 0.1);
-    }
-    
-    return updatedBlinds.map((blind, index) => ({
-      ...blind,
-      level: index + 1
-    }));
-  };
-  
   const handleGenerateBlindStructure = () => {
     try {
-      if (chipsetValues.length === 0) {
-        toast.error("Invalid chipset values");
+      const targetDurationMinutes = durationHours * 60;
+      
+      const levelDurationMinutes = 20;
+      
+      const rebuyFactor = allowRebuy ? (1 + (maxRebuys / 2)) : 1;
+      
+      const newLevels = generateDynamicBlinds(
+        playerCount,
+        initialChips,
+        targetDurationMinutes,
+        {
+          levelDurationMinutes,
+          rebuyAddonFactor: rebuyFactor,
+          breakIntervalLevels: 4,
+          anteStartLevel: 4,
+          blindIncreaseFactor: tournamentFormat === "Deep Stack" ? 1.3 : 1.5
+        }
+      );
+      
+      if (newLevels.length === 0) {
+        toast.error("Failed to generate blind structure. Please check your inputs.");
         return;
       }
-      
-      const newLevels = generateInitialBlindStructure(
-        chipsetValues, 
-        initialChips,
-        durationHours,
-        playerCount,
-        tournamentFormat,
-        maxRebuys
-      );
       
       setLevels(newLevels);
       toast.success("Blind structure generated successfully");
