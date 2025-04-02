@@ -1,4 +1,3 @@
-
 // Add types for the tournament state
 export interface TournamentState {
   isRunning: boolean;
@@ -61,7 +60,14 @@ export type TournamentAction =
   | { type: 'UPDATE_TOURNAMENT_CHIPSET'; payload: string }
   | { type: 'RESET_TOURNAMENT' }
   | { type: 'GET_DEFAULT_LEVELS' }
-  | { type: 'UPDATE_PAYOUT_STRUCTURE'; payload: PayoutPlace[] };
+  | { type: 'UPDATE_PAYOUT_STRUCTURE'; payload: PayoutPlace[] }
+  | { 
+      type: 'UPDATE_HOUSE_FEE'; 
+      payload: { 
+        type: 'none' | 'percentage' | 'fixed'; 
+        value: number 
+      } 
+    };
 
 export interface Player {
   id: string;
@@ -113,4 +119,6 @@ export interface TournamentSettings {
   lastAddOnLevel: number;
   levels: TournamentLevel[];
   payoutStructure: PayoutStructure;
+  houseFeeType?: 'none' | 'percentage' | 'fixed';
+  houseFeeValue?: number;
 }

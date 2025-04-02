@@ -14,6 +14,8 @@ const defaultSettings: TournamentSettings = {
   maxAddOns: 1,
   lastRebuyLevel: 6,
   lastAddOnLevel: 6,
+  houseFeeType: 'none',
+  houseFeeValue: 0,
   payoutStructure: {
     places: [
       { position: 1, percentage: 50 },
@@ -500,6 +502,19 @@ function tournamentReducer(state: TournamentState, action: TournamentAction): To
         payoutStructure: {
           places: action.payload
         }
+      };
+      
+      return {
+        ...state,
+        settings: newSettings
+      };
+    }
+    
+    case 'UPDATE_HOUSE_FEE': {
+      const newSettings = {
+        ...state.settings,
+        houseFeeType: action.payload.type,
+        houseFeeValue: action.payload.value
       };
       
       return {
