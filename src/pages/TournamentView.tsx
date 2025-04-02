@@ -49,13 +49,14 @@ const TournamentView = () => {
             rebuyAmount: data.rebuy_amount || 100,
             addOnAmount: data.addon_amount || 100,
             initialChips: data.starting_chips || 10000,
-            rebuyChips: data.starting_chips || 10000,
-            addOnChips: data.starting_chips || 10000,
+            rebuyChips: data.rebuy_chips || data.starting_chips || 10000,
+            addOnChips: data.addon_chips || data.starting_chips || 10000,
             maxRebuys: data.max_rebuys || 2,
             maxAddOns: data.max_addons || 1,
             lastRebuyLevel: data.last_rebuy_level || 6,
             lastAddOnLevel: data.last_addon_level || 6,
             levels: blindLevels || state.settings.levels,
+            tournamentFormat: data.tournament_format || 'standard',
             payoutStructure: {
               places: [
                 { position: 1, percentage: 50 },

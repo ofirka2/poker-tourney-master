@@ -25,10 +25,10 @@ const chipsetOptions = [
 ];
 
 const formatOptions = [
-  { value: 'Freezeout', label: 'Freezeout' },
-  { value: 'Rebuy', label: 'Rebuy' },
-  { value: 'Bounty', label: 'Bounty' },
-  { value: 'Deep Stack', label: 'Deep Stack' }
+  { value: 'standard', label: 'Standard' },
+  { value: 'turbo', label: 'Turbo' },
+  { value: 'hyper', label: 'Hyper Turbo' },
+  { value: 'deepstack', label: 'Deep Stack' }
 ];
 
 interface TournamentSetupProps {
@@ -136,6 +136,8 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
       
       const rebuyFactor = allowRebuy ? (1 + (maxRebuys / 2)) : 1;
       
+      const chipValues = chipsetValues.length > 0 ? chipsetValues : [25, 100, 500, 1000, 5000];
+      
       const newLevels = generateDynamicBlinds(
         playerCount,
         initialChips,
@@ -145,7 +147,9 @@ export const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }
           rebuyAddonFactor: rebuyFactor,
           breakIntervalLevels: 4,
           anteStartLevel: 4,
-          blindIncreaseFactor: tournamentFormat === "Deep Stack" ? 1.3 : 1.5
+          blindIncreaseFactor: 1.5,
+          tournamentFormat: tournamentFormat.toLowerCase(),
+          chipset: chipValues
         }
       );
       

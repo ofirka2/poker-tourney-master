@@ -48,6 +48,7 @@ const Setup = () => {
             lastRebuyLevel: data.last_rebuy_level || 6,
             lastAddOnLevel: data.last_addon_level || 6,
             levels: blindLevels || state.settings.levels,
+            tournamentFormat: data.tournament_format || 'standard',
             payoutStructure: {
               places: [
                 { position: 1, percentage: 50 },
