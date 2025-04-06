@@ -28,5 +28,10 @@ export default defineConfig(({ mode }) => ({
   define: {
     'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL || ''),
     'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY || ''),
+    'import.meta.env.VITE_DEFAULT_PLAYER_COUNT': JSON.stringify(process.env.VITE_DEFAULT_PLAYER_COUNT || '9'),
+    'import.meta.env.VITE_DEFAULT_TOURNAMENT_DURATION': JSON.stringify(process.env.VITE_DEFAULT_TOURNAMENT_DURATION || '4'),
+    'import.meta.env.VITE_DEFAULT_BUY_IN_AMOUNT': JSON.stringify(process.env.VITE_DEFAULT_BUY_IN_AMOUNT || '100'),
+    'import.meta.env.VITE_DEFAULT_ALLOW_REBUY': JSON.stringify(process.env.VITE_DEFAULT_ALLOW_REBUY || 'true'),
+    'import.meta.env.VITE_DEFAULT_ALLOW_ADDON': JSON.stringify(process.env.VITE_DEFAULT_ALLOW_ADDON || 'true'),
   },
 }))

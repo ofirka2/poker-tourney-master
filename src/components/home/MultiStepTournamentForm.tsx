@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTournament } from '@/context/TournamentContext';
 import { supabase } from '@/integrations/supabase/client';
+import { envDefaults } from '@/context/defaultSettings';
 import {
   Dialog,
   DialogContent,
@@ -49,10 +50,10 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     startDate: new Date().toISOString().split('T')[0],
-    playerCount: 9,
-    desiredDuration: 4, // In hours now
-    allowRebuy: true,
-    allowAddon: true,
+    playerCount: envDefaults.playerCount,
+    desiredDuration: envDefaults.tournamentDuration,
+    allowRebuy: envDefaults.allowRebuy,
+    allowAddon: envDefaults.allowAddon,
     format: 'rebuy',
     chipset: '25,100,500,1000,5000',
     startingStack: 10000,
@@ -152,9 +153,9 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
         starting_chips: formData.startingStack,
         chipset: formData.chipset,
         blind_levels: blindLevels,
-        buy_in: 100, // Default values
-        rebuy_amount: 100,
-        addon_amount: 100
+        buy_in: envDefaults.buyInAmount, // Use the environment variable
+        rebuy_amount: envDefaults.buyInAmount,
+        addon_amount: envDefaults.buyInAmount
       }).select().single();
 
       if (error) {
@@ -170,9 +171,9 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
           name: formData.name,
           startDate: formData.startDate,
           settings: {
-            buyInAmount: 100,
-            rebuyAmount: 100,
-            addOnAmount: 100,
+            buyInAmount: envDefaults.buyInAmount,
+            rebuyAmount: envDefaults.buyInAmount,
+            addOnAmount: envDefaults.buyInAmount,
             initialChips: formData.startingStack,
             rebuyChips: formData.startingStack,
             addOnChips: formData.startingStack,
