@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTournament } from '@/context/TournamentContext';
 import { supabase } from '@/integrations/supabase/client';
-import { envDefaults } from '@/context/defaultSettings';
+import { tournamentDefaults } from '@/utils/envConfig';
 import {
   Dialog,
   DialogContent,
@@ -50,10 +50,10 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     startDate: new Date().toISOString().split('T')[0],
-    playerCount: envDefaults.playerCount,
-    desiredDuration: envDefaults.tournamentDuration,
-    allowRebuy: envDefaults.allowRebuy,
-    allowAddon: envDefaults.allowAddon,
+    playerCount: tournamentDefaults.playerCount,
+    desiredDuration: tournamentDefaults.tournamentDuration,
+    allowRebuy: tournamentDefaults.allowRebuy,
+    allowAddon: tournamentDefaults.allowAddon,
     format: 'rebuy',
     chipset: '25,100,500,1000,5000',
     startingStack: 10000,
@@ -153,9 +153,9 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
         starting_chips: formData.startingStack,
         chipset: formData.chipset,
         blind_levels: blindLevels,
-        buy_in: envDefaults.buyInAmount, // Use the environment variable
-        rebuy_amount: envDefaults.buyInAmount,
-        addon_amount: envDefaults.buyInAmount
+        buy_in: tournamentDefaults.buyInAmount, // Use the environment variable
+        rebuy_amount: tournamentDefaults.buyInAmount,
+        addon_amount: tournamentDefaults.buyInAmount
       }).select().single();
 
       if (error) {
@@ -171,9 +171,9 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
           name: formData.name,
           startDate: formData.startDate,
           settings: {
-            buyInAmount: envDefaults.buyInAmount,
-            rebuyAmount: envDefaults.buyInAmount,
-            addOnAmount: envDefaults.buyInAmount,
+            buyInAmount: tournamentDefaults.buyInAmount,
+            rebuyAmount: tournamentDefaults.buyInAmount,
+            addOnAmount: tournamentDefaults.buyInAmount,
             initialChips: formData.startingStack,
             rebuyChips: formData.startingStack,
             addOnChips: formData.startingStack,

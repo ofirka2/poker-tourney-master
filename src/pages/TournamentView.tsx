@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import TimerDisplay from "@/components/timer/TimerDisplay";
 import { supabase } from "@/integrations/supabase/client";
+import { tournamentDefaults } from "@/utils/envConfig";
 
 const TournamentView = () => {
   const { state, dispatch } = useTournament();

@@ -1,29 +1,13 @@
 
 import { TournamentSettings } from "@/types/types";
+import { tournamentDefaults } from "@/utils/envConfig";
 
-// Parse environment variables with appropriate defaults
-const getEnvInt = (key: string, defaultValue: number): number => {
-  const value = import.meta.env[key];
-  return value ? parseInt(value, 10) : defaultValue;
-};
-
-const getEnvFloat = (key: string, defaultValue: number): number => {
-  const value = import.meta.env[key];
-  return value ? parseFloat(value) : defaultValue;
-};
-
-const getEnvBool = (key: string, defaultValue: boolean): boolean => {
-  const value = import.meta.env[key];
-  if (value === undefined) return defaultValue;
-  return value.toLowerCase() === 'true';
-};
-
-// Get values from environment variables
-const DEFAULT_PLAYER_COUNT = getEnvInt('VITE_DEFAULT_PLAYER_COUNT', 9);
-const DEFAULT_TOURNAMENT_DURATION = getEnvFloat('VITE_DEFAULT_TOURNAMENT_DURATION', 4);
-const DEFAULT_BUY_IN_AMOUNT = getEnvInt('VITE_DEFAULT_BUY_IN_AMOUNT', 100);
-const DEFAULT_ALLOW_REBUY = getEnvBool('VITE_DEFAULT_ALLOW_REBUY', true);
-const DEFAULT_ALLOW_ADDON = getEnvBool('VITE_DEFAULT_ALLOW_ADDON', true);
+// Use the environment variables from the utility file
+const DEFAULT_PLAYER_COUNT = tournamentDefaults.playerCount;
+const DEFAULT_TOURNAMENT_DURATION = tournamentDefaults.tournamentDuration;
+const DEFAULT_BUY_IN_AMOUNT = tournamentDefaults.buyInAmount;
+const DEFAULT_ALLOW_REBUY = tournamentDefaults.allowRebuy;
+const DEFAULT_ALLOW_ADDON = tournamentDefaults.allowAddon;
 
 export const defaultSettings: TournamentSettings = {
   buyInAmount: DEFAULT_BUY_IN_AMOUNT,
@@ -78,10 +62,4 @@ export const initialState = {
 };
 
 // Export the environment variables for use in other files
-export const envDefaults = {
-  playerCount: DEFAULT_PLAYER_COUNT,
-  tournamentDuration: DEFAULT_TOURNAMENT_DURATION,
-  buyInAmount: DEFAULT_BUY_IN_AMOUNT,
-  allowRebuy: DEFAULT_ALLOW_REBUY,
-  allowAddon: DEFAULT_ALLOW_ADDON
-};
+export const envDefaults = tournamentDefaults;

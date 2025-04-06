@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -8,6 +7,7 @@ import TournamentSetup from "@/components/setup/TournamentSetup";
 import { useTournament } from "@/context/TournamentContext";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
 import { PayoutPlace } from "@/types/types";
+import { tournamentDefaults } from "@/utils/envConfig";
 
 const Setup = () => {
   const [searchParams] = useSearchParams();
