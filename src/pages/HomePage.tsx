@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * @file Home page component displaying tournament history and a button to create new tournaments.
  * @description Fetches and displays a list of past tournaments from Supabase and provides
@@ -82,12 +83,44 @@ const HomePage = () => {
       } catch (error) {
         console.error('Error fetching tournaments:', error);
         // TODO: Display user-friendly error message (e.g., toast notification)
+=======
+
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Layout from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { Plus, Trophy, Eye } from "lucide-react";
+import { format } from "date-fns";
+import MultiStepTournamentForm from "@/components/home/MultiStepTournamentForm";
+
+const HomePage = () => {
+  const [tournaments, setTournaments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateTournament, setShowCreateTournament] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tournaments')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setTournaments(data || []);
+      } catch (error) {
+        console.error('Error fetching tournaments:', error);
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
       } finally {
         setLoading(false);
       }
     };
 
     fetchTournaments();
+<<<<<<< HEAD
   }, []); // Empty dependency array means this runs once on mount
 
   /**
@@ -121,6 +154,19 @@ const HomePage = () => {
   const handleViewTournament = (tournamentId: string) => {
   navigate(`/tournaments/${tournamentId}/dashboard`);
 };
+=======
+  }, []);
+
+  const handleTournamentCreated = () => {
+    setShowCreateTournament(false);
+    navigate('/setup');
+  };
+
+  const handleViewTournament = (tournamentId) => {
+    // Navigate to setup page with tournament ID
+    navigate(`/setup?id=${tournamentId}`);
+  };
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
 
   return (
     <Layout>
@@ -172,6 +218,7 @@ const HomePage = () => {
                     </thead>
                     <tbody>
                       {tournaments.map((tournament) => (
+<<<<<<< HEAD
                         <tr
                           key={tournament.id}
                           className="border-b last:border-0 hover:bg-muted/50"
@@ -210,6 +257,42 @@ const HomePage = () => {
                                   View
                                 </Button>
                             )}
+=======
+                        <tr key={tournament.id} className="border-b last:border-0 hover:bg-muted/50">
+                          <td className="py-3 font-medium">{tournament.name || 'Untitled Tournament'}</td>
+                          <td className="py-3 text-muted-foreground">
+                            {tournament.start_date 
+                              ? format(new Date(tournament.start_date), 'MMM d, yyyy')
+                              : 'Not set'}
+                          </td>
+                          <td className="py-3">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              tournament.status === 'Completed' 
+                                ? 'bg-green-100 text-green-800'
+                                : tournament.status === 'In Progress'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {tournament.status || 'Not Started'}
+                            </span>
+                          </td>
+                          <td className="py-3 text-muted-foreground">
+                            {tournament.no_of_players || 0}
+                          </td>
+                          <td className="py-3 text-muted-foreground">
+                            {tournament.winner || '-'}
+                          </td>
+                          <td className="py-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleViewTournament(tournament.id)}
+                              className="flex items-center"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                           </td>
                         </tr>
                       ))}
@@ -221,6 +304,7 @@ const HomePage = () => {
           </div>
         )}
 
+<<<<<<< HEAD
         {/* Pass a callback to onTournamentCreated that receives the new tournament data */}
         {/* The callback function now correctly calls handleTournamentCreated with the data */}
         <MultiStepTournamentForm
@@ -229,6 +313,12 @@ const HomePage = () => {
           onTournamentCreated={(newTournamentData) => {
              handleTournamentCreated(newTournamentData);
           }}
+=======
+        <MultiStepTournamentForm 
+          open={showCreateTournament}
+          onOpenChange={setShowCreateTournament}
+          onTournamentCreated={handleTournamentCreated}
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
         />
       </div>
     </Layout>

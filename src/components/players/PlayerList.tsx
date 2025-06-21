@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Plus, Trash, Search, UserMinus, RefreshCcw, DollarSign,
+=======
+
+import React, { useState } from "react";
+import { 
+  Plus, Trash, Search, UserMinus, RefreshCcw, DollarSign, 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
   Edit, Check, X, ChevronDown, ChevronUp, List, Shuffle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+<<<<<<< HEAD
 import { useTournament } from "@/context/TournamentContext"; // Still use context for settings/dispatch
 import { Player } from "@/types/types"; // Assuming Player type is defined
 import { v4 as uuidv4 } from 'uuid';
@@ -53,6 +61,13 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
   // For this update, we'll focus on fetching and managing local state,
   // and add placeholders for DB interactions in the handlers.
 
+=======
+import { useTournament, createEmptyPlayer } from "@/context/TournamentContext";
+import { Player } from "@/types/types";
+
+export const PlayerList: React.FC = () => {
+  const { state, dispatch } = useTournament();
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [isBulkImportDialogOpen, setIsBulkImportDialogOpen] = useState(false);
@@ -62,6 +77,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
   const [bulkPlayerNames, setBulkPlayerNames] = useState("");
   const [sortField, setSortField] = useState<keyof Player | null>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+<<<<<<< HEAD
 
   const { settings } = state; // Get settings from context
 
@@ -147,6 +163,45 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
     ? Math.round(totalChips / activePlayers.length)
     : 0;
 
+=======
+  
+  const { players, settings } = state;
+  
+  // Get player being edited
+  const selectedPlayer = selectedPlayerId 
+    ? players.find(p => p.id === selectedPlayerId) 
+    : null;
+  
+  // Filter players based on search term
+  const filteredPlayers = players.filter(player => 
+    player.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  // Sort players
+  const sortedPlayers = sortField 
+    ? [...filteredPlayers].sort((a, b) => {
+        const fieldA = a[sortField];
+        const fieldB = b[sortField];
+        
+        if (fieldA === fieldB) return 0;
+        
+        const direction = sortDirection === "asc" ? 1 : -1;
+        
+        if (fieldA === null) return 1 * direction;
+        if (fieldB === null) return -1 * direction;
+        
+        return fieldA < fieldB ? -1 * direction : 1 * direction;
+      })
+    : filteredPlayers;
+  
+  // Calculate player totals
+  const activePlayers = players.filter(p => !p.eliminated);
+  const totalChips = players.reduce((sum, p) => sum + p.chips, 0);
+  const averageChips = activePlayers.length > 0 
+    ? Math.round(totalChips / activePlayers.length) 
+    : 0;
+  
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
   // Handle sorting
   const handleSort = (field: keyof Player) => {
     if (sortField === field) {
@@ -156,13 +211,20 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
       setSortDirection("asc");
     }
   };
+<<<<<<< HEAD
 
   // Add a new player - Needs DB interaction
   const handleAddPlayer = async () => {
+=======
+  
+  // Add a new player
+  const handleAddPlayer = () => {
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
     if (!newPlayerName.trim()) {
       toast.error("Please enter a player name");
       return;
     }
+<<<<<<< HEAD
      if (!tournamentId) {
          toast.error("Cannot add player: Tournament ID is missing.");
          return;
@@ -203,24 +265,49 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
 
   // Add players in bulk - Needs DB interaction
   const handleBulkImport = async () => {
+=======
+    
+    const newPlayer = createEmptyPlayer(newPlayerName.trim());
+    newPlayer.chips = settings.initialChips; // Set initial chips
+    
+    dispatch({ type: 'ADD_PLAYER', payload: newPlayer });
+    
+    setNewPlayerName("");
+    setIsAddPlayerDialogOpen(false);
+    
+    toast.success(`Player ${newPlayerName} added`);
+  };
+
+  // Add players in bulk
+  const handleBulkImport = () => {
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
     if (!bulkPlayerNames.trim()) {
       toast.error("Please enter player names");
       return;
     }
+<<<<<<< HEAD
      if (!tournamentId) {
          toast.error("Cannot import players: Tournament ID is missing.");
          return;
      }
 
+=======
+    
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
     const names = bulkPlayerNames
       .split('\n')
       .map(name => name.trim())
       .filter(name => name.length > 0);
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
     if (names.length === 0) {
       toast.error("No valid player names found");
       return;
     }
+<<<<<<< HEAD
 
     const newPlayersToInsert = names.map(name => {
         const player = createEmptyPlayer(name, tournamentId);
@@ -462,11 +549,82 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
   };
 
 
+=======
+    
+    let addedCount = 0;
+    
+    names.forEach(name => {
+      const newPlayer = createEmptyPlayer(name);
+      newPlayer.chips = settings.initialChips; // Set initial chips
+      
+      dispatch({ type: 'ADD_PLAYER', payload: newPlayer });
+      addedCount++;
+    });
+    
+    setBulkPlayerNames("");
+    setIsBulkImportDialogOpen(false);
+    
+    toast.success(`${addedCount} players added`);
+  };
+  
+  // Remove a player
+  const handleRemovePlayer = (id: string) => {
+    const player = players.find(p => p.id === id);
+    if (!player) return;
+    
+    dispatch({ type: 'REMOVE_PLAYER', payload: id });
+    toast.success(`Player ${player.name} removed`);
+  };
+  
+  // Mark player as eliminated
+  const handleEliminatePlayer = (id: string) => {
+    const player = players.find(p => p.id === id);
+    if (!player) return;
+    
+    dispatch({ type: 'MARK_ELIMINATED', payload: id });
+    toast.info(`Player ${player.name} eliminated`);
+  };
+  
+  // Add rebuy for player
+  const handleRebuy = (id: string) => {
+    const player = players.find(p => p.id === id);
+    if (!player) return;
+    
+    // Check if player has reached max rebuys
+    if (player.rebuys >= settings.maxRebuys) {
+      toast.error(`Maximum ${settings.maxRebuys} rebuys reached`);
+      return;
+    }
+    
+    dispatch({ type: 'ADD_REBUY', payload: id });
+    toast.success(`Rebuy for ${player.name} added`);
+  };
+  
+  // Add add-on for player
+  const handleAddOn = (id: string) => {
+    const player = players.find(p => p.id === id);
+    if (!player) return;
+    
+    dispatch({ type: 'ADD_ADDON', payload: id });
+    toast.success(`Add-on for ${player.name} added`);
+  };
+  
+  // Update player chips
+  const handleUpdateChips = (id: string, chips: number) => {
+    const player = players.find(p => p.id === id);
+    if (!player) return;
+    
+    const updatedPlayer = { ...player, chips };
+    dispatch({ type: 'UPDATE_PLAYER', payload: updatedPlayer });
+  };
+  
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
   // Edit player dialog open
   const openEditDialog = (id: string) => {
     setSelectedPlayerId(id);
     setIsEditPlayerDialogOpen(true);
   };
+<<<<<<< HEAD
 
   // Render sort indicator
   const renderSortIndicator = (field: keyof Player) => {
@@ -501,6 +659,18 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
   }
 
 
+=======
+  
+  // Render sort indicator
+  const renderSortIndicator = (field: keyof Player) => {
+    if (sortField !== field) return null;
+    
+    return sortDirection === "asc" 
+      ? <ChevronUp className="w-4 h-4" /> 
+      : <ChevronDown className="w-4 h-4" />;
+  };
+  
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
@@ -508,16 +678,26 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
           <h2 className="text-2xl font-bold tracking-tight">Players</h2>
           <p className="text-muted-foreground">Manage tournament players</p>
         </div>
+<<<<<<< HEAD
 
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
+=======
+        
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
             onClick={() => setIsAddPlayerDialogOpen(true)}
             className="w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Player
           </Button>
+<<<<<<< HEAD
           <Button
+=======
+          <Button 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
             variant="outline"
             onClick={() => setIsBulkImportDialogOpen(true)}
             className="w-full sm:w-auto"
@@ -525,6 +705,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
             <List className="w-4 h-4 mr-2" />
             Bulk Import
           </Button>
+<<<<<<< HEAD
           {/* Optional: Add a button here to trigger table assignment if needed */}
            {/* <Button variant="outline" className="w-full sm:w-auto">
                <Shuffle className="w-4 h-4 mr-2" />
@@ -533,6 +714,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
         </div>
       </div>
 
+=======
+        </div>
+      </div>
+      
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
       {/* Search and stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="col-span-1 space-y-1">
@@ -546,11 +732,16 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
             />
           </div>
         </div>
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
         <div className="col-span-1 md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4 flex flex-col justify-center h-full">
               <div className="text-muted-foreground text-sm">Total Players</div>
+<<<<<<< HEAD
               <div className="text-2xl font-bold mt-1">{players.length}</div> {/* Use local players state */}
             </CardContent>
           </Card>
@@ -573,11 +764,39 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
             <CardContent className="p-4 flex flex-col justify-center h-full">
               <div className="text-muted-foreground text-sm">Average Stack</div>
               <div className="text-2xl font-bold mt-1">{averageChips.toLocaleString()}</div> {/* Use local averageChips */}
+=======
+              <div className="text-2xl font-bold mt-1">{players.length}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 flex flex-col justify-center h-full">
+              <div className="text-muted-foreground text-sm">Active Players</div>
+              <div className="text-2xl font-bold mt-1">{activePlayers.length}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 flex flex-col justify-center h-full">
+              <div className="text-muted-foreground text-sm">Total Chips</div>
+              <div className="text-2xl font-bold mt-1">{totalChips.toLocaleString()}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4 flex flex-col justify-center h-full">
+              <div className="text-muted-foreground text-sm">Average Stack</div>
+              <div className="text-2xl font-bold mt-1">{averageChips.toLocaleString()}</div>
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
             </CardContent>
           </Card>
         </div>
       </div>
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
       {/* Players table */}
       <div className="rounded-md border bg-card">
         <div className="overflow-x-auto">
@@ -585,7 +804,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
             <thead>
               <tr className="border-b bg-muted/50 text-sm text-muted-foreground">
                 <th className="h-10 px-4 text-left font-medium">
+<<<<<<< HEAD
                   <button
+=======
+                  <button 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                     className="flex items-center space-x-1"
                     onClick={() => handleSort("name")}
                   >
@@ -594,7 +817,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                   </button>
                 </th>
                 <th className="h-10 px-4 text-left font-medium">
+<<<<<<< HEAD
                   <button
+=======
+                  <button 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                     className="flex items-center space-x-1"
                     onClick={() => handleSort("tableNumber")}
                   >
@@ -603,7 +830,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                   </button>
                 </th>
                 <th className="h-10 px-4 text-left font-medium">
+<<<<<<< HEAD
                   <button
+=======
+                  <button 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                     className="flex items-center space-x-1"
                     onClick={() => handleSort("seatNumber")}
                   >
@@ -612,7 +843,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                   </button>
                 </th>
                 <th className="h-10 px-4 text-left font-medium">
+<<<<<<< HEAD
                   <button
+=======
+                  <button 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                     className="flex items-center space-x-1"
                     onClick={() => handleSort("chips")}
                   >
@@ -635,10 +870,18 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                 </tr>
               ) : (
                 sortedPlayers.map((player) => (
+<<<<<<< HEAD
                   <tr
                     key={player.id}
                     className={`border-b transition-colors hover:bg-muted/50 ${player.eliminated ? "bg-muted/20 text-muted-foreground" : ""
                       }`}
+=======
+                  <tr 
+                    key={player.id} 
+                    className={`border-b transition-colors hover:bg-muted/50 ${
+                      player.eliminated ? "bg-muted/20 text-muted-foreground" : ""
+                    }`}
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                   >
                     <td className="p-4 font-medium">{player.name}</td>
                     <td className="p-4">
@@ -647,7 +890,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                     <td className="p-4">
                       {player.seatNumber !== null ? player.seatNumber : "-"}
                     </td>
+<<<<<<< HEAD
                     <td className="p-4">{player.chips?.toLocaleString() || '0'}</td> {/* Use optional chaining and default */}
+=======
+                    <td className="p-4">{player.chips.toLocaleString()}</td>
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                     <td className="p-4">
                       {player.eliminated ? (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -659,6 +906,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                         </span>
                       )}
                     </td>
+<<<<<<< HEAD
                     <td className="p-4">{player.rebuys || 0}</td> {/* Use default 0 */}
                     <td className="p-4">{player.addOns || 0}</td> {/* Use default 0 */}
                     <td className="p-4 text-right">
@@ -666,23 +914,41 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                         <Button
                           variant="outline"
                           size="icon"
+=======
+                    <td className="p-4">{player.rebuys}</td>
+                    <td className="p-4">{player.addOns}</td>
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                           onClick={() => openEditDialog(player.id)}
                           title="Edit player"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
+<<<<<<< HEAD
 
                         {/* Rebuy/Eliminate Button */}
                         {!player.eliminated ? (
                           <Button
                             variant="outline"
                             size="icon"
+=======
+                        
+                        {!player.eliminated ? (
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                             onClick={() => handleEliminatePlayer(player.id)}
                             title="Mark as eliminated"
                           >
                             <UserMinus className="h-4 w-4" />
                           </Button>
                         ) : (
+<<<<<<< HEAD
                            // Show Rebuy button if eliminated AND within rebuy period/limits
                            // Use settings from context
                            (state.currentLevel ?? 0) <= (settings.lastRebuyLevel ?? Infinity) && (player.rebuys ?? 0) < (settings.maxRebuys ?? 0) && (
@@ -714,6 +980,32 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                         <Button
                           variant="outline"
                           size="icon"
+=======
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={() => handleRebuy(player.id)}
+                            title="Add rebuy"
+                            disabled={player.rebuys >= settings.maxRebuys || state.currentLevel > settings.lastRebuyLevel}
+                          >
+                            <RefreshCcw className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          onClick={() => handleAddOn(player.id)}
+                          title="Add add-on"
+                          disabled={player.addOns >= settings.maxAddOns || state.currentLevel > settings.lastAddOnLevel}
+                        >
+                          <DollarSign className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                           onClick={() => handleRemovePlayer(player.id)}
                           title="Remove player"
                         >
@@ -728,14 +1020,22 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
           </table>
         </div>
       </div>
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
       {/* Add Player Dialog */}
       <Dialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Player</DialogTitle>
           </DialogHeader>
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label htmlFor="playerName" className="text-sm font-medium">
@@ -749,7 +1049,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
               />
             </div>
           </div>
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddPlayerDialogOpen(false)}>
               Cancel
@@ -760,14 +1064,22 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
       {/* Bulk Import Dialog */}
       <Dialog open={isBulkImportDialogOpen} onOpenChange={setIsBulkImportDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Bulk Import Players</DialogTitle>
           </DialogHeader>
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label htmlFor="bulkPlayerNames" className="text-sm font-medium">
@@ -782,7 +1094,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
               />
             </div>
           </div>
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsBulkImportDialogOpen(false)}>
               Cancel
@@ -793,14 +1109,22 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
       {/* Edit Player Dialog */}
       <Dialog open={isEditPlayerDialogOpen} onOpenChange={setIsEditPlayerDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Player</DialogTitle>
           </DialogHeader>
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
           {selectedPlayer && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -809,7 +1133,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                 </label>
                 <div className="font-medium">{selectedPlayer.name}</div>
               </div>
+<<<<<<< HEAD
 
+=======
+              
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
               <div className="space-y-2">
                 <label htmlFor="playerChips" className="text-sm font-medium">
                   Chips
@@ -817,6 +1145,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                 <Input
                   id="playerChips"
                   type="number"
+<<<<<<< HEAD
                   value={selectedPlayer.chips ?? ''} // Use ?? '' for controlled input
                   onChange={(e) => handleUpdateChips(selectedPlayer.id, parseInt(e.target.value) || 0)}
                 />
@@ -834,6 +1163,25 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                 </div>
               </div>
 
+=======
+                  value={selectedPlayer.chips}
+                  onChange={(e) => handleUpdateChips(selectedPlayer.id, parseInt(e.target.value) || 0)}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm font-medium mb-1">Rebuys</div>
+                  <div className="font-medium">{selectedPlayer.rebuys}</div>
+                </div>
+                
+                <div>
+                  <div className="text-sm font-medium mb-1">Add-ons</div>
+                  <div className="font-medium">{selectedPlayer.addOns}</div>
+                </div>
+              </div>
+              
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm font-medium mb-1">Table</div>
@@ -841,7 +1189,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                     {selectedPlayer.tableNumber !== null ? selectedPlayer.tableNumber : "-"}
                   </div>
                 </div>
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                 <div>
                   <div className="text-sm font-medium mb-1">Seat</div>
                   <div className="font-medium">
@@ -849,7 +1201,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                   </div>
                 </div>
               </div>
+<<<<<<< HEAD
 
+=======
+              
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
               <div>
                 <div className="text-sm font-medium mb-1">Status</div>
                 {selectedPlayer.eliminated ? (
@@ -857,6 +1213,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                       Eliminated
                     </span>
+<<<<<<< HEAD
                     {/* Show Rebuy button in dialog if eliminated AND within rebuy period/limits */}
                     {(state.currentLevel ?? 0) <= (settings.lastRebuyLevel ?? Infinity) && (selectedPlayer.rebuys ?? 0) < (settings.maxRebuys ?? 0) && (
                       <Button
@@ -866,6 +1223,16 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                         onClick={async () => { // Make async
                            await handleRebuy(selectedPlayer.id); // Call handler
                            setIsEditPlayerDialogOpen(false); // Close dialog after action
+=======
+                    {state.currentLevel <= settings.lastRebuyLevel && selectedPlayer.rebuys < settings.maxRebuys && (
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="ml-2"
+                        onClick={() => {
+                          dispatch({ type: 'ADD_REBUY', payload: selectedPlayer.id });
+                          setIsEditPlayerDialogOpen(false);
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                         }}
                       >
                         <RefreshCcw className="w-3 h-3 mr-1" />
@@ -878,6 +1245,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">
                       Active
                     </span>
+<<<<<<< HEAD
 
                     <div className="flex space-x-2">
                        {/* Show Rebuy button in dialog if active AND within rebuy period/limits */}
@@ -911,13 +1279,48 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                             Add-on
                           </Button>
                         )}
+=======
+                    
+                    <div className="flex space-x-2">
+                      {state.currentLevel <= settings.lastRebuyLevel && selectedPlayer.rebuys < settings.maxRebuys && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            dispatch({ type: 'ADD_REBUY', payload: selectedPlayer.id });
+                            toast.success(`Rebuy for ${selectedPlayer.name} added`);
+                          }}
+                        >
+                          <RefreshCcw className="w-3 h-3 mr-1" />
+                          Rebuy
+                        </Button>
+                      )}
+                      
+                      {state.currentLevel <= settings.lastAddOnLevel && selectedPlayer.addOns < settings.maxAddOns && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            dispatch({ type: 'ADD_ADDON', payload: selectedPlayer.id });
+                            toast.success(`Add-on for ${selectedPlayer.name} added`);
+                          }}
+                        >
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          Add-on
+                        </Button>
+                      )}
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
                     </div>
                   </div>
                 )}
               </div>
             </div>
           )}
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditPlayerDialogOpen(false)}>
               Close

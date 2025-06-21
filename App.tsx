@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 // src/App.tsx
-=======
-
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,24 +7,14 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import { TournamentProvider } from "@/context/TournamentContext";
 import HomePage from "./pages/HomePage";
 import Index from "./pages/Index";
-<<<<<<< HEAD
 import Dashboard from "./pages/Dashboard";
-=======
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
 import Players from "./pages/Players";
 import Tables from "./pages/Tables";
 import Setup from "./pages/Setup";
 import Timer from "./pages/Timer";
-<<<<<<< HEAD
 import TournamentView from "./pages/TournamentView";
 import ShortUrlRedirect from "./pages/ShortUrlRedirect";
 import NotFound from "./pages/NotFound";
-=======
-import TournamentView from "./pages/TournamentView"; 
-import ShortUrlRedirect from "./pages/ShortUrlRedirect"; 
-import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
 
 const queryClient = new QueryClient();
 
@@ -40,7 +26,6 @@ const App = () => (
         <Sonner />
         <HashRouter>
           <Routes>
-<<<<<<< HEAD
             {/* Public/General Routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/tournament" element={<Index />} /> {/* Menu for active tournament */}
@@ -55,18 +40,6 @@ const App = () => (
             <Route path="/tournaments/:tournamentId/tables" element={<Tables />} />
             <Route path="/tournaments/:tournamentId/setup" element={<Setup />} />
             <Route path="/tournaments/:tournamentId/timer" element={<Timer />} />
-=======
-            <Route path="/" element={<HomePage />} />
-            <Route path="/tournament" element={<Index />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/players" element={<Players />} />
-            <Route path="/tables" element={<Tables />} />
-            <Route path="/setup" element={<Setup />} />
-            <Route path="/timer" element={<Timer />} />
-            <Route path="/tournament/view" element={<TournamentView />} />
-            <Route path="/t/:shortId" element={<ShortUrlRedirect />} />
-            <Route path="*" element={<NotFound />} />
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
           </Routes>
         </HashRouter>
       </TournamentProvider>
@@ -74,8 +47,4 @@ const App = () => (
   </QueryClientProvider>
 );
 
-<<<<<<< HEAD
 export default App;
-=======
-export default App;
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061

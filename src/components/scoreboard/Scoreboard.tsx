@@ -97,4 +97,8 @@ const Scoreboard: React.FC = () => {
   );
 };
 
+<<<<<<< HEAD
 export default Scoreboard;
+=======
+export default Scoreboard;
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061

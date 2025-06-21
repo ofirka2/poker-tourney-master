@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 // src/types/types.ts (Example - adjust path as needed)
 
+=======
+// Add types for the tournament state
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
 export interface TournamentState {
   isRunning: boolean;
   currentLevel: number;
@@ -12,6 +16,7 @@ export interface TournamentState {
   totalPrizePool: number;
   eliminationCounter: number;
   chipset?: string;
+<<<<<<< HEAD
   allowRebuy?: boolean;
   allowAddon?: boolean;
   format?: string;
@@ -88,6 +93,11 @@ export type TournamentAction =
         value: number 
       } 
     };
+=======
+}
+
+// TournamentAction type has been moved to actionTypes.ts
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
 
 export interface Player {
   id: string;
@@ -112,7 +122,11 @@ export interface TournamentLevel {
   level: number;
   smallBlind: number;
   bigBlind: number;
+<<<<<<< HEAD
   ante?: number;
+=======
+  ante: number;
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
   duration: number;
   isBreak: boolean;
 }
@@ -141,6 +155,7 @@ export interface TournamentSettings {
   payoutStructure: PayoutStructure;
   houseFeeType?: 'none' | 'percentage' | 'fixed';
   houseFeeValue?: number;
+<<<<<<< HEAD
   allowRebuy: boolean;
   allowAddon: boolean;
   includeAnte: boolean;
@@ -163,3 +178,6 @@ export interface Player {
   chips?: number;
     // ... keep any other existing properties
   }
+=======
+}
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
