@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { 
@@ -6,12 +10,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+<<<<<<< HEAD
 import { Link, useParams } from "react-router-dom";
+=======
+import { Link } from "react-router-dom";
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import { useTournament } from "@/context/TournamentContext";
 
 const PlayerDashboard: React.FC = () => {
   const { state, dispatch } = useTournament();
+<<<<<<< HEAD
   const { tournamentId } = useParams<{ tournamentId: string }>();
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   const { players, settings, currentLevel } = state;
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -55,9 +66,12 @@ const PlayerDashboard: React.FC = () => {
     toast.success(`Added add-on for ${player.name}`);
   };
   
+<<<<<<< HEAD
   // Create the correct link path based on whether we have a tournament ID
   const playersLink = tournamentId ? `/tournaments/${tournamentId}/players` : "/players";
   
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -66,7 +80,11 @@ const PlayerDashboard: React.FC = () => {
             Player Management
           </CardTitle>
           <Button asChild size="sm">
+<<<<<<< HEAD
             <Link to={playersLink}>
+=======
+            <Link to="/players">
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
               Manage All Players
               <ChevronRight className="ml-1 h-4 w-4" />
             </Link>
@@ -104,7 +122,11 @@ const PlayerDashboard: React.FC = () => {
                 <div key={player.id} className={`grid grid-cols-12 py-2 text-sm border-b border-dashed last:border-0 items-center ${player.eliminated ? "text-muted-foreground" : ""}`}>
                   <div className="col-span-4 font-medium">{player.name}</div>
                   <div className="col-span-1">{player.tableNumber || "-"}</div>
+<<<<<<< HEAD
                   <div className="col-span-2">{player.chips?.toLocaleString() || '0'}</div>
+=======
+                  <div className="col-span-2">{player.chips.toLocaleString()}</div>
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                   <div className="col-span-1 text-center">{player.rebuys}</div>
                   <div className="col-span-1 text-center">{player.addOns}</div>
                   <div className="col-span-3 text-right">
@@ -159,4 +181,8 @@ const PlayerDashboard: React.FC = () => {
   );
 };
 
+<<<<<<< HEAD
 export default PlayerDashboard;
+=======
+export default PlayerDashboard;
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23

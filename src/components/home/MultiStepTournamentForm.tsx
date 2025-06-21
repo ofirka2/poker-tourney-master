@@ -1,8 +1,24 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
+=======
+<<<<<<< HEAD
+import React, { useState, useEffect } from 'react';
+=======
+
+import React, { useState } from 'react';
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTournament } from '@/context/TournamentContext';
 import { supabase } from '@/integrations/supabase/client';
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+import { tournamentDefaults } from '@/utils/envConfig';
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import {
   Dialog,
   DialogContent,
@@ -15,14 +31,35 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+<<<<<<< HEAD
 import { ENV, chipsets } from '@/config/env';
 import { calculateInitialStack } from '@/utils/stackCalculator';
 import { generateDynamicBlinds, roundToPokerChips } from '@/utils/blindStructureGenerator';
+=======
+<<<<<<< HEAD
+import { ENV, chipsets } from '@/config/env';
+import { calculateInitialStack } from '@/utils/stackCalculator';
+import { generateDynamicBlinds, roundToPokerChips } from '@/utils/blindStructureGenerator';
+=======
+
+const chipsetOptions = [
+  { value: '25,100,500,1000,5000', label: '25, 100, 500, 1000, 5000' },
+  { value: '25,50,100,500,1000', label: '25, 50, 100, 500, 1000' },
+  { value: '5,25,100,500,1000', label: '5, 25, 100, 500, 1000' },
+  { value: '1,2,5,10,25,50', label: '1, 2, 5, 10, 25, 50' },
+  { value: 'custom', label: 'Custom Chipset...' }
+];
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
 const formatOptions = [
   { value: 'freezeout', label: 'Freezeout' },
   { value: 'rebuy', label: 'Rebuy' },
   { value: 'bounty', label: 'Bounty' },
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   { value: 'deepstack', label: 'Deepstack' },
   { value: 'turbo', label: 'Turbo' },
   { value: 'hyper', label: 'Hyper-Turbo' }
@@ -37,7 +74,11 @@ const customChipsetOption = { value: 'custom', label: 'Custom Chipset' };
 interface MultiStepTournamentFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+<<<<<<< HEAD
   onTournamentCreated?: (tournamentData: { id: string }) => void; // Updated callback signature
+=======
+  onTournamentCreated?: () => void; // Callback for when tournament is created
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 }
 
 /**
@@ -84,11 +125,34 @@ const parseChipset = (chipsetString: string): number[] => {
 const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
   open,
   onOpenChange,
+<<<<<<< HEAD
   onTournamentCreated // Updated callback prop
+=======
+  onTournamentCreated // Callback prop
+=======
+  { value: 'deepstack', label: 'Deepstack' }
+];
+
+interface MultiStepTournamentFormProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onTournamentCreated?: () => void;
+}
+
+const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({ 
+  open, 
+  onOpenChange,
+  onTournamentCreated 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 }) => {
   const navigate = useNavigate();
   const { dispatch } = useTournament();
   const [currentStep, setCurrentStep] = useState(1);
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
   // Create full chipset options array (ensuring no duplicates)
   const allChipsetOptions = [...chipsets];
@@ -156,6 +220,28 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
    * @param {React.ChangeEvent<HTMLInputElement | HTMLCheckBoxElement>} e - The input change event.
    */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLCheckBoxElement>) => {
+<<<<<<< HEAD
+=======
+=======
+  const [formData, setFormData] = useState({
+    name: '',
+    startDate: new Date().toISOString().split('T')[0],
+    playerCount: tournamentDefaults.playerCount,
+    desiredDuration: tournamentDefaults.tournamentDuration,
+    allowRebuy: tournamentDefaults.allowRebuy,
+    allowAddon: tournamentDefaults.allowAddon,
+    format: 'rebuy',
+    chipset: '25,100,500,1000,5000',
+    startingStack: 10000,
+    lastRebuyLevel: 6,
+    lastAddonLevel: 6,
+    maxRebuys: 2,
+    maxAddons: 1
+  });
+
+  const handleInputChange = (e) => {
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
@@ -163,6 +249,10 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
     });
   };
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   /**
    * Handles changes to select fields in the form.
    * @param {string} name - The name of the select field.
@@ -180,21 +270,46 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
   /**
    * Navigates to the next step in the form.
    */
+<<<<<<< HEAD
+=======
+=======
+  const handleSelectChange = (name, value) => {
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   const handleNextStep = () => {
     if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
 
+<<<<<<< HEAD
   /**
    * Navigates to the previous step in the form.
    */
+=======
+<<<<<<< HEAD
+  /**
+   * Navigates to the previous step in the form.
+   */
+=======
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   const handlePreviousStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   /**
    * Generates a blind structure based on the tournament settings.
    * Uses the dynamic blind generator.
@@ -274,6 +389,22 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
     let bigBlind = formData.bigBlind;
     let ante = 0;
 
+<<<<<<< HEAD
+=======
+=======
+  const generateBlindLevels = () => {
+    const desiredDurationMinutes = formData.desiredDuration * 60; // Convert hours to minutes
+    const avgLevelDuration = 20; // minutes
+    const numLevels = Math.ceil(desiredDurationMinutes / avgLevelDuration);
+    
+    // Generate blind structure based on desired duration
+    const blindLevels = [];
+    let smallBlind = 25;
+    let bigBlind = 50;
+    let ante = 0;
+    
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     for (let i = 1; i <= numLevels; i++) {
       // Add a break every 4 levels
       if (i > 1 && i % 4 === 0) {
@@ -286,13 +417,26 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
           isBreak: true
         });
       } else {
+<<<<<<< HEAD
         // Calculate ante for this level
         const currentLevelAnte = formData.includeAnte && i >= 4 ? ante : 0; // Start adding antes after level 3 (i.e., from level 4) if includeAnte is true
 
+=======
+<<<<<<< HEAD
+        // Calculate ante for this level
+        const currentLevelAnte = formData.includeAnte && i >= 4 ? ante : 0; // Start adding antes after level 3 (i.e., from level 4) if includeAnte is true
+
+=======
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         blindLevels.push({
           level: i,
           smallBlind,
           bigBlind,
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
           ante: currentLevelAnte,
           duration: 20,
           isBreak: false
@@ -329,17 +473,57 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
       // Generate the blind levels
       const blindLevels = generateBlindLevels();
 
+<<<<<<< HEAD
+=======
+=======
+          ante: i > 3 ? ante : 0, // Start adding antes after level 3
+          duration: 20,
+          isBreak: false
+        });
+        
+        // Increase blinds for next level
+        if (i % 2 === 0) {
+          smallBlind = Math.round(smallBlind * 1.5);
+          bigBlind = smallBlind * 2;
+          if (i > 3) {
+            ante = Math.round(bigBlind * 0.1); // Ante is typically 10% of big blind
+          }
+        }
+      }
+    }
+    
+    return blindLevels;
+  };
+
+  const handleCreate = async () => {
+    try {
+      const blindLevels = generateBlindLevels();
+      
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
       // Create tournament in Supabase
       const { data, error } = await supabase.from('tournaments').insert({
         name: formData.name,
         start_date: formData.startDate,
         status: 'Not Started',
         no_of_players: formData.playerCount,
+<<<<<<< HEAD
         desired_duration: formData.desiredDuration * 60,
+=======
+<<<<<<< HEAD
+        desired_duration: formData.desiredDuration * 60,
+=======
+        desired_duration: formData.desiredDuration * 60, // Convert hours to minutes for database
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         allow_rebuy: formData.allowRebuy,
         allow_addon: formData.allowAddon,
         format: formData.format,
         starting_chips: formData.startingStack,
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         chipset: finalChipset,
         blind_levels: JSON.stringify(blindLevels),
         buy_in: formData.buyIn,
@@ -350,6 +534,17 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
         // last_rebuy_level: settings.lastRebuyLevel,
         // last_addon_level: settings.lastAddOnLevel,
       }).select().single(); // Use select().single() to get the inserted row data
+<<<<<<< HEAD
+=======
+=======
+        chipset: formData.chipset,
+        blind_levels: blindLevels,
+        buy_in: tournamentDefaults.buyInAmount, // Use the environment variable
+        rebuy_amount: tournamentDefaults.buyInAmount,
+        addon_amount: tournamentDefaults.buyInAmount
+      }).select().single();
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
       if (error) {
         toast.error('Error creating tournament: ' + error.message);
@@ -357,6 +552,10 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
         return;
       }
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
       // Dispatch to context (optional, depends on context design)
       // If context manages the *active* tournament, you might dispatch LOAD_TOURNAMENT
       // If context only manages settings defaults, this dispatch might need adjustment
@@ -393,6 +592,7 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
              chipset: finalChipset,
              format: formData.format,
              desiredDuration: formData.desiredDuration, // Store desired duration in settings
+<<<<<<< HEAD
              rebuyChips: formData.startingStack, // Default rebuy chips to starting stack
              addOnChips: formData.startingStack, // Default addon chips to starting stack
              houseFeeType: 'none' as const,
@@ -405,6 +605,11 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
           playerCount: formData.playerCount,
           desiredDuration: formData.desiredDuration,
           includeAnte: formData.includeAnte,
+=======
+          },
+          chipset: finalChipset, // Redundant if in settings, but kept for consistency
+          format: formData.format, // Redundant if in settings
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
           // ... add other top-level tournament properties if your state shape requires it
         }
       });
@@ -412,6 +617,7 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
       toast.success('Tournament created successfully!');
       onOpenChange(false); // Close the dialog
 
+<<<<<<< HEAD
       // Call the callback with the tournament data including the ID
       if (onTournamentCreated) {
         onTournamentCreated({ id: data.id });
@@ -419,12 +625,64 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
         // Fallback navigation if no callback is provided
         navigate(`/tournaments/${data.id}/setup`, { replace: true });
       }
+=======
+      if (onTournamentCreated) {
+        onTournamentCreated(); // Call the callback if provided
+      } else {
+        // Navigate to the setup page for the newly created tournament using its ID
+        // Use replace: true to prevent hash stacking issues with HashRouter
+        navigate(`/tournaments/${data.id}/setup`, { replace: true });
+
+        // Removed the setTimeout and window.location.reload()
+        // React Router handles navigation, no need for manual reload
+      }
+=======
+      // Dispatch to context
+      dispatch({ 
+        type: 'CREATE_TOURNAMENT', 
+        payload: {
+          name: formData.name,
+          startDate: formData.startDate,
+          settings: {
+            buyInAmount: tournamentDefaults.buyInAmount,
+            rebuyAmount: tournamentDefaults.buyInAmount,
+            addOnAmount: tournamentDefaults.buyInAmount,
+            initialChips: formData.startingStack,
+            rebuyChips: formData.startingStack,
+            addOnChips: formData.startingStack,
+            maxRebuys: formData.maxRebuys,
+            maxAddOns: formData.maxAddons,
+            lastRebuyLevel: formData.lastRebuyLevel,
+            lastAddOnLevel: formData.lastAddonLevel,
+            levels: blindLevels,
+            payoutStructure: {
+              places: [
+                { position: 1, percentage: 50 },
+                { position: 2, percentage: 30 },
+                { position: 3, percentage: 20 },
+              ]
+            }
+          }
+        }
+      });
+      
+      toast.success('Tournament created successfully!');
+      onOpenChange(false);
+      
+      // Navigate to setup page
+      navigate('/setup');
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     } catch (err) {
       console.error('Error:', err);
       toast.error('An unexpected error occurred');
     }
   };
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   // Update starting stack when form is first mounted
   useEffect(() => {
     try {
@@ -461,6 +719,11 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
   // }, [formData.startingStack]);
 
 
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -535,6 +798,10 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
                   id="desiredDuration"
                   name="desiredDuration"
                   type="number"
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                   min="0.5" // Changed min duration to 0.5 based on TournamentSetup
                   max="24" // Changed max duration to 24 based on TournamentSetup
                   step="0.5"
@@ -542,10 +809,25 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
                   onChange={handleInputChange}
                 />
                 <p className="text-sm text-muted-foreground mt-1">
+<<<<<<< HEAD
+=======
+=======
+                  min="1"
+                  max="12"
+                  value={formData.desiredDuration}
+                  onChange={handleInputChange}
+                />
+                <p className="text-sm text-muted-foreground">
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                   Approximate tournament length (used to generate blind structure)
                 </p>
               </div>
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
               <div className="grid gap-2">
                 <Label htmlFor="buyIn">Buy-in Amount</Label>
                 <Input
@@ -559,13 +841,28 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
                 />
               </div>
 
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="allowRebuy"
                   name="allowRebuy"
                   checked={formData.allowRebuy}
+<<<<<<< HEAD
                   onCheckedChange={(checked) =>
                     setFormData({ ...formData, allowRebuy: !!checked })
+=======
+<<<<<<< HEAD
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, allowRebuy: !!checked })
+=======
+                  onCheckedChange={(checked) => 
+                    setFormData({...formData, allowRebuy: !!checked})
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                   }
                 />
                 <Label htmlFor="allowRebuy">Allow Rebuys</Label>
@@ -576,12 +873,26 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
                   id="allowAddon"
                   name="allowAddon"
                   checked={formData.allowAddon}
+<<<<<<< HEAD
                   onCheckedChange={(checked) =>
                     setFormData({ ...formData, allowAddon: !!checked })
+=======
+<<<<<<< HEAD
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, allowAddon: !!checked })
+=======
+                  onCheckedChange={(checked) => 
+                    setFormData({...formData, allowAddon: !!checked})
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                   }
                 />
                 <Label htmlFor="allowAddon">Allow Add-ons</Label>
               </div>
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -594,6 +905,11 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
                 />
                 <Label htmlFor="includeAnte">Include Ante</Label>
               </div>
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             </div>
 
             <div className="flex justify-between mt-6">
@@ -635,13 +951,25 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
                     <SelectValue placeholder="Select chipset" />
                   </SelectTrigger>
                   <SelectContent>
+<<<<<<< HEAD
                     {allChipsetOptions.map((option) => (
+=======
+<<<<<<< HEAD
+                    {allChipsetOptions.map((option) => (
+=======
+                    {chipsetOptions.map((option) => (
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
                 {formData.chipset === 'custom' && (
                   <div className="mt-2">
@@ -690,6 +1018,25 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
                     </div>
                   </div>
                 </div>
+<<<<<<< HEAD
+=======
+=======
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="startingStack">Starting Stack</Label>
+                <Input
+                  id="startingStack"
+                  name="startingStack"
+                  type="number"
+                  min="1000"
+                  step="1000"
+                  value={formData.startingStack}
+                  onChange={handleInputChange}
+                  required
+                />
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
               </div>
             </div>
 
@@ -706,4 +1053,8 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
   );
 };
 
+<<<<<<< HEAD
 export default MultiStepTournamentForm;
+=======
+export default MultiStepTournamentForm;
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23

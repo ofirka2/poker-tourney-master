@@ -1,7 +1,17 @@
+<<<<<<< HEAD
 // src/types/types.ts (Example - adjust path as needed)
 
 export interface TournamentState {
   id?: string; // Added tournament ID to state
+=======
+<<<<<<< HEAD
+// src/types/types.ts (Example - adjust path as needed)
+
+=======
+// Add types for the tournament state
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+export interface TournamentState {
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   isRunning: boolean;
   currentLevel: number;
   timeRemaining: number;
@@ -13,6 +23,10 @@ export interface TournamentState {
   totalPrizePool: number;
   eliminationCounter: number;
   chipset?: string;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   allowRebuy?: boolean;
   allowAddon?: boolean;
   format?: string;
@@ -47,7 +61,10 @@ export type TournamentAction =
   | { 
       type: 'CREATE_TOURNAMENT'; 
       payload: { 
+<<<<<<< HEAD
         id?: string; // Added ID to CREATE_TOURNAMENT
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         name: string; 
         startDate: string; 
         settings?: TournamentSettings; 
@@ -63,7 +80,10 @@ export type TournamentAction =
   | { 
       type: 'LOAD_TOURNAMENT'; 
       payload: { 
+<<<<<<< HEAD
         id?: string; // Added ID to LOAD_TOURNAMENT
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         name?: string; 
         startDate?: string; 
         settings?: TournamentSettings; 
@@ -71,10 +91,13 @@ export type TournamentAction =
         chipset?: string;
         isRunning?: boolean;
         currentLevel?: number;
+<<<<<<< HEAD
         timeRemaining?: number;
         totalPrizePool?: number;
         eliminationCounter?: number;
         tables?: Table[];
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         allowRebuy?: boolean;
         allowAddon?: boolean;
         format?: string;
@@ -95,10 +118,21 @@ export type TournamentAction =
         value: number 
       } 
     };
+<<<<<<< HEAD
 
 export interface Player {
   id: string;
   tournament_id?: string; // Made optional for backward compatibility
+=======
+=======
+}
+
+// TournamentAction type has been moved to actionTypes.ts
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+
+export interface Player {
+  id: string;
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   name: string;
   buyIn: boolean;
   rebuys: number;
@@ -120,7 +154,15 @@ export interface TournamentLevel {
   level: number;
   smallBlind: number;
   bigBlind: number;
+<<<<<<< HEAD
   ante?: number;
+=======
+<<<<<<< HEAD
+  ante?: number;
+=======
+  ante: number;
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   duration: number;
   isBreak: boolean;
 }
@@ -149,6 +191,10 @@ export interface TournamentSettings {
   payoutStructure: PayoutStructure;
   houseFeeType?: 'none' | 'percentage' | 'fixed';
   houseFeeValue?: number;
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   allowRebuy: boolean;
   allowAddon: boolean;
   includeAnte: boolean;
@@ -156,4 +202,25 @@ export interface TournamentSettings {
   chipset: string;
   format: string;
   desiredDuration: number;
+<<<<<<< HEAD
 }
+=======
+}
+export interface Player {
+  id: string;
+  tournament_id: string; 
+  name: string;
+  buyIn: boolean;
+  rebuys: number;
+  addOns: number;
+  tableNumber: number | null;
+  seatNumber: number | null;
+  eliminated: boolean;
+  eliminationPosition?: number;
+  chips?: number;
+    // ... keep any other existing properties
+  }
+=======
+}
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23

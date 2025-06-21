@@ -1,12 +1,32 @@
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import React from "react";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import {
+<<<<<<< HEAD
+=======
+=======
+
+import React, { useState, useEffect } from "react";
+import Layout from "@/components/layout/Layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { 
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   Timer as TimerIcon, Users, LayoutGrid, Settings, ChevronRight,
   LayoutDashboard
 } from "lucide-react";
 import { useTournament } from "@/context/TournamentContext";
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import { toast } from "sonner"; // Import toast for messages
 
 const Index = () => {
@@ -45,6 +65,20 @@ const Index = () => {
         <Card className="hover:border-primary/50 transition-colors">
           {/* Link to the dashboard for the specific tournament */}
           <Link to={`/tournaments/${activeTournamentId}/dashboard`} className="block p-6">
+<<<<<<< HEAD
+=======
+=======
+
+const Index = () => {
+  const { state } = useTournament();
+  
+  return (
+    <Layout>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+        <Card className="hover:border-primary/50 transition-colors">
+          <Link to="/dashboard" className="block p-6">
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <h3 className="text-lg font-semibold">Dashboard</h3>
@@ -62,11 +96,23 @@ const Index = () => {
             </div>
           </Link>
         </Card>
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
         {/* Players Link - Update path */}
         <Card className="hover:border-primary/50 transition-colors">
           {/* Link to the players page for the specific tournament */}
           <Link to={`/tournaments/${activeTournamentId}/players`} className="block p-6">
+<<<<<<< HEAD
+=======
+=======
+        
+        <Card className="hover:border-primary/50 transition-colors">
+          <Link to="/players" className="block p-6">
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <h3 className="text-lg font-semibold">Players</h3>
@@ -84,11 +130,23 @@ const Index = () => {
             </div>
           </Link>
         </Card>
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
         {/* Tables Link - Update path */}
         <Card className="hover:border-primary/50 transition-colors">
           {/* Link to the tables page for the specific tournament */}
           <Link to={`/tournaments/${activeTournamentId}/tables`} className="block p-6">
+<<<<<<< HEAD
+=======
+=======
+        
+        <Card className="hover:border-primary/50 transition-colors">
+          <Link to="/tables" className="block p-6">
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <h3 className="text-lg font-semibold">Tables</h3>
@@ -106,11 +164,23 @@ const Index = () => {
             </div>
           </Link>
         </Card>
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
         {/* Timer Link - Update path */}
         <Card className="hover:border-primary/50 transition-colors">
           {/* Link to the timer page for the specific tournament */}
           <Link to={`/tournaments/${activeTournamentId}/timer`} className="block p-6">
+<<<<<<< HEAD
+=======
+=======
+        
+        <Card className="hover:border-primary/50 transition-colors">
+          <Link to="/timer" className="block p-6">
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <h3 className="text-lg font-semibold">Timer</h3>
@@ -128,11 +198,23 @@ const Index = () => {
             </div>
           </Link>
         </Card>
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
         {/* Setup Link - Update path */}
         <Card className="hover:border-primary/50 transition-colors">
           {/* Link to the setup page for the specific tournament */}
           <Link to={`/tournaments/${activeTournamentId}/setup`} className="block p-6">
+<<<<<<< HEAD
+=======
+=======
+        
+        <Card className="hover:border-primary/50 transition-colors">
+          <Link to="/setup" className="block p-6">
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <h3 className="text-lg font-semibold">Setup</h3>

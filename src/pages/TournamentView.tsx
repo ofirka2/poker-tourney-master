@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 // src/pages/TournamentView.tsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useTournament } from "@/context/TournamentContext";
@@ -241,10 +245,161 @@ const TournamentView = () => {
   }
   
   const currentLevelData = settings.levels[currentLevel];
+<<<<<<< HEAD
+=======
+=======
+import React, { useEffect, useState } from "react";
+import { useTournament } from "@/context/TournamentContext";
+import Layout from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
+import { Play, Pause, SkipForward, SkipBack, Square } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
+import TimerDisplay from "@/components/timer/TimerDisplay";
+import { supabase } from "@/integrations/supabase/client";
+import { tournamentDefaults } from "@/utils/envConfig";
+
+const TournamentView = () => {
+  const { state, dispatch } = useTournament();
+  const { currentLevel, isRunning, settings, players, timeRemaining, name } = state;
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tournamentId = searchParams.get("id");
+  const [loadedId, setLoadedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [timerIntervalId, setTimerIntervalId] = useState<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const loadTournament = async () => {
+      if (!tournamentId || tournamentId === loadedId) return;
+      
+      setLoading(true);
+      
+      try {
+        if (!supabase) {
+          console.warn("Supabase client not available, skipping tournament load");
+          return;
+        }
+        
+        const { data, error } = await supabase
+          .from('tournaments')
+          .select('*')
+          .eq('id', tournamentId)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          const blindLevels = data.blind_levels ? JSON.parse(data.blind_levels) : null;
+          
+          const settings = {
+            buyInAmount: data.buy_in || 100,
+            rebuyAmount: data.rebuy_amount || 100,
+            addOnAmount: data.addon_amount || 100,
+            initialChips: data.starting_chips || 10000,
+            rebuyChips: data.rebuy_chips || data.starting_chips || 10000,
+            addOnChips: data.addon_chips || data.starting_chips || 10000,
+            maxRebuys: data.max_rebuys || 2,
+            maxAddOns: data.max_addons || 1,
+            lastRebuyLevel: data.last_rebuy_level || 6,
+            lastAddOnLevel: data.last_addon_level || 6,
+            levels: blindLevels || state.settings.levels,
+            tournamentFormat: data.tournament_format || 'standard',
+            payoutStructure: {
+              places: [
+                { position: 1, percentage: 50 },
+                { position: 2, percentage: 30 },
+                { position: 3, percentage: 20 },
+              ]
+            }
+          };
+          
+          dispatch({ 
+            type: 'LOAD_TOURNAMENT', 
+            payload: {
+              name: data.name,
+              startDate: data.start_date,
+              settings,
+              chipset: data.chipset,
+              players: [],
+              isRunning: false,
+              currentLevel: 0
+            }
+          });
+          
+          setLoadedId(tournamentId);
+          
+          toast.success(`Loaded tournament: ${data.name}`);
+        }
+      } catch (error) {
+        console.error('Error loading tournament:', error);
+        toast.error('Failed to load tournament data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTournament();
+  }, [tournamentId, loadedId]);
+
+  useEffect(() => {
+    if (isRunning && startTime) {
+      const intervalId = setInterval(() => {
+        setElapsedTime(Date.now() - startTime.getTime());
+      }, 1000);
+      setTimerIntervalId(intervalId);
+    } else if (timerIntervalId) {
+      clearInterval(timerIntervalId);
+      setTimerIntervalId(null);
+    }
+
+    return () => {
+      if (timerIntervalId) {
+        clearInterval(timerIntervalId);
+      }
+    };
+  }, [isRunning, startTime]);
+
+  const startTournament = () => {
+    dispatch({ type: "START_TOURNAMENT" });
+    setStartTime(new Date());
+    toast.success("Tournament started!");
+  };
+
+  const pauseTournament = () => {
+    dispatch({ type: "PAUSE_TOURNAMENT" });
+    toast.info("Tournament paused.");
+  };
+
+  const resumeTournament = () => {
+    dispatch({ type: "START_TOURNAMENT" });
+    setStartTime(new Date(Date.now() - elapsedTime));
+    toast.success("Tournament resumed!");
+  };
+
+  const stopTournament = () => {
+    dispatch({ type: "RESET_TOURNAMENT" });
+    setStartTime(null);
+    setElapsedTime(0);
+    toast.warning("Tournament stopped.");
+  };
+
+  const goToSetup = () => {
+    navigate(tournamentId ? `/setup?id=${tournamentId}` : "/setup");
+  };
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
   return (
     <Layout>
       <div className="container mx-auto p-4">
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <h1 className="text-2xl font-bold truncate" title={tournamentNameForDisplay}>{tournamentNameForDisplay}</h1>
@@ -265,12 +420,51 @@ const TournamentView = () => {
             </Button>
             <Button onClick={goToSetup} variant="outline" size="sm">
               <SettingsIcon className="mr-2 h-4 w-4" /> Setup
+<<<<<<< HEAD
+=======
+=======
+        <div className="flex flex-col md:flex-row justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">{name || "Tournament View"}</h1>
+            {tournamentId && (
+              <p className="text-muted-foreground text-sm">Tournament ID: {tournamentId}</p>
+            )}
+          </div>
+          
+          <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
+            {isRunning ? (
+              <>
+                <Button onClick={pauseTournament} variant="secondary">
+                  <Pause className="mr-2" /> Pause
+                </Button>
+                <Button onClick={stopTournament} variant="destructive">
+                  <Square className="mr-2" /> Stop
+                </Button>
+              </>
+            ) : startTime ? (
+              <Button onClick={resumeTournament} variant="secondary">
+                <Play className="mr-2" /> Resume
+              </Button>
+            ) : (
+              <Button onClick={startTournament}>
+                <Play className="mr-2" /> Start
+              </Button>
+            )}
+            <Button onClick={goToSetup} variant="outline">
+              <SkipBack className="mr-2" />
+              Setup
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 order-2 lg:order-1">
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             <div className="bg-card border rounded-lg p-4">
               <h2 className="text-lg font-semibold mb-3">Blind Structure</h2>
               {settings.levels && settings.levels.length > 0 ? (
@@ -305,10 +499,48 @@ const TournamentView = () => {
               ) : (
                 <p className="text-muted-foreground py-4 text-center">No blind levels defined.</p>
               )}
+<<<<<<< HEAD
+=======
+=======
+            <div className="bg-card border rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Blind Structure</h2>
+              <div className="max-h-[60vh] overflow-y-auto pr-2">
+                <table className="w-full">
+                  <thead className="sticky top-0 bg-card z-10">
+                    <tr className="border-b">
+                      <th className="py-2 text-left font-medium">Level</th>
+                      <th className="py-2 text-left font-medium">Blinds</th>
+                      <th className="py-2 text-left font-medium">Ante</th>
+                      <th className="py-2 text-right font-medium">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {settings.levels.map((level, index) => (
+                      <tr key={index} className={`
+                        ${level.isBreak ? 'bg-muted/30' : ''} 
+                        ${index === currentLevel ? 'bg-primary/10 font-medium' : ''}
+                      `}>
+                        <td className="py-2">{level.level}</td>
+                        <td className="py-2">
+                          {level.isBreak ? 'Break' : `${level.smallBlind}/${level.bigBlind}`}
+                        </td>
+                        <td className="py-2">{level.isBreak ? '-' : level.ante}</td>
+                        <td className="py-2 text-right">{level.duration} min</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             </div>
           </div>
           
           <div className="lg:col-span-2 order-1 lg:order-2">
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             <div className="bg-card border rounded-lg p-2 sm:p-4 flex flex-col items-center justify-center min-h-[300px] md:min-h-[400px] lg:h-full">
               {currentLevelData ? (
                  <TimerDisplay fullscreen={true} showDurationEditor={false} />
@@ -321,6 +553,13 @@ const TournamentView = () => {
                   </Button>
                 </div>
               )}
+<<<<<<< HEAD
+=======
+=======
+            <div className="bg-card border rounded-lg p-6 flex justify-center h-full">
+              <TimerDisplay />
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             </div>
           </div>
         </div>
@@ -329,4 +568,12 @@ const TournamentView = () => {
   );
 };
 
+<<<<<<< HEAD
 export default TournamentView;
+=======
+<<<<<<< HEAD
+export default TournamentView;
+=======
+export default TournamentView;
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23

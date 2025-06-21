@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import React from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+=======
+
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import { 
   Timer, Users, LayoutGrid, Settings, Home, 
   ChevronRight, Menu, X, LayoutDashboard 
@@ -14,13 +20,17 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+<<<<<<< HEAD
   const { tournamentId } = useParams<{ tournamentId: string }>();
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   const { state } = useTournament();
   const [menuOpen, setMenuOpen] = React.useState(false);
   
   const isActive = (path: string) => location.pathname === path;
   const isHomePage = location.pathname === "/";
 
+<<<<<<< HEAD
   // Create navigation items with proper tournament-specific paths
   const getNavItems = () => {
     if (tournamentId) {
@@ -43,6 +53,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const navItems = getNavItems();
+=======
+  const navItems = [
+    { path: "/", label: "Home", icon: Home },
+    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/timer", label: "Timer", icon: Timer },
+    { path: "/players", label: "Players", icon: Users },
+    { path: "/tables", label: "Tables", icon: LayoutGrid },
+    { path: "/setup", label: "Setup", icon: Settings }
+  ];
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   
   // Current level information
   const currentLevel = state.settings.levels[state.currentLevel];
@@ -58,9 +78,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <header className="border-b border-border/60 bg-background/95 backdrop-blur-sm sticky top-0 z-10">
           <div className="container mx-auto px-4 py-4 flex justify-between items-center">
             <div className="flex items-center space-x-2">
+<<<<<<< HEAD
               <Link to="/" className="text-xl font-semibold text-foreground tracking-tight hover:text-primary transition-colors">
                 Poker Master
               </Link>
+=======
+              <h1 className="text-xl font-semibold text-foreground tracking-tight">Poker Master</h1>
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
               
               {/* Tournament status badge */}
               {state.isRunning ? (
@@ -69,6 +93,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-poker-green"></span>
                 </span>
               ) : null}
+<<<<<<< HEAD
 
               {/* Tournament ID badge */}
               {tournamentId && (
@@ -76,6 +101,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   ID: {tournamentId.substring(0, 8)}...
                 </span>
               )}
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
             </div>
             
             {/* Mobile menu button */}
@@ -135,7 +162,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
       
       {/* Tournament status bar - Hide on home page */}
+<<<<<<< HEAD
       {!isHomePage && state.players.length > 0 && tournamentId && (
+=======
+      {!isHomePage && state.players.length > 0 && (
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         <div className="bg-muted/30 border-b border-border/30">
           <div className="container mx-auto px-4 py-2 flex flex-wrap justify-between items-center gap-y-2 text-sm">
             <div className="flex items-center space-x-6">
@@ -202,4 +233,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   );
 };
 
+<<<<<<< HEAD
 export default Layout;
+=======
+export default Layout;
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23

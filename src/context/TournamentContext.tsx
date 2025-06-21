@@ -1,12 +1,34 @@
+<<<<<<< HEAD
 import React, { createContext, useReducer, useContext } from 'react';
 import { TournamentState, TournamentAction, TournamentSettings } from '@/types/types'; 
+=======
+<<<<<<< HEAD
+import React, { createContext, useReducer, useContext } from 'react';
+import { TournamentState, TournamentAction, TournamentSettings } from '@/types/types'; 
+=======
+
+import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { toast } from "sonner";
+import { TournamentState } from "@/types/types";
+import { TournamentAction } from "@/types/actionTypes";
+import { tournamentReducer } from "./tournamentReducer";
+import { initialState } from "./defaultSettings";
+import { generatePlayerId, createEmptyPlayer } from "./playerUtils";
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 
 const TournamentContext = createContext<{
   state: TournamentState;
   dispatch: React.Dispatch<TournamentAction>;
+<<<<<<< HEAD
 }>({
   state: {
     id: '',
+=======
+<<<<<<< HEAD
+}>({
+  state: {
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     isRunning: false,
     currentLevel: 0,
     timeRemaining: 0,
@@ -27,6 +49,7 @@ const TournamentContext = createContext<{
       lastAddOnLevel: 0,
       levels: [],
       payoutStructure: { places: [] },
+<<<<<<< HEAD
       allowRebuy: true,
       allowAddon: true,
       includeAnte: false,
@@ -36,6 +59,8 @@ const TournamentContext = createContext<{
       desiredDuration: 4,
       houseFeeType: 'none',
       houseFeeValue: 0,
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     },
     totalPrizePool: 0,
     eliminationCounter: 0,
@@ -46,6 +71,7 @@ const TournamentContext = createContext<{
 
 const tournamentReducer = (state: TournamentState, action: TournamentAction): TournamentState => {
   switch (action.type) {
+<<<<<<< HEAD
     case 'CREATE_TOURNAMENT':
       return {
         ...state,
@@ -53,12 +79,23 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
         name: action.payload.name,
         startDate: action.payload.startDate,
         settings: action.payload.settings || state.settings,
+=======
+    // ... other cases
+    case 'CREATE_TOURNAMENT':
+      return {
+        ...state,
+        name: action.payload.name,
+        startDate: action.payload.startDate,
+        settings: action.payload.settings,
+        // Add these lines to update the state with form data
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         allowRebuy: action.payload.allowRebuy,
         allowAddon: action.payload.allowAddon,
         format: action.payload.format,
         chipset: action.payload.chipset,
         playerCount: action.payload.playerCount,
         desiredDuration: action.payload.desiredDuration,
+<<<<<<< HEAD
         includeAnte: action.payload.includeAnte,
       };
 
@@ -336,6 +373,10 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
         })
       };
 
+=======
+      };
+    // ... other cases
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     default:
       return state;
   }
@@ -343,7 +384,10 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
 
 export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(tournamentReducer, {
+<<<<<<< HEAD
     id: '',
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     isRunning: false,
     currentLevel: 0,
     timeRemaining: 0,
@@ -364,6 +408,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       lastAddOnLevel: 0,
       levels: [],
       payoutStructure: { places: [] },
+<<<<<<< HEAD
       allowRebuy: true,
       allowAddon: true,
       includeAnte: false,
@@ -373,12 +418,41 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       desiredDuration: 4,
       houseFeeType: 'none',
       houseFeeValue: 0,
+=======
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     },
     totalPrizePool: 0,
     eliminationCounter: 0,
     chipset: '',
   });
 
+<<<<<<< HEAD
+=======
+=======
+} | undefined>(undefined);
+
+export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(tournamentReducer, initialState);
+  
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    
+    if (state.isRunning && state.timeRemaining > 0) {
+      timer = setInterval(() => {
+        dispatch({ type: 'SET_TIME', payload: state.timeRemaining - 1 });
+      }, 1000);
+    } else if (state.timeRemaining === 0 && state.isRunning) {
+      dispatch({ type: 'NEXT_LEVEL' });
+      toast.info(`Level ${state.currentLevel + 1} complete`);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [state.isRunning, state.timeRemaining, state.currentLevel]);
+  
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   return (
     <TournamentContext.Provider value={{ state, dispatch }}>
       {children}
@@ -387,5 +461,21 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 };
 
 export const useTournament = () => {
+<<<<<<< HEAD
   return useContext(TournamentContext);
 };
+=======
+<<<<<<< HEAD
+  return useContext(TournamentContext);
+};
+=======
+  const context = useContext(TournamentContext);
+  if (context === undefined) {
+    throw new Error('useTournament must be used within a TournamentProvider');
+  }
+  return context;
+};
+
+export { generatePlayerId, createEmptyPlayer };
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23

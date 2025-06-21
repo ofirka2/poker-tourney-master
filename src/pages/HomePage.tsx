@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 /**
  * @file Home page component displaying tournament history and a button to create new tournaments.
  * @description Fetches and displays a list of past tournaments from Supabase and provides
@@ -82,12 +86,50 @@ const HomePage = () => {
       } catch (error) {
         console.error('Error fetching tournaments:', error);
         // TODO: Display user-friendly error message (e.g., toast notification)
+<<<<<<< HEAD
+=======
+=======
+
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import Layout from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { Plus, Trophy, Eye } from "lucide-react";
+import { format } from "date-fns";
+import MultiStepTournamentForm from "@/components/home/MultiStepTournamentForm";
+
+const HomePage = () => {
+  const [tournaments, setTournaments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateTournament, setShowCreateTournament] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchTournaments = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tournaments')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setTournaments(data || []);
+      } catch (error) {
+        console.error('Error fetching tournaments:', error);
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
       } finally {
         setLoading(false);
       }
     };
 
     fetchTournaments();
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   }, []); // Empty dependency array means this runs once on mount
 
   /**
@@ -96,7 +138,11 @@ const HomePage = () => {
    * This callback receives the newly created tournament data, including the ID.
    * @param newTournamentData - The data of the newly created tournament (from MultiStepTournamentForm).
    */
+<<<<<<< HEAD
   const handleTournamentCreated = (newTournamentData: { id: string }) => {
+=======
+  const handleTournamentCreated = (newTournamentData: { id: string | null }) => { // Accept data with potentially null ID
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     setShowCreateTournament(false);
     // Navigate to the setup page for the specific tournament using its ID
     if (newTournamentData?.id) { // Check if ID exists
@@ -109,7 +155,11 @@ const HomePage = () => {
         console.error("Tournament created but no valid ID received for navigation.");
         // Fallback navigation or error message
         // Navigate to the dashboard or homepage if ID is missing
+<<<<<<< HEAD
         navigate('/'); // Example fallback
+=======
+        navigate('/dashboard'); // Example fallback
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     }
   };
 
@@ -119,9 +169,28 @@ const HomePage = () => {
    * @param tournamentId - The ID of the tournament to view.
    */
   const handleViewTournament = (tournamentId: string) => {
+<<<<<<< HEAD
     navigate(`/tournaments/${tournamentId}/dashboard`);
   };
 
+=======
+  navigate(`/tournaments/${tournamentId}/dashboard`);
+};
+=======
+  }, []);
+
+  const handleTournamentCreated = () => {
+    setShowCreateTournament(false);
+    navigate('/setup');
+  };
+
+  const handleViewTournament = (tournamentId) => {
+    // Navigate to setup page with tournament ID
+    navigate(`/setup?id=${tournamentId}`);
+  };
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   return (
     <Layout>
       <div className="container mx-auto p-4">
@@ -172,6 +241,10 @@ const HomePage = () => {
                     </thead>
                     <tbody>
                       {tournaments.map((tournament) => (
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                         <tr
                           key={tournament.id}
                           className="border-b last:border-0 hover:bg-muted/50"
@@ -179,7 +252,11 @@ const HomePage = () => {
                           <td className="py-3 font-medium">{tournament.name || 'Untitled Tournament'}</td>
                           <td className="py-3 text-muted-foreground">
                             {tournament.start_date
+<<<<<<< HEAD
                               ? format(new Date(tournament.start_date), 'MMM d, yyyy') // Corrected format string
+=======
+                              ? format(new Date(tournament.start_date), 'MMM d,') // Corrected format string
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                               : 'Not set'}
                           </td>
                           <td className="py-3">
@@ -210,6 +287,45 @@ const HomePage = () => {
                                   View
                                 </Button>
                             )}
+<<<<<<< HEAD
+=======
+=======
+                        <tr key={tournament.id} className="border-b last:border-0 hover:bg-muted/50">
+                          <td className="py-3 font-medium">{tournament.name || 'Untitled Tournament'}</td>
+                          <td className="py-3 text-muted-foreground">
+                            {tournament.start_date 
+                              ? format(new Date(tournament.start_date), 'MMM d, yyyy')
+                              : 'Not set'}
+                          </td>
+                          <td className="py-3">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              tournament.status === 'Completed' 
+                                ? 'bg-green-100 text-green-800'
+                                : tournament.status === 'In Progress'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {tournament.status || 'Not Started'}
+                            </span>
+                          </td>
+                          <td className="py-3 text-muted-foreground">
+                            {tournament.no_of_players || 0}
+                          </td>
+                          <td className="py-3 text-muted-foreground">
+                            {tournament.winner || '-'}
+                          </td>
+                          <td className="py-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleViewTournament(tournament.id)}
+                              className="flex items-center"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </Button>
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                           </td>
                         </tr>
                       ))}
@@ -221,15 +337,37 @@ const HomePage = () => {
           </div>
         )}
 
+<<<<<<< HEAD
         {/* Pass the updated callback to onTournamentCreated */}
         <MultiStepTournamentForm
           open={showCreateTournament}
           onOpenChange={setShowCreateTournament}
           onTournamentCreated={handleTournamentCreated}
+=======
+<<<<<<< HEAD
+        {/* Pass a callback to onTournamentCreated that receives the new tournament data */}
+        {/* The callback function now correctly calls handleTournamentCreated with the data */}
+        <MultiStepTournamentForm
+          open={showCreateTournament}
+          onOpenChange={setShowCreateTournament}
+          onTournamentCreated={(newTournamentData) => {
+             handleTournamentCreated(newTournamentData);
+          }}
+=======
+        <MultiStepTournamentForm 
+          open={showCreateTournament}
+          onOpenChange={setShowCreateTournament}
+          onTournamentCreated={handleTournamentCreated}
+>>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         />
       </div>
     </Layout>
   );
 };
 
+<<<<<<< HEAD
 export default HomePage;
+=======
+export default HomePage;
+>>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
