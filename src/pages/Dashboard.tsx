@@ -1,17 +1,6 @@
-<<<<<<< HEAD
 // src/pages/Dashboard.tsx
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom"; // Added useNavigate
-=======
-<<<<<<< HEAD
-// src/pages/Dashboard.tsx
-import React, { useEffect, useState, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom"; // Added useNavigate
-=======
-
-import React from "react";
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
+import { useParams, Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import TimerDisplay from "@/components/timer/TimerDisplay";
 import Scoreboard from "@/components/scoreboard/Scoreboard";
@@ -19,32 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import {
   Timer as TimerIcon, Users, LayoutGrid, Settings as SettingsIcon, ChevronRight,
   Play, Clock, Trophy, ArrowRight, UserMinus, Search, X, Check,
   RefreshCw, Plus, Wallet
-<<<<<<< HEAD
-=======
-=======
-import { Link } from "react-router-dom";
-import { 
-  Timer as TimerIcon, Users, LayoutGrid, Settings, ChevronRight, 
-  Play, Clock, Trophy, ArrowRight, UserMinus, Search, X, Check,
-  RefreshCw, Plus, Wallet 
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 } from "lucide-react";
 import { useTournament } from "@/context/TournamentContext";
 import { toast } from "sonner";
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import { supabase } from "@/integrations/supabase/client";
 import { PayoutPlace, TournamentSettings, Player as PlayerType } from "@/types/types";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
@@ -84,32 +55,26 @@ const Dashboard = () => {
     name: contextTournamentName,
     id: contextTournamentId
   } = state;
-  const navigate = useNavigate(); // For potential redirects
+  const navigate = useNavigate();
 
-  // Corrected initial loading state:
-  // Start loading if tournamentId is present and not already matching the context.
   const [loadingTournament, setLoadingTournament] = useState(() => {
     if (!tournamentId) return false;
     return contextTournamentId !== tournamentId;
   });
 
   const [tournamentNameForDisplay, setTournamentNameForDisplay] = useState(
-    // Initialize with context name if IDs match, otherwise default
     contextTournamentId === tournamentId && contextTournamentName ? contextTournamentName : "Tournament Dashboard"
   );
 
   const loadTournamentData = useCallback(async (id: string) => {
-    // If context already has this ID and name, and we're not forcing a load, bail out.
     if (contextTournamentId === id && contextTournamentName && !loadingTournament) {
       setTournamentNameForDisplay(contextTournamentName);
-      // Ensure loading is false if we bail out here after initial state was true
       if (loadingTournament) setLoadingTournament(false);
       return;
     }
 
     console.log(`Dashboard: Attempting to load tournament with ID: ${id}`);
-    // Ensure loading is true when we start fetching
-    setLoadingTournament(true); 
+    setLoadingTournament(true);
 
     try {
       const { data: tournamentData, error: tournamentError } = await supabase
@@ -119,13 +84,12 @@ const Dashboard = () => {
         .single();
 
       if (tournamentError) {
-        // If error is due to no rows found, it's a specific case of "not found"
-        if (tournamentError.code === 'PGRST116') { // PostgREST code for "single row not found"
+        if (tournamentError.code === 'PGRST116') {
           toast.error(`Dashboard: Tournament with ID ${id} not found.`);
           dispatch({ type: 'RESET_TOURNAMENT' });
           setTournamentNameForDisplay("Tournament Not Found");
         } else {
-          throw tournamentError; // Re-throw other errors
+          throw tournamentError;
         }
       } else if (tournamentData) {
         const blindLevels = tournamentData.blind_levels ? JSON.parse(tournamentData.blind_levels) : [];
@@ -170,7 +134,7 @@ const Dashboard = () => {
           console.error("Dashboard: Error fetching players:", playersError);
           toast.error("Failed to load players for the tournament.");
         }
-        
+
         const tournamentPlayers: PlayerType[] = playersData || [];
         const initialTotalPrizePool = tournamentPlayers.reduce((acc, player) => {
             let c = 0; if (player.buyIn) c += loadedSettings.buyInAmount;
@@ -180,14 +144,14 @@ const Dashboard = () => {
 
         dispatch({
           type: 'LOAD_TOURNAMENT',
-          payload: { /* ... (same payload as before, ensuring all fields are set) ... */ 
+          payload: {
             id: tournamentData.id,
             name: tournamentData.name,
             startDate: tournamentData.start_date,
             settings: loadedSettings,
             chipset: tournamentData.chipset || '',
             players: tournamentPlayers,
-            isRunning: tournamentData.status === 'In Progress', 
+            isRunning: tournamentData.status === 'In Progress',
             currentLevel: tournamentData.current_level || 0,
             timeRemaining: tournamentData.time_remaining ?? (loadedSettings.levels[tournamentData.current_level || 0]?.duration * 60 || 0),
             totalPrizePool: initialTotalPrizePool,
@@ -196,8 +160,7 @@ const Dashboard = () => {
            }
         });
         setTournamentNameForDisplay(tournamentData.name);
-        // toast.success(`Loaded dashboard for: ${tournamentData.name}`); // Consider if this toast is too noisy on every load
-      } else { // Should be caught by PGRST116 if using .single()
+      } else {
         toast.error(`Dashboard: No data for tournament ID ${id}.`);
         dispatch({ type: 'RESET_TOURNAMENT' });
         setTournamentNameForDisplay("Tournament Data Error");
@@ -211,21 +174,19 @@ const Dashboard = () => {
     } finally {
       setLoadingTournament(false);
     }
-  }, [dispatch, contextTournamentId, contextTournamentName]); // Removed loadingTournament from deps
+  }, [dispatch, contextTournamentId, contextTournamentName]);
 
   useEffect(() => {
     if (tournamentId) {
       loadTournamentData(tournamentId);
     } else {
-      // No tournamentId in URL, ensure context is clear or user is redirected
-      if(contextTournamentId) { // Only dispatch if context actually holds a tournament
+      if(contextTournamentId) {
           dispatch({ type: 'RESET_TOURNAMENT' });
       }
       setTournamentNameForDisplay("Tournament Dashboard");
-      setLoadingTournament(false); // Not loading anything specific
+      setLoadingTournament(false);
     }
   }, [tournamentId, loadTournamentData, dispatch, contextTournamentId]);
-
 
   const activePlayersList = players.filter(p => !p.eliminated);
   const currentLevelData = settings.levels && settings.levels.length > currentLevel ? settings.levels[currentLevel] : null;
@@ -247,10 +208,7 @@ const Dashboard = () => {
       </Layout>
     );
   }
-  
-  // This condition checks if, after attempting to load (loadingTournament is false),
-  // the context's ID still doesn't match the URL's tournamentId.
-  // This implies the load failed or the ID was invalid.
+
   if (tournamentId && contextTournamentId !== tournamentId && !loadingTournament) {
       return (
           <Layout>
@@ -267,8 +225,7 @@ const Dashboard = () => {
           </Layout>
       );
   }
-  
-  // If there's no tournamentId in the URL at all (e.g. user navigated to /dashboard directly by mistake)
+
   if (!tournamentId && !loadingTournament) {
     return (
          <Layout>
@@ -286,8 +243,6 @@ const Dashboard = () => {
     )
   }
 
-
-  // --- Render actual dashboard content if tournamentId is present and context.id matches ---
   return (
     <Layout>
       <div className="mb-4 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
@@ -299,7 +254,6 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Rest of the Dashboard JSX as before, using `state` or derived values */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 overflow-hidden">
           <CardHeader className="pb-0">
@@ -312,62 +266,6 @@ const Dashboard = () => {
                     <Button
                       variant="destructive"
                       size="sm"
-<<<<<<< HEAD
-=======
-=======
-
-const Dashboard = () => {
-  const { state, dispatch } = useTournament();
-  const { players, settings, currentLevel, isRunning } = state;
-  
-  const activePlayers = players.filter(p => !p.eliminated);
-  const currentLevelData = settings.levels[currentLevel];
-  const averageStack = activePlayers.length > 0 
-    ? Math.round(activePlayers.reduce((sum, p) => sum + p.chips, 0) / activePlayers.length) 
-    : 0;
-
-  const handleEndTournament = () => {
-    if (activePlayers.length > 0) {
-      const remainingPlayers = [...activePlayers].sort((a, b) => a.chips - b.chips);
-      
-      for (let i = 0; i < remainingPlayers.length - 1; i++) {
-        dispatch({ type: 'MARK_ELIMINATED', payload: remainingPlayers[i].id });
-      }
-      
-      if (remainingPlayers.length > 0) {
-        const winner = remainingPlayers[remainingPlayers.length - 1];
-        toast.success(`🏆 ${winner.name} wins the tournament!`);
-      }
-    }
-    
-    dispatch({ type: 'PAUSE_TOURNAMENT' });
-  };
-
-  return (
-    <Layout>
-      <div className="mb-4 flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Tournament Dashboard</h1>
-        {state.name && (
-          <Badge variant="outline" className="text-base px-3 py-1">
-            {state.name}
-          </Badge>
-        )}
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 overflow-hidden">
-          <CardHeader className="pb-0">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Tournament Status</CardTitle>
-              <div className="flex items-center gap-2">
-                {isRunning ? (
-                  <>
-                    <Badge variant="default" className="bg-poker-green">Running</Badge>
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                       onClick={handleEndTournament}
                       disabled={players.length === 0}
                     >
@@ -376,15 +274,7 @@ const Dashboard = () => {
                     </Button>
                   </>
                 ) : (
-<<<<<<< HEAD
                   <Badge variant="outline">Not Started / Paused</Badge>
-=======
-<<<<<<< HEAD
-                  <Badge variant="outline">Not Started / Paused</Badge>
-=======
-                  <Badge variant="outline">Not Started</Badge>
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                 )}
               </div>
             </div>
@@ -392,10 +282,6 @@ const Dashboard = () => {
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="flex flex-col justify-center">
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                 <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
                   <div className="text-center">
                     <div className="text-2xl sm:text-3xl font-bold">{players.length}</div>
@@ -421,67 +307,18 @@ const Dashboard = () => {
                       <>
                         <div className="flex justify-between">
                           <div className="text-muted-foreground">Blinds</div>
-<<<<<<< HEAD
-=======
-=======
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold">{players.length}</div>
-                    <div className="text-sm text-muted-foreground">Total Players</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold">{activePlayers.length}</div>
-                    <div className="text-sm text-muted-foreground">Active Players</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold">${state.totalPrizePool}</div>
-                    <div className="text-sm text-muted-foreground">Prize Pool</div>
-                  </div>
-                </div>
-                
-                {currentLevelData && (
-                  <div className="bg-muted/30 p-4 rounded-lg space-y-3">
-                    <div className="flex justify-between">
-                      <div className="text-sm text-muted-foreground">Current Level</div>
-                      <div className="font-medium">{currentLevelData.level}</div>
-                    </div>
-                    
-                    {!currentLevelData.isBreak && (
-                      <>
-                        <div className="flex justify-between">
-                          <div className="text-sm text-muted-foreground">Blinds</div>
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                           <div className="font-medium">
                             {currentLevelData.smallBlind}/{currentLevelData.bigBlind}
                           </div>
                         </div>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                         <div className="flex justify-between">
                           <div className="text-muted-foreground">Ante</div>
                           <div className="font-medium">
                             {currentLevelData.ante > 0 ? currentLevelData.ante : "-"}
-<<<<<<< HEAD
-=======
-=======
-                        
-                        <div className="flex justify-between">
-                          <div className="text-sm text-muted-foreground">Ante</div>
-                          <div className="font-medium">
-                            {currentLevelData.ante || "-"}
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                           </div>
                         </div>
                       </>
                     )}
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                      {currentLevelData.isBreak && (
                         <div className="flex justify-between">
                             <div className="text-muted-foreground">Status</div>
@@ -504,54 +341,17 @@ const Dashboard = () => {
                           <span className="text-muted-foreground">Next: </span>
                           {settings.levels[currentLevel + 1].isBreak ? (
                             <span className="ml-1 text-green-600">Break</span>
-<<<<<<< HEAD
-=======
-=======
-                    
-                    <div className="flex justify-between">
-                      <div className="text-sm text-muted-foreground">Duration</div>
-                      <div className="font-medium">{currentLevelData.duration} min</div>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <div className="text-sm text-muted-foreground">Average Stack</div>
-                      <div className="font-medium">{averageStack.toLocaleString()}</div>
-                    </div>
-                    
-                    {currentLevel < settings.levels.length - 1 && (
-                      <>
-                        <Separator />
-                        
-                        <div className="flex items-center text-sm">
-                          <ArrowRight className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Next: </span>
-                          
-                          {settings.levels[currentLevel + 1].isBreak ? (
-                            <span className="ml-1 text-poker-green">Break</span>
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                           ) : (
                             <span className="ml-1">
                               {settings.levels[currentLevel + 1].smallBlind}/
                               {settings.levels[currentLevel + 1].bigBlind}
-<<<<<<< HEAD
                                {settings.levels[currentLevel + 1].ante > 0 ? ` (A: ${settings.levels[currentLevel + 1].ante})` : ""}
-=======
-<<<<<<< HEAD
-                               {settings.levels[currentLevel + 1].ante > 0 ? ` (A: ${settings.levels[currentLevel + 1].ante})` : ""}
-=======
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                             </span>
                           )}
                         </div>
                       </>
                     )}
                   </div>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                 ) : (
                   <p className="text-muted-foreground text-sm text-center py-4">No levels defined for this tournament.</p>
                 )}
@@ -559,74 +359,28 @@ const Dashboard = () => {
                 <div className="flex flex-col sm:flex-row mt-4 gap-3">
                   <Button asChild className="flex-1">
                     <Link to={tournamentId ? `/tournaments/${tournamentId}/timer` : "/timer"}>
-<<<<<<< HEAD
-=======
-=======
-                )}
-                
-                <div className="flex flex-col mt-4 sm:flex-row gap-3">
-                  <Button asChild className="flex-1">
-                    <Link to="/timer">
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                       <Clock className="mr-2 h-4 w-4" />
                       Full Timer
                     </Link>
                   </Button>
-<<<<<<< HEAD
                   <Button asChild variant="outline" className="flex-1">
                     <Link to={tournamentId ? `/tournaments/${tournamentId}/setup` : "/setup"}>
                       <SettingsIcon className="mr-2 h-4 w-4" />
-=======
-<<<<<<< HEAD
-                  <Button asChild variant="outline" className="flex-1">
-                    <Link to={tournamentId ? `/tournaments/${tournamentId}/setup` : "/setup"}>
-                      <SettingsIcon className="mr-2 h-4 w-4" />
-=======
-                  
-                  <Button asChild variant="outline" className="flex-1">
-                    <Link to="/setup">
-                      <Settings className="mr-2 h-4 w-4" />
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                       Settings
                     </Link>
                   </Button>
                 </div>
               </div>
-<<<<<<< HEAD
               <div className="flex items-center justify-center pt-4 lg:pt-0">
-=======
-<<<<<<< HEAD
-              <div className="flex items-center justify-center pt-4 lg:pt-0">
-=======
-              
-              <div className="flex items-center justify-center">
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
                 <TimerDisplay />
               </div>
             </div>
           </CardContent>
         </Card>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-        
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
         <div className="space-y-6">
           <Scoreboard />
         </div>
       </div>
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-      
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
       <div className="mt-6">
         <PlayerDashboard />
       </div>
@@ -634,12 +388,4 @@ const Dashboard = () => {
   );
 };
 
-<<<<<<< HEAD
 export default Dashboard;
-=======
-<<<<<<< HEAD
-export default Dashboard;
-=======
-export default Dashboard;
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23

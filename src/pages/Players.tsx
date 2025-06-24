@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
 import React from "react";
 import Layout from "@/components/layout/Layout";
 import PlayerList from "@/components/players/PlayerList";
@@ -25,20 +21,6 @@ const Players = () => {
     <Layout>
       {/* Pass the tournamentId down to the PlayerList component */}
       <PlayerList tournamentId={tournamentId} />
-<<<<<<< HEAD
-=======
-=======
-
-import React from "react";
-import Layout from "@/components/layout/Layout";
-import PlayerList from "@/components/players/PlayerList";
-
-const Players = () => {
-  return (
-    <Layout>
-      <PlayerList />
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     </Layout>
   );
 };
