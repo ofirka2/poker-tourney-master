@@ -1,77 +1,54 @@
-<<<<<<< HEAD
 import React, { createContext, useReducer, useContext } from 'react';
-import { TournamentState, TournamentAction, TournamentSettings } from '@/types/types'; 
-=======
-<<<<<<< HEAD
-import React, { createContext, useReducer, useContext } from 'react';
-import { TournamentState, TournamentAction, TournamentSettings } from '@/types/types'; 
-=======
+import { TournamentState, TournamentAction, TournamentSettings, Player, Table } from '@/types/types';
 
-import React, { createContext, useContext, useReducer, useEffect } from "react";
-import { toast } from "sonner";
-import { TournamentState } from "@/types/types";
-import { TournamentAction } from "@/types/actionTypes";
-import { tournamentReducer } from "./tournamentReducer";
-import { initialState } from "./defaultSettings";
-import { generatePlayerId, createEmptyPlayer } from "./playerUtils";
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
+// Define a more complete initial state that matches the TournamentState interface
+const initialTournamentState: TournamentState = {
+  id: '',
+  isRunning: false,
+  currentLevel: 0,
+  timeRemaining: 0,
+  name: '',
+  startDate: '',
+  players: [],
+  tables: [],
+  settings: {
+    buyInAmount: 0,
+    rebuyAmount: 0,
+    addOnAmount: 0,
+    initialChips: 0,
+    rebuyChips: 0,
+    addOnChips: 0,
+    maxRebuys: 0,
+    maxAddOns: 0,
+    lastRebuyLevel: 0,
+    lastAddOnLevel: 0,
+    levels: [],
+    payoutStructure: { places: [] },
+    allowRebuy: true,
+    allowAddon: true,
+    includeAnte: false,
+    playerCount: 9,
+    chipset: "25,100,500,1000,5000",
+    format: 'standard',
+    desiredDuration: 4,
+    houseFeeType: 'none',
+    houseFeeValue: 0,
+  },
+  totalPrizePool: 0,
+  eliminationCounter: 0,
+  chipset: '', // This might be redundant if chipset is always in settings, but keeping for now
+};
 
 const TournamentContext = createContext<{
   state: TournamentState;
   dispatch: React.Dispatch<TournamentAction>;
-<<<<<<< HEAD
 }>({
-  state: {
-    id: '',
-=======
-<<<<<<< HEAD
-}>({
-  state: {
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
-    isRunning: false,
-    currentLevel: 0,
-    timeRemaining: 0,
-    name: '',
-    startDate: '',
-    players: [],
-    tables: [],
-    settings: {
-      buyInAmount: 0,
-      rebuyAmount: 0,
-      addOnAmount: 0,
-      initialChips: 0,
-      rebuyChips: 0,
-      addOnChips: 0,
-      maxRebuys: 0,
-      maxAddOns: 0,
-      lastRebuyLevel: 0,
-      lastAddOnLevel: 0,
-      levels: [],
-      payoutStructure: { places: [] },
-<<<<<<< HEAD
-      allowRebuy: true,
-      allowAddon: true,
-      includeAnte: false,
-      playerCount: 9,
-      chipset: "25,100,500,1000,5000",
-      format: 'standard',
-      desiredDuration: 4,
-      houseFeeType: 'none',
-      houseFeeValue: 0,
-=======
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
-    },
-    totalPrizePool: 0,
-    eliminationCounter: 0,
-    chipset: '',
-  },
+  state: initialTournamentState,
   dispatch: () => {},
 });
 
 const tournamentReducer = (state: TournamentState, action: TournamentAction): TournamentState => {
   switch (action.type) {
-<<<<<<< HEAD
     case 'CREATE_TOURNAMENT':
       return {
         ...state,
@@ -79,24 +56,15 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
         name: action.payload.name,
         startDate: action.payload.startDate,
         settings: action.payload.settings || state.settings,
-=======
-    // ... other cases
-    case 'CREATE_TOURNAMENT':
-      return {
-        ...state,
-        name: action.payload.name,
-        startDate: action.payload.startDate,
-        settings: action.payload.settings,
-        // Add these lines to update the state with form data
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
-        allowRebuy: action.payload.allowRebuy,
-        allowAddon: action.payload.allowAddon,
-        format: action.payload.format,
-        chipset: action.payload.chipset,
-        playerCount: action.payload.playerCount,
-        desiredDuration: action.payload.desiredDuration,
-<<<<<<< HEAD
-        includeAnte: action.payload.includeAnte,
+        // These properties are part of settings now, but keeping for backward compatibility if needed
+        // They should ideally be accessed from state.settings
+        // allowRebuy: action.payload.allowRebuy,
+        // allowAddon: action.payload.allowAddon,
+        // format: action.payload.format,
+        // chipset: action.payload.chipset,
+        // playerCount: action.payload.playerCount,
+        // desiredDuration: action.payload.desiredDuration,
+        // includeAnte: action.payload.includeAnte,
       };
 
     case 'LOAD_TOURNAMENT':
@@ -105,7 +73,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
         id: action.payload.id || state.id,
         name: action.payload.name || state.name,
         startDate: action.payload.startDate || state.startDate,
-        settings: action.payload.settings || state.settings,
+        settings: action.payload.settings || state.settings, // New settings overwrite old
         players: action.payload.players || state.players,
         chipset: action.payload.chipset || state.chipset,
         isRunning: action.payload.isRunning ?? state.isRunning,
@@ -114,12 +82,13 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
         totalPrizePool: action.payload.totalPrizePool ?? state.totalPrizePool,
         eliminationCounter: action.payload.eliminationCounter ?? state.eliminationCounter,
         tables: action.payload.tables || state.tables,
-        allowRebuy: action.payload.allowRebuy ?? state.allowRebuy,
-        allowAddon: action.payload.allowAddon ?? state.allowAddon,
-        format: action.payload.format || state.format,
-        playerCount: action.payload.playerCount ?? state.playerCount,
-        desiredDuration: action.payload.desiredDuration ?? state.desiredDuration,
-        includeAnte: action.payload.includeAnte ?? state.includeAnte,
+        // The following properties are expected to be within settings
+        // allowRebuy: action.payload.allowRebuy ?? state.settings.allowRebuy,
+        // allowAddon: action.payload.allowAddon ?? state.settings.allowAddon,
+        // format: action.payload.format || state.settings.format,
+        // playerCount: action.payload.playerCount ?? state.settings.playerCount,
+        // desiredDuration: action.payload.desiredDuration ?? state.settings.desiredDuration,
+        // includeAnte: action.payload.includeAnte ?? state.settings.includeAnte,
       };
 
     case 'UPDATE_SETTINGS':
@@ -153,42 +122,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
       };
 
     case 'RESET_TOURNAMENT':
-      return {
-        id: '',
-        isRunning: false,
-        currentLevel: 0,
-        timeRemaining: 0,
-        name: '',
-        startDate: '',
-        players: [],
-        tables: [],
-        settings: {
-          buyInAmount: 0,
-          rebuyAmount: 0,
-          addOnAmount: 0,
-          initialChips: 0,
-          rebuyChips: 0,
-          addOnChips: 0,
-          maxRebuys: 0,
-          maxAddOns: 0,
-          lastRebuyLevel: 0,
-          lastAddOnLevel: 0,
-          levels: [],
-          payoutStructure: { places: [] },
-          allowRebuy: true,
-          allowAddon: true,
-          includeAnte: false,
-          playerCount: 9,
-          chipset: "25,100,500,1000,5000",
-          format: 'standard',
-          desiredDuration: 4,
-          houseFeeType: 'none',
-          houseFeeValue: 0,
-        },
-        totalPrizePool: 0,
-        eliminationCounter: 0,
-        chipset: '',
-      };
+      return initialTournamentState; // Reset to the defined initial state
 
     case 'NEXT_LEVEL':
       if (state.currentLevel < state.settings.levels.length - 1) {
@@ -202,7 +136,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
       return state;
 
     case 'PREV_LEVEL':
-    case 'PREVIOUS_LEVEL':
+    case 'PREVIOUS_LEVEL': // Keeping both for robustness, PREV_LEVEL is more common
       if (state.currentLevel > 0) {
         const prevLevel = state.currentLevel - 1;
         return {
@@ -214,7 +148,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
       return state;
 
     case 'SET_TIME':
-      const newTime = Math.max(0, state.timeRemaining + action.payload);
+      const newTime = Math.max(0, action.payload); // action.payload is the new time remaining, not a delta
       if (newTime === 0 && state.currentLevel < state.settings.levels.length - 1) {
         // Auto-advance to next level when time reaches 0
         const nextLevel = state.currentLevel + 1;
@@ -237,7 +171,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
           ...updatedLevels[levelIndex],
           duration
         };
-        
+
         return {
           ...state,
           settings: {
@@ -265,7 +199,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
     case 'UPDATE_PLAYER':
       return {
         ...state,
-        players: state.players.map(p => 
+        players: state.players.map(p =>
           p.id === action.payload.id ? action.payload : p
         )
       };
@@ -273,8 +207,8 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
     case 'MARK_ELIMINATED':
       return {
         ...state,
-        players: state.players.map(p => 
-          p.id === action.payload 
+        players: state.players.map(p =>
+          p.id === action.payload
             ? { ...p, eliminated: true, eliminationPosition: state.eliminationCounter + 1 }
             : p
         ),
@@ -284,175 +218,126 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
     case 'ADD_REBUY':
       return {
         ...state,
-        players: state.players.map(p => 
-          p.id === action.payload 
-            ? { 
-                ...p, 
-                rebuys: p.rebuys + 1,
-                chips: (p.chips || 0) + state.settings.rebuyChips,
+        players: state.players.map(p =>
+          p.id === action.payload
+            ? {
+                ...p,
+                rebuys: (p.rebuys || 0) + 1, // Ensure p.rebuys is treated as number
+                chips: (p.chips || 0) + state.settings.rebuyChips, // Ensure p.chips is number
                 eliminated: false,
                 eliminationPosition: undefined
               }
             : p
-        )
+        ),
+        totalPrizePool: state.totalPrizePool + state.settings.rebuyAmount, // Update prize pool
       };
 
     case 'ADD_ADDON':
       return {
         ...state,
-        players: state.players.map(p => 
-          p.id === action.payload 
-            ? { 
-                ...p, 
-                addOns: p.addOns + 1,
-                chips: (p.chips || 0) + state.settings.addOnChips
+        players: state.players.map(p =>
+          p.id === action.payload
+            ? {
+                ...p,
+                addOns: (p.addOns || 0) + 1, // Ensure p.addOns is number
+                chips: (p.chips || 0) + state.settings.addOnChips // Ensure p.chips is number
               }
             : p
-        )
+        ),
+        totalPrizePool: state.totalPrizePool + state.settings.addOnAmount, // Update prize pool
       };
 
     case 'ASSIGN_TABLES':
-      // Simple table assignment logic - you can enhance this
-      const activePlayers = state.players.filter(p => !p.eliminated);
-      const playersPerTable = 9; // Standard poker table size
-      const numTables = Math.ceil(activePlayers.length / playersPerTable);
-      
-      const newTables = Array.from({ length: numTables }, (_, i) => ({
+      const playersToAssign = state.players.filter(p => !p.eliminated);
+      const playersPerTable = 9; // Standard poker table size, can be dynamic
+      const numTables = Math.ceil(playersToAssign.length / playersPerTable);
+
+      const newTables: Table[] = Array.from({ length: numTables }, (_, i) => ({
         id: i + 1,
         players: [],
         maxSeats: playersPerTable
       }));
 
-      // Assign players to tables
-      const updatedPlayers = activePlayers.map((player, index) => ({
-        ...player,
-        tableNumber: Math.floor(index / playersPerTable) + 1,
-        seatNumber: (index % playersPerTable) + 1
-      }));
+      // Randomly shuffle players for assignment
+      const shuffledPlayers = [...playersToAssign].sort(() => Math.random() - 0.5);
 
-      // Update table players
-      updatedPlayers.forEach(player => {
-        if (player.tableNumber) {
-          newTables[player.tableNumber - 1].players.push(player);
+      // Assign players to tables
+      const assignedPlayers = shuffledPlayers.map((player, index) => {
+        const tableIndex = Math.floor(index / playersPerTable);
+        const seatIndex = index % playersPerTable;
+        if (newTables[tableIndex]) {
+          newTables[tableIndex].players.push(player);
         }
+        return {
+          ...player,
+          tableNumber: tableIndex + 1,
+          seatNumber: seatIndex + 1
+        };
+      });
+
+      // Update all players in state, including eliminated ones that were not assigned
+      const finalPlayers = state.players.map(p => {
+        const assigned = assignedPlayers.find(ap => ap.id === p.id);
+        return assigned || p; // Keep original if not an active player assigned to a table
       });
 
       return {
         ...state,
-        players: state.players.map(p => {
-          const updatedPlayer = updatedPlayers.find(up => up.id === p.id);
-          return updatedPlayer || p;
-        }),
+        players: finalPlayers,
         tables: newTables
       };
 
     case 'BALANCE_TABLES':
-      // Simple table balancing - redistribute players evenly
+      // Basic re-balancing: collect active players, re-assign seats, keep same number of tables
       const activePlayersForBalance = state.players.filter(p => !p.eliminated);
-      const currentTables = state.tables.length;
-      
-      if (currentTables <= 1) return state;
+      if (activePlayersForBalance.length === 0 || state.tables.length === 0) return state;
 
-      const playersPerTableBalance = Math.floor(activePlayersForBalance.length / currentTables);
-      const extraPlayers = activePlayersForBalance.length % currentTables;
+      const currentTableCount = state.tables.length;
+      const playersPerTableBalanced = Math.floor(activePlayersForBalance.length / currentTableCount);
+      let extraPlayers = activePlayersForBalance.length % currentTableCount;
 
-      const balancedPlayers = activePlayersForBalance.map((player, index) => {
-        const tableIndex = Math.floor(index / (playersPerTableBalance + (index < extraPlayers ? 1 : 0)));
-        return {
-          ...player,
-          tableNumber: Math.min(tableIndex + 1, currentTables),
-          seatNumber: (index % 9) + 1
-        };
+      const rebalancedPlayers = [...activePlayersForBalance].sort(() => Math.random() - 0.5); // Shuffle for re-assignment
+
+      let playerIndex = 0;
+      const updatedTables = Array.from({ length: currentTableCount }, (_, i) => ({
+        ...state.tables[i], // Keep existing table ID, maxSeats etc.
+        players: [],
+      }));
+
+      const finalBalancedPlayers = state.players.map(p => {
+        if (p.eliminated) return p; // Don't touch eliminated players
+
+        if (playerIndex < rebalancedPlayers.length) {
+          const assignedPlayer = rebalancedPlayers[playerIndex];
+          const tableTarget = playersPerTableBalanced + (extraPlayers > 0 ? 1 : 0);
+          extraPlayers = Math.max(0, extraPlayers - 1);
+
+          const targetTableIndex = updatedTables.findIndex(t => t.players.length < tableTarget);
+          if (targetTableIndex !== -1) {
+            updatedTables[targetTableIndex].players.push(assignedPlayer);
+            assignedPlayer.tableNumber = updatedTables[targetTableIndex].id;
+            assignedPlayer.seatNumber = updatedTables[targetTableIndex].players.length; // Assign seat sequentially
+            playerIndex++;
+            return assignedPlayer;
+          }
+        }
+        return p;
       });
 
       return {
         ...state,
-        players: state.players.map(p => {
-          const balancedPlayer = balancedPlayers.find(bp => bp.id === p.id);
-          return balancedPlayer || p;
-        })
+        players: finalBalancedPlayers,
+        tables: updatedTables,
       };
 
-=======
-      };
-    // ... other cases
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
     default:
       return state;
   }
 };
 
 export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(tournamentReducer, {
-<<<<<<< HEAD
-    id: '',
-=======
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
-    isRunning: false,
-    currentLevel: 0,
-    timeRemaining: 0,
-    name: '',
-    startDate: '',
-    players: [],
-    tables: [],
-    settings: {
-      buyInAmount: 0,
-      rebuyAmount: 0,
-      addOnAmount: 0,
-      initialChips: 0,
-      rebuyChips: 0,
-      addOnChips: 0,
-      maxRebuys: 0,
-      maxAddOns: 0,
-      lastRebuyLevel: 0,
-      lastAddOnLevel: 0,
-      levels: [],
-      payoutStructure: { places: [] },
-<<<<<<< HEAD
-      allowRebuy: true,
-      allowAddon: true,
-      includeAnte: false,
-      playerCount: 9,
-      chipset: "25,100,500,1000,5000",
-      format: 'standard',
-      desiredDuration: 4,
-      houseFeeType: 'none',
-      houseFeeValue: 0,
-=======
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
-    },
-    totalPrizePool: 0,
-    eliminationCounter: 0,
-    chipset: '',
-  });
+  const [state, dispatch] = useReducer(tournamentReducer, initialTournamentState);
 
-<<<<<<< HEAD
-=======
-=======
-} | undefined>(undefined);
-
-export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(tournamentReducer, initialState);
-  
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    
-    if (state.isRunning && state.timeRemaining > 0) {
-      timer = setInterval(() => {
-        dispatch({ type: 'SET_TIME', payload: state.timeRemaining - 1 });
-      }, 1000);
-    } else if (state.timeRemaining === 0 && state.isRunning) {
-      dispatch({ type: 'NEXT_LEVEL' });
-      toast.info(`Level ${state.currentLevel + 1} complete`);
-    }
-    
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [state.isRunning, state.timeRemaining, state.currentLevel]);
-  
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
   return (
     <TournamentContext.Provider value={{ state, dispatch }}>
       {children}
@@ -461,21 +346,9 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 };
 
 export const useTournament = () => {
-<<<<<<< HEAD
-  return useContext(TournamentContext);
-};
-=======
-<<<<<<< HEAD
-  return useContext(TournamentContext);
-};
-=======
   const context = useContext(TournamentContext);
   if (context === undefined) {
     throw new Error('useTournament must be used within a TournamentProvider');
   }
   return context;
 };
-
-export { generatePlayerId, createEmptyPlayer };
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
