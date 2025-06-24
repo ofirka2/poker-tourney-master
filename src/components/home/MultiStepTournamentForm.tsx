@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ENV, chipsets } from '@/config/env';
 import { calculateInitialStack } from '@/utils/stackCalculator';
-import { generateDynamicBlinds, roundToPokerChips } from '@/utils/blindGenerator'; // Corrected import from blindStructureGenerator
+import { generateDynamicBlinds, roundToPokerChips } from '@/utils/blindStructureGenerator'; 
 
 const formatOptions = [
   { value: 'freezeout', label: 'Freezeout' },
