@@ -3,7 +3,6 @@ import { Save, Clock, Wand2, DollarSign, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Layout from "@/components/layout/Layout";
 import { useTournament } from "@/context/TournamentContext";
 import { toast } from "sonner";
 import { PayoutPlace } from "@/types/types";
@@ -39,7 +38,6 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }) => {
   // allowRebuy/allowAddon are also kept here as they affect UI visibility in BuyInSettingsCard
   const [allowRebuy, setAllowRebuy] = useState(settings.allowRebuy ?? true); // Initialize from settings
   const [allowAddon, setAllowAddon] = useState(settings.allowAddon ?? true); // Initialize from settings
-
 
   const [payoutPlaces, setPayoutPlaces] = useState<PayoutPlace[]>(
     settings.payoutStructure?.places || []
@@ -94,7 +92,6 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }) => {
       initialAddOnChips: settings.addOnChips ?? 0
   });
 
-
   // Load data from database on initial load
   useEffect(() => {
     const loadTournamentData = async () => {
@@ -131,7 +128,6 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }) => {
             setAddOnChips(data.addon_chips || settings.addOnChips);
             setMaxRebuys(data.max_rebuys || settings.maxRebuys);
             setIncludeAnte(data.include_ante !== undefined ? data.include_ante : false);
-
 
             // Parse and set blind levels from JSON string (managed by hook)
             if (data.blind_levels) {
@@ -194,18 +190,17 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }) => {
       setMaxRebuys,
       setIncludeAnte,
       setLevels,
-      state.name, // Added for completeness, though it's the initial value
-      state.buyInAmount, // Added for completeness
-      state.rebuyAmount, // Added for completeness
-      state.addOnAmount, // Added for completeness
-      state.maxAddOns, // Added for completeness
-      state.lastRebuyLevel, // Added for completeness
-      state.lastAddOnLevel, // Added for completeness
-      state.allowRebuy, // Added for completeness
-      state.allowAddon, // Added for completeness
-      state.payoutStructure, // Added for completeness
+      state.name,
+      state.buyInAmount,
+      state.rebuyAmount,
+      state.addOnAmount,
+      state.maxAddOns,
+      state.lastRebuyLevel,
+      state.lastAddOnLevel,
+      state.allowRebuy,
+      state.allowAddon,
+      state.payoutStructure,
   ]);
-
 
   // Handler for adding payout place (managed here)
   const addPayoutPlace = useCallback(() => {
@@ -280,7 +275,6 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }) => {
        toast.error("Failed to update current level duration. Tournament may not be running.");
     }
   }, [currentLevel, levels, dispatch, state.isRunning, setLevels]);
-
 
   // Save settings handler
   const saveSettings = useCallback(async () => {
@@ -399,242 +393,235 @@ const TournamentSetup: React.FC<TournamentSetupProps> = ({ tournamentId }) => {
     chipset,
   ]);
 
-
   // Show loading state while tournament data is being fetched
   if (loading && tournamentId) {
     return (
-      <Layout>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading tournament data...</p>
-          </div>
+      <div className="flex justify-center items-center h-64">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading tournament data...</p>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   // Main component render - Orchestrates the layout and child components
   return (
-    <Layout> {/* Ensure Layout wraps the entire content */}
-      <div className="space-y-6"> {/* Main stacked layout */}
+    <div className="space-y-6"> {/* Main stacked layout */}
 
-        {/* Header and Save Button */}
-        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Tournament Setup</h2>
-            <p className="text-muted-foreground">Configure tournament settings</p>
-          </div>
-          <Button onClick={saveSettings}>
-            <Save className="mr-2 h-4 w-4" />
-            Save Settings
-          </Button>
+      {/* Header and Save Button */}
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Tournament Setup</h2>
+          <p className="text-muted-foreground">Configure tournament settings</p>
         </div>
+        <Button onClick={saveSettings}>
+          <Save className="mr-2 h-4 w-4" />
+          Save Settings
+        </Button>
+      </div>
 
-        {/* Tournament Name Card */}
-        <Card>
+      {/* Tournament Name Card */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Tournament Name</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="tournamentName">Name</Label>
+            <Input
+              id="tournamentName"
+              value={tournamentName}
+              onChange={(e) => setTournamentName(e.target.value)}
+              placeholder="Enter tournament name"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Optional Current Level Duration Card - Only shown if tournament is running */}
+      {state.isRunning && (
+        <Card className="border-primary/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Tournament Name</CardTitle>
+            <CardTitle className="flex items-center text-lg">
+              <Clock className="mr-2 h-5 w-5" />
+              Current Level Duration
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="tournamentName">Name</Label>
-              <Input
-                id="tournamentName"
-                value={tournamentName}
-                onChange={(e) => setTournamentName(e.target.value)}
-                placeholder="Enter tournament name"
-              />
+          <CardContent className="pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+              <div className="space-y-2">
+                <Label htmlFor="currentLevelDuration">Duration (minutes)</Label>
+                {/* Input value comes from the levels state managed by the hook */}
+                <Input
+                  id="currentLevelDuration"
+                  type="number"
+                  min="1"
+                  value={levels[currentLevel]?.duration ?? ''} // Use ?? '' for controlled input
+                   // Update local state on input change - this updates the levels state in the hook
+                  onChange={(e) => {
+                     const newDuration = Number(e.target.value);
+                     if (currentLevel >= 0 && currentLevel < levels.length) {
+                        const updatedLevels = [...levels];
+                        // Ensure it's a valid number before updating
+                        updatedLevels[currentLevel] = {
+                           ...updatedLevels[currentLevel],
+                           duration: isNaN(newDuration) ? 0 : newDuration
+                        };
+                        setLevels(updatedLevels); // Use the setter from the hook
+                     }
+                  }}
+                />
+              </div>
+               {/* Button to apply the duration change to the context/running timer */}
+              <Button
+                onClick={() => updateCurrentLevelDuration(levels[currentLevel]?.duration || 0)} // Use the local state value
+                className="mt-4 sm:mt-0"
+                // Disable button if tournament is not running, current level is invalid, or duration is invalid
+                disabled={!state.isRunning || currentLevel < 0 || currentLevel >= levels.length || isNaN(levels[currentLevel]?.duration || 0) || (levels[currentLevel]?.duration || 0) <= 0}
+              >
+                Apply Change
+              </Button>
             </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* Optional Current Level Duration Card - Only shown if tournament is running */}
-        {state.isRunning && (
-          <Card className="border-primary/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-lg">
-                <Clock className="mr-2 h-5 w-5" />
-                Current Level Duration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                <div className="space-y-2">
-                  <Label htmlFor="currentLevelDuration">Duration (minutes)</Label>
-                  {/* Input value comes from the levels state managed by the hook */}
-                  <Input
-                    id="currentLevelDuration"
-                    type="number"
-                    min="1"
-                    value={levels[currentLevel]?.duration ?? ''} // Use ?? '' for controlled input
-                     // Update local state on input change - this updates the levels state in the hook
-                    onChange={(e) => {
-                       const newDuration = Number(e.target.value);
-                       if (currentLevel >= 0 && currentLevel < levels.length) {
-                          const updatedLevels = [...levels];
-                          // Ensure it's a valid number before updating
-                          updatedLevels[currentLevel] = {
-                             ...updatedLevels[currentLevel],
-                             duration: isNaN(newDuration) ? 0 : newDuration
-                          };
-                          setLevels(updatedLevels); // Use the setter from the hook
-                       }
-                    }}
-                  />
-                </div>
-                 {/* Button to apply the duration change to the context/running timer */}
-                <Button
-                  onClick={() => updateCurrentLevelDuration(levels[currentLevel]?.duration || 0)} // Use the local state value
-                  className="mt-4 sm:mt-0"
-                  // Disable button if tournament is not running, current level is invalid, or duration is invalid
-                  disabled={!state.isRunning || currentLevel < 0 || currentLevel >= levels.length || isNaN(levels[currentLevel]?.duration || 0) || (levels[currentLevel]?.duration || 0) <= 0}
-                >
-                  Apply Change
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      {/* Main Tabs Component */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        {/* Tabs List with three triggers */}
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="general">General Settings</TabsTrigger>
+          <TabsTrigger value="blinds">Blind Structure</TabsTrigger>
+          <TabsTrigger value="payouts">Payout Structure</TabsTrigger>
+        </TabsList>
 
-        {/* Main Tabs Component */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          {/* Tabs List with three triggers */}
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="general">General Settings</TabsTrigger>
-            <TabsTrigger value="blinds">Blind Structure</TabsTrigger>
-            <TabsTrigger value="payouts">Payout Structure</TabsTrigger>
-          </TabsList>
+        {/* Tabs Content for General Settings */}
+        <TabsContent value="general" className="space-y-4 pt-4">
+          {/* Use grid layout for the cards in the General tab */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Buy-in Settings Card - Now on the LEFT */}
+               <BuyInSettingsCard
+                   buyInAmount={buyInAmount}
+                   setBuyInAmount={setBuyInAmount}
+                   allowRebuy={allowRebuy}
+                   setAllowRebuy={setAllowRebuy}
+                   rebuyAmount={rebuyAmount}
+                   setRebuyAmount={setRebuyAmount}
+                   maxRebuys={maxRebuys} // Max rebuys passed for UI visibility
+                   setMaxRebuys={setMaxRebuys} // Max rebuys setter passed
+                   lastRebuyLevel={lastRebuyLevel}
+                   setLastRebuyLevel={setLastRebuyLevel}
+                   allowAddon={allowAddon}
+                   setAllowAddon={setAllowAddon}
+                   addOnAmount={addOnAmount}
+                   setAddOnAmount={setAddOnAmount}
+                   maxAddOns={maxAddOns}
+                   setMaxAddOns={setMaxAddOns}
+                   lastAddOnLevel={lastAddOnLevel}
+                   setLastAddOnLevel={setLastAddOnLevel}
+                   includeAnte={includeAnte} // Passed for display
+                   setIncludeAnte={setIncludeAnte} // Passed for setting
+                   levelsCount={levels.length} // Passed to help with level selection bounds
+               />
 
-          {/* Tabs Content for General Settings */}
-          <TabsContent value="general" className="space-y-4 pt-4">
-            {/* Use grid layout for the cards in the General tab */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Buy-in Settings Card - Now on the LEFT */}
-                 <BuyInSettingsCard
-                     buyInAmount={buyInAmount}
-                     setBuyInAmount={setBuyInAmount}
-                     allowRebuy={allowRebuy}
-                     setAllowRebuy={setAllowRebuy}
-                     rebuyAmount={rebuyAmount}
-                     setRebuyAmount={setRebuyAmount}
-                     maxRebuys={maxRebuys} // Max rebuys passed for UI visibility
-                     setMaxRebuys={setMaxRebuys} // Max rebuys setter passed
-                     lastRebuyLevel={lastRebuyLevel}
-                     setLastRebuyLevel={setLastRebuyLevel}
-                     allowAddon={allowAddon}
-                     setAllowAddon={setAllowAddon}
-                     addOnAmount={addOnAmount}
-                     setAddOnAmount={setAddOnAmount}
-                     maxAddOns={maxAddOns}
-                     setMaxAddOns={setMaxAddOns}
-                     lastAddOnLevel={lastAddOnLevel}
-                     setLastAddOnLevel={setLastAddOnLevel}
-                     includeAnte={includeAnte} // Passed for display
-                     setIncludeAnte={setIncludeAnte} // Passed for setting
-                     levelsCount={levels.length} // Passed to help with level selection bounds
-                 />
+              {/* Tournament Parameters Card - Now on the RIGHT */}
+              <TournamentParametersCard
+                  tournamentFormat={tournamentFormat}
+                  handleFormatChange={setTournamentFormat}
+                  playerCount={playerCount}
+                  handlePlayerCountChange={(e) => setPlayerCount(Number(e.target.value))}
+                  durationHours={durationHours}
+                  handleDurationHoursChange={(e) => setDurationHours(Number(e.target.value))}
+                  // Removed handleGenerateBlindStructure and canGenerateBlinds props as the button is removed from this card
+              />
+           </div>
+        </TabsContent> {/* End of General TabsContent */}
 
-                {/* Tournament Parameters Card - Now on the RIGHT */}
-                <TournamentParametersCard
-                    tournamentFormat={tournamentFormat}
-                    handleFormatChange={setTournamentFormat}
-                    playerCount={playerCount}
-                    handlePlayerCountChange={(e) => setPlayerCount(Number(e.target.value))}
-                    durationHours={durationHours}
-                    handleDurationHoursChange={(e) => setDurationHours(Number(e.target.value))}
-                    // Removed handleGenerateBlindStructure and canGenerateBlinds props as the button is removed from this card
-                />
-             </div>
-          </TabsContent> {/* End of General TabsContent */}
+        {/* Tabs Content for Blind Structure - Two-column layout inside the tab */}
+        <TabsContent value="blinds" className="space-y-4 pt-4">
+           <div className="flex flex-col md:flex-row gap-6"> {/* Two-column layout INSIDE the tab */}
 
+               {/* Left Column (within Blinds Tab): Blind Levels Table */}
+               <div className="w-full md:w-1/2 lg:w-2/3 min-w-64"> {/* Flexible width */}
+                   <Card>
+                      <CardHeader>
+                         <CardTitle className="flex items-center text-lg">
+                           <Clock className="mr-2 h-5 w-5" />
+                           Blind Levels
+                         </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                         {/* Use the existing BlindsSetupTab component */}
+                         <BlindsSetupTab
+                            levels={levels}
+                            onLevelsChange={setLevels}
+                            includeAnte={includeAnte}
+                          />
+                      </CardContent>
+                   </Card>
+               </div>
 
-          {/* Tabs Content for Blind Structure - Two-column layout inside the tab */}
-          <TabsContent value="blinds" className="space-y-4 pt-4">
-             <div className="flex flex-col md:flex-row gap-6"> {/* Two-column layout INSIDE the tab */}
+               {/* Right Column (within Blinds Tab): Chip Structure & Generation Controls */}
+               <div className="flex-1 space-y-6"> {/* Takes up the remaining space */}
 
-                 {/* Left Column (within Blinds Tab): Blind Levels Table */}
-                 <div className="w-full md:w-1/2 lg:w-2/3 min-w-64"> {/* Flexible width */}
-                     <Card>
-                        <CardHeader>
-                           <CardTitle className="flex items-center text-lg">
-                             <Clock className="mr-2 h-5 w-5" />
-                             Blind Levels
-                           </CardTitle>
+                    {/* Use the extracted component for Chip Settings */}
+                    <ChipSettingsCard
+                        chipset={chipset}
+                        handleChipsetChange={handleChipsetChange}
+                        isCustomChipset={isCustomChipset}
+                        handleCustomChipsetChange={handleCustomChipsetChange}
+                        initialChips={initialChips}
+                        handleInitialChipsChange={handleInitialChipsChange}
+                        smallBlind={smallBlind}
+                        bigBlind={bigBlind}
+                        allowRebuy={allowRebuy} // Passed for UI
+                        rebuyChips={rebuyChips}
+                        handleRebuyChipsChange={handleRebuyChipsChange}
+                        allowAddon={allowAddon} // Passed for UI
+                        addOnChips={addOnChips}
+                        handleAddOnChipsChange={handleAddOnChipsChange}
+                    />
+
+                    {/* Dedicated Card for Generate Blinds Button - This is where the button remains */}
+                    <Card>
+                         <CardHeader>
+                            <CardTitle className="flex items-center">
+                               <Wand2 className="mr-2 h-5 w-5" />
+                                Generate Blinds
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                           {/* Use the existing BlindsSetupTab component */}
-                           <BlindsSetupTab
-                              levels={levels}
-                              onLevelsChange={setLevels}
-                              includeAnte={includeAnte}
-                            />
-                        </CardContent>
-                     </Card>
-                 </div>
+                             <Button
+                               onClick={handleGenerateBlindStructure}
+                               className="w-full"
+                               disabled={!canGenerateBlinds}
+                             >
+                               <Wand2 className="mr-2 h-4 w-4" />
+                               Generate Blind Structure
+                             </Button>
+                         </CardContent>
+                    </Card>
 
-                 {/* Right Column (within Blinds Tab): Chip Structure & Generation Controls */}
-                 <div className="flex-1 space-y-6"> {/* Takes up the remaining space */}
+               </div>
+           </div>
+        </TabsContent>
 
-                      {/* Use the extracted component for Chip Settings */}
-                      <ChipSettingsCard
-                          chipset={chipset}
-                          handleChipsetChange={handleChipsetChange}
-                          isCustomChipset={isCustomChipset}
-                          handleCustomChipsetChange={handleCustomChipsetChange}
-                          initialChips={initialChips}
-                          handleInitialChipsChange={handleInitialChipsChange}
-                          smallBlind={smallBlind}
-                          bigBlind={bigBlind}
-                          allowRebuy={allowRebuy} // Passed for UI
-                          rebuyChips={rebuyChips}
-                          handleRebuyChipsChange={handleRebuyChipsChange}
-                          allowAddon={allowAddon} // Passed for UI
-                          addOnChips={addOnChips}
-                          handleAddOnChipsChange={handleAddOnChipsChange}
-                      />
+        {/* Tabs Content for Payout Structure */}
+        <TabsContent value="payouts" className="space-y-4 pt-4">
+          {/* Use the extracted component for Payout Structure */}
+          <PayoutStructureSection
+              payoutPlaces={payoutPlaces}
+              addPayoutPlace={addPayoutPlace}
+              removePayoutPlace={removePayoutPlace}
+              updatePayoutPercentage={updatePayoutPercentage}
+              totalPayoutPercentage={totalPayoutPercentage}
+          />
+        </TabsContent>
 
-                      {/* Dedicated Card for Generate Blinds Button - This is where the button remains */}
-                      <Card>
-                           <CardHeader>
-                              <CardTitle className="flex items-center">
-                                 <Wand2 className="mr-2 h-5 w-5" />
-                                  Generate Blinds
-                              </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                               <Button
-                                 onClick={handleGenerateBlindStructure}
-                                 className="w-full"
-                                 disabled={!canGenerateBlinds}
-                               >
-                                 <Wand2 className="mr-2 h-4 w-4" />
-                                 Generate Blind Structure
-                               </Button>
-                           </CardContent>
-                      </Card>
+      </Tabs>
 
-                 </div>
-             </div>
-          </TabsContent>
-
-
-          {/* Tabs Content for Payout Structure */}
-          <TabsContent value="payouts" className="space-y-4 pt-4">
-            {/* Use the extracted component for Payout Structure */}
-            <PayoutStructureSection
-                payoutPlaces={payoutPlaces}
-                addPayoutPlace={addPayoutPlace}
-                removePayoutPlace={removePayoutPlace}
-                updatePayoutPercentage={updatePayoutPercentage}
-                totalPayoutPercentage={totalPayoutPercentage}
-            />
-          </TabsContent>
-
-        </Tabs>
-
-      </div>
-    </Layout>
+    </div>
   );
 };
 
