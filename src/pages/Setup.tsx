@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import Layout from "@/components/layout/Layout";
+import Layout from "@/components/layout/Layout"; // This is the single Layout import
 import TournamentSetup from "@/components/setup/TournamentSetup";
 import { useTournament } from "@/context/TournamentContext";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
@@ -32,8 +32,8 @@ const tournamentDefaults: TournamentSettings = {
   chipset: "25,100,500,1000,5000",
   format: 'standard',
   desiredDuration: 4,
-  houseFeeType: 'none', // Added default
-  houseFeeValue: 0,      // Added default
+  houseFeeType: 'none',
+  houseFeeValue: 0,
 };
 
 
@@ -41,8 +41,6 @@ const Setup = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const { dispatch, state } = useTournament();
   const [loading, setLoading] = useState(false);
-  // This state helps ensure we only attempt to load a specific tournament ID once
-  // or if the tournament ID from the URL changes.
   const [processedTournamentId, setProcessedTournamentId] = useState<string | null>(null);
 
   const loadTournamentData = useCallback(async (id: string) => {
@@ -53,7 +51,6 @@ const Setup = () => {
       return;
     }
 
-    // If the context is already set to this ID, and we've marked it as processed for this instance
     if (state.id === id && processedTournamentId === id) {
       setLoading(false);
       return;
@@ -111,11 +108,10 @@ const Setup = () => {
           chipset: data.chipset || tournamentDefaults.chipset,
           format: data.format || tournamentDefaults.format,
           desiredDuration: data.desired_duration ? data.desired_duration / 60 : tournamentDefaults.desiredDuration,
-          houseFeeType: (data.house_fee_type as any) || tournamentDefaults.houseFeeType, // Cast if type from DB is different
+          houseFeeType: (data.house_fee_type as any) || tournamentDefaults.houseFeeType,
           houseFeeValue: data.house_fee_value ?? tournamentDefaults.houseFeeValue,
         };
 
-        // Fetch players associated with this tournament
         let tournamentPlayers = [];
         const { data: playersData, error: playersError } = await supabase
           .from('players')
@@ -125,7 +121,6 @@ const Setup = () => {
         if (playersError) {
           console.error('Error fetching players for setup:', playersError);
           toast.error("Failed to load players for the tournament.");
-          // Decide if you want to proceed without players or show a harder error
         } else {
           tournamentPlayers = playersData || [];
         }
@@ -138,16 +133,13 @@ const Setup = () => {
             startDate: data.start_date,
             settings: loadedSettings,
             chipset: data.chipset || tournamentDefaults.chipset,
-            players: tournamentPlayers, // Load fetched players
-            // Reset operational state when loading for setup
-            isRunning: false, 
-            currentLevel: 0, 
+            players: tournamentPlayers,
+            isRunning: false,
+            currentLevel: 0,
             timeRemaining: loadedSettings.levels[0]?.duration ? loadedSettings.levels[0].duration * 60 : 0,
-            // You might want to calculate totalPrizePool based on loaded players and settings here
-            // or have another mechanism to update it. For now, resetting.
-            totalPrizePool: 0, 
+            totalPrizePool: 0,
             eliminationCounter: 0,
-            tables: [], // Reset tables
+            tables: [],
           }
         });
         
@@ -166,61 +158,59 @@ const Setup = () => {
     } finally {
       setLoading(false);
     }
-  }, [dispatch]); // Removed state.id from dependencies, will rely on processedTournamentId and direct checks
+  }, [dispatch, state.id, processedTournamentId]); // Added missing dependencies
 
   useEffect(() => {
     if (tournamentId && tournamentId !== processedTournamentId) {
       loadTournamentData(tournamentId);
     } else if (!tournamentId) {
-        // If there's no tournamentId in the URL, reset context to a clean state
-        // This handles navigating to a generic /setup page without an ID
-        if(state.id) { // Only reset if context has some other tournament loaded
+        if(state.id) {
             dispatch({ type: 'RESET_TOURNAMENT' });
             toast.info("Navigated to generic setup. Create or select a tournament.");
         }
-        setProcessedTournamentId(null); // Clear processed ID
+        setProcessedTournamentId(null);
     }
   }, [tournamentId, processedTournamentId, loadTournamentData, dispatch, state.id]);
 
+  // Determine what content to render inside the single Layout
+  let content;
   if (loading) {
-    return (
-      <Layout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="ml-4 text-muted-foreground">Loading tournament setup...</p>
-        </div>
-      </Layout>
+    content = (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="ml-4 text-muted-foreground">Loading tournament setup...</p>
+      </div>
     );
+  } else if (!tournamentId || (!state.id && !loading)) {
+    content = (
+      <div className="text-center py-10">
+        <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">No Tournament Selected</h2>
+        <p className="text-muted-foreground mb-4">
+          Please select a tournament from the homepage or create a new one to configure its settings.
+        </p>
+        <Button asChild>
+          <Link to="/">Go to Homepage</Link>
+        </Button>
+      </div>
+    );
+  } else if (state.id === tournamentId) {
+    content = <TournamentSetup tournamentId={tournamentId} />;
+  } else {
+      // This state handles a brief moment if state.id hasn't caught up with tournamentId yet
+      // or if there's a mismatch after loading attempts
+      content = (
+          <div className="flex justify-center items-center h-64">
+             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+             <p className="ml-4 text-muted-foreground">Preparing setup page...</p>
+          </div>
+      );
   }
 
-  if (!tournamentId || (!state.id && !loading)) {
-    return (
-      <Layout>
-        <div className="text-center py-10">
-          <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No Tournament Selected</h2>
-          <p className="text-muted-foreground mb-4">
-            Please select a tournament from the homepage or create a new one to configure its settings.
-          </p>
-          <Button asChild>
-            <Link to="/">Go to Homepage</Link>
-          </Button>
-        </div>
-      </Layout>
-    );
-  }
-  
-  // Ensure TournamentSetup is rendered only when the context ID matches the URL ID
+
   return (
     <Layout>
-      {state.id === tournamentId ? (
-        <TournamentSetup tournamentId={tournamentId} />
-      ) : (
-        <div className="flex justify-center items-center h-64">
-           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-           <p className="ml-4 text-muted-foreground">Preparing setup page...</p>
-        </div>
-      )}
+      {content}
     </Layout>
   );
 };
