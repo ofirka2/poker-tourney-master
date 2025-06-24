@@ -319,5 +319,5 @@ if (blindStructure.length > 0) {
     }
 }
 
-
 return blindStructure;
+} 
