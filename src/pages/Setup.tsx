@@ -3,7 +3,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import Layout from "@/components/layout/Layout"; // This is the single Layout import
+import Layout from "@/components/layout/Layout";
 import TournamentSetup from "@/components/setup/TournamentSetup";
 import { useTournament } from "@/context/TournamentContext";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
@@ -35,7 +35,6 @@ const tournamentDefaults: TournamentSettings = {
   houseFeeType: 'none',
   houseFeeValue: 0,
 };
-
 
 const Setup = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
@@ -158,7 +157,7 @@ const Setup = () => {
     } finally {
       setLoading(false);
     }
-  }, [dispatch, state.id, processedTournamentId]); // Added missing dependencies
+  }, [dispatch, state.id, processedTournamentId]);
 
   useEffect(() => {
     if (tournamentId && tournamentId !== processedTournamentId) {
@@ -172,45 +171,52 @@ const Setup = () => {
     }
   }, [tournamentId, processedTournamentId, loadTournamentData, dispatch, state.id]);
 
-  // Determine what content to render inside the single Layout
-  let content;
+  // Show loading state
   if (loading) {
-    content = (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="ml-4 text-muted-foreground">Loading tournament setup...</p>
-      </div>
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="ml-4 text-muted-foreground">Loading tournament setup...</p>
+        </div>
+      </Layout>
     );
-  } else if (!tournamentId || (!state.id && !loading)) {
-    content = (
-      <div className="text-center py-10">
-        <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Tournament Selected</h2>
-        <p className="text-muted-foreground mb-4">
-          Please select a tournament from the homepage or create a new one to configure its settings.
-        </p>
-        <Button asChild>
-          <Link to="/">Go to Homepage</Link>
-        </Button>
-      </div>
-    );
-  } else if (state.id === tournamentId) {
-    content = <TournamentSetup tournamentId={tournamentId} />;
-  } else {
-      // This state handles a brief moment if state.id hasn't caught up with tournamentId yet
-      // or if there's a mismatch after loading attempts
-      content = (
-          <div className="flex justify-center items-center h-64">
-             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-             <p className="ml-4 text-muted-foreground">Preparing setup page...</p>
-          </div>
-      );
   }
 
+  // Show no tournament selected state
+  if (!tournamentId || (!state.id && !loading)) {
+    return (
+      <Layout>
+        <div className="text-center py-10">
+          <Trophy className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No Tournament Selected</h2>
+          <p className="text-muted-foreground mb-4">
+            Please select a tournament from the homepage or create a new one to configure its settings.
+          </p>
+          <Button asChild>
+            <Link to="/">Go to Homepage</Link>
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
 
+  // Show tournament setup when everything is loaded
+  if (state.id === tournamentId) {
+    return (
+      <Layout>
+        <TournamentSetup tournamentId={tournamentId} />
+      </Layout>
+    );
+  }
+
+  // Show preparing state (brief moment while state catches up)
   return (
     <Layout>
-      {content}
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="ml-4 text-muted-foreground">Preparing setup page...</p>
+      </div>
     </Layout>
   );
 };
