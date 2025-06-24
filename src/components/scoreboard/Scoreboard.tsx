@@ -6,13 +6,13 @@ import { useTournament } from "@/context/TournamentContext";
 const Scoreboard: React.FC = () => {
   const { state } = useTournament();
   const { players, totalPrizePool, settings } = state;
-  
+
   // Get active players
   const activePlayers = players.filter(p => !p.eliminated);
-  
+
   // Total number of players in tournament
   const totalPlayers = players.length;
-  
+
   // Calculate position for each eliminated player
   const eliminatedPlayersWithPositions = players
     .filter(p => p.eliminated)
@@ -22,28 +22,28 @@ const Scoreboard: React.FC = () => {
       const position = totalPlayers + 1 - (player.eliminationPosition || 0);
       return { ...player, displayPosition: position };
     });
-  
+
   // Sort by position in ascending order (e.g., #6, #7, #8, #9)
   const sortedPlayers = eliminatedPlayersWithPositions.sort((a, b) => a.displayPosition - b.displayPosition);
-  
+
   // Calculate if a position is in the money (eligible for payout)
   const isInTheMoney = (position: number): boolean => {
     if (!settings.payoutStructure || !settings.payoutStructure.places) return false;
-    
+
     // Check if this position has a payout defined
     return settings.payoutStructure.places.some(p => p.position === position);
   };
-  
+
   // Calculate payout for a position
   const calculatePayout = (position: number): number | null => {
     if (!settings.payoutStructure || !settings.payoutStructure.places) return null;
-    
+
     const payoutPlace = settings.payoutStructure.places.find(p => p.position === position);
     if (!payoutPlace) return null;
-    
+
     return (totalPrizePool * payoutPlace.percentage) / 100;
   };
-  
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -64,13 +64,13 @@ const Scoreboard: React.FC = () => {
               <div className="col-span-6">Name</div>
               <div className="col-span-3 text-right">Prize</div>
             </div>
-            
+
             <div className="max-h-[200px] overflow-y-auto pr-2">
               {sortedPlayers.map((player) => {
                 const position = player.displayPosition;
                 const inTheMoney = isInTheMoney(position);
                 const payout = inTheMoney ? calculatePayout(position) : null;
-                
+
                 return (
                   <div key={player.id} className="grid grid-cols-12 py-2 text-sm border-b border-dashed last:border-0">
                     <div className="col-span-3">#{position}</div>
@@ -84,7 +84,7 @@ const Scoreboard: React.FC = () => {
             </div>
           </div>
         )}
-        
+
         {activePlayers.length > 0 && (
           <div className="mt-4 pt-3 border-t">
             <div className="text-sm font-medium">
@@ -97,12 +97,4 @@ const Scoreboard: React.FC = () => {
   );
 };
 
-<<<<<<< HEAD
 export default Scoreboard;
-=======
-<<<<<<< HEAD
-export default Scoreboard;
-=======
-export default Scoreboard;
->>>>>>> c9af91c62fcaf3a7daa80ec56c6537ac01608061
->>>>>>> 85734bd3e1d49194c296795590515243b8f29e23
