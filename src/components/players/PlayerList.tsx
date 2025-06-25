@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import {
  Plus, Trash, Search, UserMinus, RefreshCcw, DollarSign,
@@ -13,24 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useTournament } from "@/context/TournamentContext";
 import { Player } from "@/types/types";
-import { v4 as uuidv4 } from 'uuid';
 import { supabase } from "@/integrations/supabase/client";
-
-// Define createEmptyPlayer within PlayerList.tsx (or move to utils if reused)
-const createEmptyPlayer = (name: string, tournamentId: string): Player => {
- return {
-   id: uuidv4(),
-   tournament_id: tournamentId,
-   name,
-   buyIn: true,
-   rebuys: 0,
-   addOns: 0,
-   tableNumber: null,
-   seatNumber: null,
-   eliminated: false,
-   chips: 0,
- };
-};
+import { mapDatabasePlayerToPlayer, mapPlayerToDatabase, createEmptyPlayer } from "@/utils/playerUtils";
 
 // Define props interface to accept tournamentId
 interface PlayerListProps {
@@ -74,7 +59,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
          setError('Failed to load players.');
          setPlayers([]);
        } else {
-         setPlayers(data || []);
+         const mappedPlayers = (data || []).map(mapDatabasePlayerToPlayer);
+         setPlayers(mappedPlayers);
        }
      } catch (err) {
        console.error('Unexpected error fetching players:', err);
@@ -101,7 +87,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
 
  // Filter players based on search term (uses local state)
  const filteredPlayers = players.filter(player =>
-   player.name.toLowerCase().includes(searchTerm.toLowerCase())
+   player.name?.toLowerCase().includes(searchTerm.toLowerCase())
  );
 
  // Sort players (uses filtered local state)
@@ -158,11 +144,13 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
 
    const newPlayer = createEmptyPlayer(newPlayerName.trim(), tournamentId);
    newPlayer.chips = settings.initialChips || 0;
+   newPlayer.current_chips = settings.initialChips || 0;
 
    try {
+       const playerForDb = mapPlayerToDatabase(newPlayer);
        const { data, error } = await supabase
            .from('players')
-           .insert(newPlayer)
+           .insert(playerForDb)
            .select()
            .single();
 
@@ -172,7 +160,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
            return;
        }
 
-       setPlayers(prevPlayers => [...prevPlayers, data]);
+       const mappedPlayer = mapDatabasePlayerToPlayer(data);
+       setPlayers(prevPlayers => [...prevPlayers, mappedPlayer]);
 
        setNewPlayerName("");
        setIsAddPlayerDialogOpen(false);
@@ -208,7 +197,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
    const newPlayersToInsert = names.map(name => {
        const player = createEmptyPlayer(name, tournamentId);
        player.chips = settings.initialChips || 0;
-       return player;
+       player.current_chips = settings.initialChips || 0;
+       return mapPlayerToDatabase(player);
    });
 
    try {
@@ -223,7 +213,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
            return;
        }
 
-       setPlayers(prevPlayers => [...prevPlayers, ...(data || [])]);
+       const mappedPlayers = (data || []).map(mapDatabasePlayerToPlayer);
+       setPlayers(prevPlayers => [...prevPlayers, ...mappedPlayers]);
 
        setBulkPlayerNames("");
        setIsBulkImportDialogOpen(false);
@@ -270,7 +261,10 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
    try {
        const { data, error } = await supabase
            .from('players')
-           .update({ eliminated: true })
+           .update({ 
+             status: 'eliminated',
+             finish_position: players.filter(p => p.eliminated).length + 1
+           })
            .eq('id', id)
            .select()
            .single();
@@ -281,7 +275,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
            return;
        }
 
-       setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? data : p));
+       const updatedPlayer = mapDatabasePlayerToPlayer(data);
+       setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? updatedPlayer : p));
 
        toast.info(`Player ${player.name} eliminated`);
 
@@ -310,9 +305,9 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
            .from('players')
            .update({
                rebuys: player.rebuys + 1,
-               chips: (player.chips || 0) + (settings.rebuyChips || 0),
-               eliminated: false,
-               eliminationPosition: null,
+               current_chips: (player.current_chips || 0) + (settings.rebuyChips || 0),
+               status: 'active',
+               finish_position: null,
            })
            .eq('id', id)
            .select()
@@ -324,7 +319,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
            return;
        }
 
-       setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? data : p));
+       const updatedPlayer = mapDatabasePlayerToPlayer(data);
+       setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? updatedPlayer : p));
 
        toast.success(`Rebuy for ${player.name} added`);
 
@@ -343,7 +339,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
         toast.error("Add-on period has ended.");
         return;
    }
-   if (player.addOns >= (settings.maxAddOns ?? 0)) {
+   if (player.addons >= (settings.maxAddOns ?? 0)) {
         toast.error(`Maximum ${settings.maxAddOns ?? 0} add-ons reached`);
         return;
    }
@@ -352,8 +348,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
        const { data, error } = await supabase
            .from('players')
            .update({
-               addOns: player.addOns + 1,
-               chips: (player.chips || 0) + (settings.addOnChips || 0),
+               addons: player.addons + 1,
+               current_chips: (player.current_chips || 0) + (settings.addOnChips || 0),
            })
            .eq('id', id)
            .select()
@@ -365,7 +361,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
            return;
        }
 
-       setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? data : p));
+       const updatedPlayer = mapDatabasePlayerToPlayer(data);
+       setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? updatedPlayer : p));
 
        toast.success(`Add-on for ${player.name} added`);
 
@@ -385,7 +382,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
    try {
        const { data, error } = await supabase
            .from('players')
-           .update({ chips: safeChips })
+           .update({ current_chips: safeChips })
            .eq('id', id)
            .select()
            .single();
@@ -396,7 +393,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
             return;
         }
 
-       setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? data : p));
+       const updatedPlayer = mapDatabasePlayerToPlayer(data);
+       setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? updatedPlayer : p));
 
         toast.success(`Chips updated for ${player.name}`);
 
@@ -624,7 +622,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                           (state.currentLevel ?? 0) <= (settings.lastRebuyLevel ?? Infinity) && (player.rebuys ?? 0) < (settings.maxRebuys ?? 0) && (
                              <Button
                                variant="outline"
-                               size="icon"
+                               size="sm"
                                onClick={() => handleRebuy(player.id)}
                                title="Add rebuy"
                              >
@@ -638,7 +636,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
                        {(state.currentLevel ?? 0) <= (settings.lastAddOnLevel ?? Infinity) && (player.addOns ?? 0) < (settings.maxAddOns ?? 0) && (
                          <Button
                            variant="outline"
-                           size="icon"
+                           size="sm"
                            onClick={() => handleAddOn(player.id)}
                            title="Add add-on"
                          >

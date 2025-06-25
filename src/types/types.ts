@@ -1,3 +1,4 @@
+
 // src/types/types.ts (Example - adjust path as needed)
 
 export interface TournamentState {
@@ -96,16 +97,33 @@ export type TournamentAction =
      } 
    };
 
+// Updated Player interface to match database schema
 export interface Player {
  id: string;
- tournament_id?: string;
- name: string;
- buyIn: boolean;
+ tournament_id: string;
+ first_name: string;
+ last_name: string;
+ email?: string;
+ phone?: string;
+ buy_ins: number;
  rebuys: number;
- addOns: number;
- tableNumber: number | null;
- seatNumber: number | null;
- eliminated: boolean;
+ addons: number;
+ current_chips: number | null;
+ status: 'registered' | 'active' | 'eliminated';
+ table_id?: string | null;
+ seat_number?: number | null;
+ starting_position?: number | null;
+ finish_position?: number | null;
+ created_at?: string;
+ updated_at?: string;
+ 
+ // Computed properties for backward compatibility
+ name?: string;
+ buyIn?: boolean;
+ addOns?: number;
+ tableNumber?: number | null;
+ seatNumber?: number | null;
+ eliminated?: boolean;
  eliminationPosition?: number;
  chips?: number;
 }
