@@ -7,6 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useTournament } from "@/context/TournamentContext";
+import UserMenu from "./UserMenu";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -78,15 +79,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               )}
             </div>
             
-            {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
-              {menuOpen ? <X size={20} /> : <Menu size={20} />}
-            </Button>
+            <div className="flex items-center space-x-4">
+              {/* User menu */}
+              <UserMenu />
+              
+              {/* Mobile menu button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setMenuOpen(!menuOpen)}
+              >
+                {menuOpen ? <X size={20} /> : <Menu size={20} />}
+              </Button>
+            </div>
             
             {/* Desktop navigation */}
             <nav className="hidden md:flex items-center space-x-6">
@@ -106,6 +112,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Link>
               ))}
             </nav>
+          </div>
+        </header>
+      )}
+
+      {/* Show user menu on home page */}
+      {isHomePage && (
+        <header className="border-b border-border/60 bg-background/95 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4 flex justify-end">
+            <UserMenu />
           </div>
         </header>
       )}
