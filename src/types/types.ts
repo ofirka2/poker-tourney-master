@@ -1,4 +1,3 @@
-
 // src/types/types.ts (Example - adjust path as needed)
 
 export interface TournamentState {
@@ -28,6 +27,7 @@ export interface TournamentState {
  lastRebuyLevel?: number;
  lastAddOnLevel?: number;
  payoutStructure?: PayoutStructure;
+ user_id?: string;
 }
 
 export type TournamentAction =
@@ -182,6 +182,18 @@ export interface TournamentSettings {
  chipset: string;
  format: string;
  desiredDuration: number;
- // Add the missing smallBlind property
+ // Add the missing blind properties
  smallBlind?: number;
+ bigBlind?: number;
+}
+
+// Add user role types
+export type UserRole = 'admin' | 'user';
+
+export interface UserRoleData {
+ id: string;
+ user_id: string;
+ role: UserRole;
+ created_at?: string;
+ updated_at?: string;
 }
