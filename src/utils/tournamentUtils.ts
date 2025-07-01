@@ -1,80 +1,94 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { TournamentSettings } from '@/types/types';
+import { supabase } from "@/integrations/supabase/client";
+import { DatabaseTournament } from "@/types/types";
 
-// Helper function to create tournament with user ownership
-export const createTournamentWithOwnership = async (
-  name: string,
-  startDate: string,
-  settings: TournamentSettings,
-  userId: string
-) => {
-  const tournamentData = {
-    name,
-    start_date: startDate,
-    user_id: userId,
-    buy_in: settings.buyInAmount,
-    rebuy_amount: settings.rebuyAmount,
-    addon_amount: settings.addOnAmount,
-    starting_chips: settings.initialChips,
-    rebuy_chips: settings.rebuyChips,
-    addon_chips: settings.addOnChips,
-    max_rebuys: settings.maxRebuys,
-    max_addons: settings.maxAddOns,
-    last_rebuy_level: settings.lastRebuyLevel,
-    last_addon_level: settings.lastAddOnLevel,
-    allow_rebuy: settings.allowRebuy,
-    allow_addon: settings.allowAddon,
-    include_ante: settings.includeAnte,
-    no_of_players: settings.playerCount,
-    chipset: settings.chipset,
-    format: settings.format,
-    desired_duration: settings.desiredDuration * 60, // Convert to minutes
-    blind_levels: JSON.stringify(settings.levels),
-    payout_structure: JSON.stringify(settings.payoutStructure),
-    house_fee_type: settings.houseFeeType || 'none',
-    house_fee_value: settings.houseFeeValue || 0,
-    status: 'created'
+// Create a new tournament with user ownership
+export const createTournamentWithOwnership = async (tournamentData: Partial<DatabaseTournament>) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    throw new Error('User must be authenticated to create tournaments');
+  }
+
+  const tournamentWithOwnership = {
+    ...tournamentData,
+    user_id: user.id,
   };
 
   const { data, error } = await supabase
     .from('tournaments')
-    .insert([tournamentData])
+    .insert(tournamentWithOwnership)
     .select()
     .single();
 
   if (error) {
-    console.error('Error creating tournament:', error);
     throw error;
   }
 
   return data;
 };
 
-// Helper function to check if user can access tournament
-export const canAccessTournament = async (tournamentId: string, userId: string): Promise<boolean> => {
-  try {
-    // Check if user is admin
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .single();
+// Get tournaments for the current user (respects RLS)
+export const getUserTournaments = async () => {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-    if (roleData?.role === 'admin') {
-      return true;
-    }
-
-    // Check if user owns the tournament
-    const { data: tournamentData } = await supabase
-      .from('tournaments')
-      .select('user_id')
-      .eq('id', tournamentId)
-      .single();
-
-    return tournamentData?.user_id === userId;
-  } catch (error) {
-    console.error('Error checking tournament access:', error);
-    return false;
+  if (error) {
+    throw error;
   }
+
+  return data;
+};
+
+// Update tournament (only if user owns it or is admin - handled by RLS)
+export const updateTournament = async (tournamentId: string, updates: Partial<DatabaseTournament>) => {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .update(updates)
+    .eq('id', tournamentId)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+// Delete tournament (only if user owns it or is admin - handled by RLS)
+export const deleteTournament = async (tournamentId: string) => {
+  const { error } = await supabase
+    .from('tournaments')
+    .delete()
+    .eq('id', tournamentId);
+
+  if (error) {
+    throw error;
+  }
+};
+
+// Get tournament by ID (only if user owns it or is admin - handled by RLS)
+export const getTournamentById = async (tournamentId: string) => {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .eq('id', tournamentId)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+// Utility to safely convert JSON fields to strings
+export const safeJsonToString = (value: any): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return value.toString();
+  if (value === null || value === undefined) return '';
+  return JSON.stringify(value);
 };

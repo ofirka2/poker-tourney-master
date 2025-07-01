@@ -39,7 +39,7 @@ export const mapDatabasePlayerToPlayer = (dbPlayer: DatabasePlayer): Player => {
 };
 
 // Convert frontend Player to database format for inserts/updates - ensure required fields
-export const mapPlayerToDatabase = (player: Player): DatabasePlayer => {
+export const mapPlayerToDatabase = (player: Player): Omit<DatabasePlayer, 'created_at' | 'updated_at'> => {
   const nameParts = player.name?.split(' ') || [player.first_name, player.last_name];
   const firstName = nameParts[0] || player.first_name || '';
   const lastName = nameParts.slice(1).join(' ') || player.last_name || '';
@@ -60,8 +60,6 @@ export const mapPlayerToDatabase = (player: Player): DatabasePlayer => {
     seat_number: player.seat_number || player.seatNumber || null,
     starting_position: player.starting_position || null,
     finish_position: player.finish_position || player.eliminationPosition || null,
-    created_at: player.created_at || null,
-    updated_at: player.updated_at || null,
   };
 };
 

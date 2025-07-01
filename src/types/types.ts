@@ -1,3 +1,4 @@
+
 // src/types/types.ts (Example - adjust path as needed)
 
 export interface TournamentState {
@@ -196,4 +197,45 @@ export interface UserRoleData {
  role: UserRole;
  created_at?: string;
  updated_at?: string;
+}
+
+// Extended tournament interface with database fields
+export interface DatabaseTournament {
+ id: string;
+ name: string;
+ start_date: string;
+ end_date?: string;
+ buy_in: number;
+ rebuy_amount: number;
+ addon_amount: number;
+ starting_chips: number;
+ blind_levels?: any;
+ created_at?: string;
+ updated_at?: string;
+ no_of_players?: number;
+ desired_duration?: number;
+ allow_rebuy?: boolean;
+ allow_addon?: boolean;
+ total_money?: number;
+ house_rake?: number;
+ max_rebuys?: number;
+ max_addons?: number;
+ last_rebuy_level?: number;
+ last_addon_level?: number;
+ house_payment?: number;
+ is_house_percentage?: boolean;
+ include_ante?: boolean;
+ addon_chips?: number;
+ rebuy_chips?: number;
+ payout_structure?: any;
+ chipset?: string;
+ format?: string;
+ winner?: string;
+ status: string;
+ user_id?: string;
+ // Tournament runtime fields
+ current_level?: number;
+ time_remaining?: number;
+ house_fee_type?: string;
+ house_fee_value?: number;
 }

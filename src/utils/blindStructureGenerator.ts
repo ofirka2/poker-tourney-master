@@ -1,3 +1,4 @@
+
 import { TournamentLevel } from "@/types/types";
 
 // Function to generate early game blind structure
@@ -66,10 +67,14 @@ export const generateBlindStructure = (
     }
   });
 
-  // Use findIndex instead of findLastIndex for compatibility
-  const lastBreakIndex = levels.map((level, index) => level.isBreak ? index : -1)
-    .filter(index => index !== -1)
-    .pop() || -1;
+  // Find last break index using manual search instead of findLastIndex for compatibility
+  let lastBreakIndex = -1;
+  for (let i = levels.length - 1; i >= 0; i--) {
+    if (levels[i].isBreak) {
+      lastBreakIndex = i;
+      break;
+    }
+  }
 
   // Late game: slower progression with antes
   const lateGameLevels = [
