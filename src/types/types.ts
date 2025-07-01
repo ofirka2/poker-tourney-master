@@ -20,6 +20,14 @@ export interface TournamentState {
  playerCount?: number;
  desiredDuration?: number;
  includeAnte?: boolean;
+ // Add the missing properties that are being accessed
+ buyInAmount?: number;
+ rebuyAmount?: number;
+ addOnAmount?: number;
+ maxAddOns?: number;
+ lastRebuyLevel?: number;
+ lastAddOnLevel?: number;
+ payoutStructure?: PayoutStructure;
 }
 
 export type TournamentAction =
@@ -174,4 +182,6 @@ export interface TournamentSettings {
  chipset: string;
  format: string;
  desiredDuration: number;
+ // Add the missing smallBlind property
+ smallBlind?: number;
 }

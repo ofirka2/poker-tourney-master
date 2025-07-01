@@ -38,28 +38,30 @@ export const mapDatabasePlayerToPlayer = (dbPlayer: DatabasePlayer): Player => {
   };
 };
 
-// Convert frontend Player to database format for inserts/updates
-export const mapPlayerToDatabase = (player: Player): Partial<DatabasePlayer> => {
+// Convert frontend Player to database format for inserts/updates - ensure required fields
+export const mapPlayerToDatabase = (player: Player): DatabasePlayer => {
   const nameParts = player.name?.split(' ') || [player.first_name, player.last_name];
-  const firstName = nameParts[0] || player.first_name;
-  const lastName = nameParts.slice(1).join(' ') || player.last_name;
+  const firstName = nameParts[0] || player.first_name || '';
+  const lastName = nameParts.slice(1).join(' ') || player.last_name || '';
 
   return {
     id: player.id,
     tournament_id: player.tournament_id,
-    first_name: firstName,
-    last_name: lastName,
-    email: player.email,
-    phone: player.phone,
-    buy_ins: player.buy_ins,
-    rebuys: player.rebuys,
+    first_name: firstName, // Ensure this is always a string
+    last_name: lastName,   // Ensure this is always a string
+    email: player.email || null,
+    phone: player.phone || null,
+    buy_ins: player.buy_ins || 1,
+    rebuys: player.rebuys || 0,
     addons: player.addons || player.addOns || 0,
     current_chips: player.current_chips || player.chips || 0,
-    status: player.eliminated ? 'eliminated' : 'active',
-    table_id: player.table_id,
-    seat_number: player.seat_number || player.seatNumber,
-    starting_position: player.starting_position,
-    finish_position: player.finish_position || player.eliminationPosition,
+    status: player.eliminated ? 'eliminated' : (player.status || 'active'),
+    table_id: player.table_id || null,
+    seat_number: player.seat_number || player.seatNumber || null,
+    starting_position: player.starting_position || null,
+    finish_position: player.finish_position || player.eliminationPosition || null,
+    created_at: player.created_at || null,
+    updated_at: player.updated_at || null,
   };
 };
 
