@@ -1,9 +1,82 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { DatabaseTournament } from "@/types/types";
+import { DatabaseTournament, Player, Table, TournamentSettings } from "@/types/types";
+import { Tables } from "@/integrations/supabase/types";
+import { mapDatabasePlayerToPlayer } from "./playerUtils";
+
+// Calculate prize pool based on players and settings
+export const calculatePrizePool = (players: Player[], settings: TournamentSettings): number => {
+  const totalBuyIns = players.reduce((sum, player) => sum + (player.buy_ins || 1), 0);
+  const totalRebuys = players.reduce((sum, player) => sum + (player.rebuys || 0), 0);
+  const totalAddons = players.reduce((sum, player) => sum + (player.addons || 0), 0);
+  
+  const buyInTotal = totalBuyIns * settings.buyInAmount;
+  const rebuyTotal = totalRebuys * settings.rebuyAmount;
+  const addonTotal = totalAddons * settings.addOnAmount;
+  
+  const grossPrizePool = buyInTotal + rebuyTotal + addonTotal;
+  
+  // Apply house fee if configured
+  let houseFee = 0;
+  if (settings.houseFeeType === 'percentage') {
+    houseFee = grossPrizePool * (settings.houseFeeValue || 0) / 100;
+  } else if (settings.houseFeeType === 'fixed') {
+    houseFee = settings.houseFeeValue || 0;
+  }
+  
+  return Math.max(0, grossPrizePool - houseFee);
+};
+
+// Assign players to tables
+export const assignPlayersToTables = (players: Player[], numTables: number): Table[] => {
+  const activePlayers = players.filter(p => !p.eliminated);
+  const tables: Table[] = [];
+  
+  // Create empty tables
+  for (let i = 0; i < numTables; i++) {
+    tables.push({
+      id: i + 1,
+      players: [],
+      maxSeats: 9
+    });
+  }
+  
+  // Distribute players evenly across tables
+  activePlayers.forEach((player, index) => {
+    const tableIndex = index % numTables;
+    const seatNumber = Math.floor(index / numTables) + 1;
+    
+    const updatedPlayer = {
+      ...player,
+      tableNumber: tableIndex + 1,
+      seatNumber: seatNumber
+    };
+    
+    tables[tableIndex].players.push(updatedPlayer);
+  });
+  
+  return tables;
+};
+
+// Balance tables by moving players
+export const balanceTables = (tables: Table[]): Table[] => {
+  const totalPlayers = tables.reduce((sum, table) => sum + table.players.length, 0);
+  const playersPerTable = Math.floor(totalPlayers / tables.length);
+  const extraPlayers = totalPlayers % tables.length;
+  
+  const balancedTables = tables.map((table, index) => {
+    const targetSize = playersPerTable + (index < extraPlayers ? 1 : 0);
+    return {
+      ...table,
+      players: table.players.slice(0, targetSize)
+    };
+  });
+  
+  return balancedTables;
+};
 
 // Create a new tournament with user ownership
-export const createTournamentWithOwnership = async (tournamentData: Partial<DatabaseTournament>) => {
+export const createTournamentWithOwnership = async (tournamentData: Partial<Tables<'tournaments'>>) => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -13,6 +86,7 @@ export const createTournamentWithOwnership = async (tournamentData: Partial<Data
   const tournamentWithOwnership = {
     ...tournamentData,
     user_id: user.id,
+    name: tournamentData.name || 'Untitled Tournament', // Ensure name is provided
   };
 
   const { data, error } = await supabase
@@ -43,7 +117,7 @@ export const getUserTournaments = async () => {
 };
 
 // Update tournament (only if user owns it or is admin - handled by RLS)
-export const updateTournament = async (tournamentId: string, updates: Partial<DatabaseTournament>) => {
+export const updateTournament = async (tournamentId: string, updates: Partial<Tables<'tournaments'>>) => {
   const { data, error } = await supabase
     .from('tournaments')
     .update(updates)
@@ -83,6 +157,20 @@ export const getTournamentById = async (tournamentId: string) => {
   }
 
   return data;
+};
+
+// Get tournament players with proper typing
+export const getTournamentPlayers = async (tournamentId: string): Promise<Player[]> => {
+  const { data, error } = await supabase
+    .from('players')
+    .select('*')
+    .eq('tournament_id', tournamentId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map(mapDatabasePlayerToPlayer);
 };
 
 // Utility to safely convert JSON fields to strings

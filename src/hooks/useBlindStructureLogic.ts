@@ -135,20 +135,17 @@ const useBlindStructureLogic = ({
   // Define the handleGenerateBlindStructure function
   const handleGenerateBlindStructure = useCallback(() => {
     try {
-      // Check minimal required inputs for generation using the state variables from the hook
       if (!initialChips || initialChips <= 0 || playerCount <= 0 || durationHours <= 0 || chipsetValues.length === 0 || !tournamentFormat) {
          console.warn("Cannot generate blind structure: Missing required inputs.");
          toast.warning("Please provide valid inputs for players, duration, initial chips, format, and chipset to generate blinds.");
-         setLevels([]); // Clear levels if generation is impossible
-         setSmallBlind(0); // Reset blinds display
+         setLevels([]);
+         setSmallBlind(0);
          setBigBlind(0);
-         return; // Exit if inputs are invalid
+         return;
       }
 
-      // Convert duration hours to minutes
       const targetDurationMinutes = durationHours * 60;
 
-      // Map format to the format expected by generateDynamicBlinds
       let generatorFormat;
       switch (tournamentFormat.toLowerCase()) {
         case 'freezeout': generatorFormat = 'standard'; break;
@@ -158,38 +155,33 @@ const useBlindStructureLogic = ({
         case 'rebuy': case 'bounty': default: generatorFormat = 'standard';
       }
 
-      // Add rebuy factor calculation based on current state variables
       const rebuyFactor = allowRebuy ? (1 + (maxRebuys / 2)) : 1;
 
-      // Generate the blind structure using current state variables
       const generatedLevels = generateDynamicBlinds(
         playerCount,
         initialChips,
         targetDurationMinutes,
         {
-          levelDurationMinutes: 20, // Base level duration - make this configurable if needed?
+          levelDurationMinutes: 20,
           tournamentFormat: generatorFormat,
           chipset: chipsetValues,
-          anteStartLevel: includeAnte ? 4 : 999, // Start antes at level 4 if enabled, otherwise disable
-          breakIntervalLevels: 4, // Break every 4 levels - make this configurable?
+          anteStartLevel: includeAnte ? 4 : 999,
+          breakIntervalLevels: 4,
           blindIncreaseFactor: tournamentFormat === 'deepstack' ? 1.3 :
                              tournamentFormat === 'turbo' ? 1.7 :
                              tournamentFormat === 'hyper' ? 2.0 :
-                             1.5, // Default increase factor
+                             1.5,
           rebuyAddonFactor: rebuyFactor,
-          includeAnte: includeAnte // Pass includeAnte state
+          includeAnte: includeAnte
         }
       );
 
-      // Update the levels state managed by the hook
       setLevels(generatedLevels);
 
-      // Update the small and big blind display from the first generated level
       if (generatedLevels.length > 0 && !generatedLevels[0].isBreak) {
         setSmallBlind(generatedLevels[0].smallBlind);
         setBigBlind(generatedLevels[0].bigBlind);
       } else {
-         // If no levels generated (e.g., inputs resulted in an error condition in generator)
          setSmallBlind(0);
          setBigBlind(0);
       }
@@ -198,19 +190,19 @@ const useBlindStructureLogic = ({
     } catch (error) {
       console.error("Error generating blind structure:", error);
       toast.error("Failed to generate blind structure");
-      setLevels([]); // Clear levels on generation error
-      setSmallBlind(0); // Reset blinds display
+      setLevels([]);
+      setSmallBlind(0);
       setBigBlind(0);
     }
   }, [
-    initialChips, // Dependency for generator
-    playerCount, // Dependency for generator
-    durationHours, // Dependency for generator
-    allowRebuy, // Dependency for rebuyFactor
-    maxRebuys, // Dependency for rebuyFactor
-    tournamentFormat, // Dependency for generator format and blindIncreaseFactor
-    chipsetValues, // Dependency for generator
-    includeAnte // Dependency for generator
+    initialChips,
+    playerCount,
+    durationHours,
+    allowRebuy,
+    maxRebuys,
+    tournamentFormat,
+    chipsetValues,
+    includeAnte
   ]);
 
 

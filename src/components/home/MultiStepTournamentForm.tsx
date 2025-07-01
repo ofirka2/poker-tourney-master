@@ -253,7 +253,6 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
       return defaultLevels;
     }
 
-
     // Map the format to the generator format
     let generatorFormat;
     switch (formData.format.toLowerCase()) {
@@ -297,7 +296,6 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
     );
   };
 
-
   /**
    * Handles the creation of a new tournament.
    * Saves the tournament data to Supabase and dispatches an action to the context.
@@ -309,6 +307,14 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
 
       // Generate the blind levels
       const blindLevels = generateBlindLevels();
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('You must be logged in to create tournaments');
+        return;
+      }
 
       // Create tournament in Supabase
       const { data, error } = await supabase.from('tournaments').insert({
@@ -325,6 +331,7 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
         blind_levels: JSON.stringify(blindLevels),
         buy_in: formData.buyIn,
         include_ante: formData.includeAnte,
+        user_id: user.id, // Set ownership
         // Add other settings properties to save to DB if needed
         // max_rebuys: settings.maxRebuys, // Assuming these are part of settings in context
         // max_addons: settings.maxAddOns,

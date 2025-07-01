@@ -1,5 +1,88 @@
+import { TournamentLevel, Player, TournamentSettings, Table } from "@/types/types";
 
-import { TournamentLevel } from "@/types/types";
+// Function to round values to standard poker chip denominations
+export const roundToPokerChips = (value: number, chipset: number[] = [25, 100, 500, 1000, 5000]): number => {
+  if (value <= 0) return chipset[0] || 25;
+  
+  // Find the closest chip denomination that's not larger than the value
+  const sortedChipset = [...chipset].sort((a, b) => a - b);
+  
+  for (let i = sortedChipset.length - 1; i >= 0; i--) {
+    if (value >= sortedChipset[i]) {
+      return Math.round(value / sortedChipset[i]) * sortedChipset[i];
+    }
+  }
+  
+  return sortedChipset[0];
+};
+
+// Dynamic blind structure generator
+export const generateDynamicBlinds = (
+  playerCount: number,
+  startingStack: number,
+  targetDurationMinutes: number,
+  options: {
+    levelDurationMinutes?: number;
+    tournamentFormat?: string;
+    chipset?: number[];
+    anteStartLevel?: number;
+    breakIntervalLevels?: number;
+    blindIncreaseFactor?: number;
+    rebuyAddonFactor?: number;
+    includeAnte?: boolean;
+  } = {}
+): TournamentLevel[] => {
+  const {
+    levelDurationMinutes = 20,
+    tournamentFormat = 'standard',
+    chipset = [25, 100, 500, 1000, 5000],
+    anteStartLevel = 4,
+    breakIntervalLevels = 4,
+    blindIncreaseFactor = 1.5,
+    rebuyAddonFactor = 1.0,
+    includeAnte = false
+  } = options;
+
+  const levels: TournamentLevel[] = [];
+  const targetLevels = Math.floor(targetDurationMinutes / levelDurationMinutes);
+  
+  // Starting blinds based on chipset and stack
+  let smallBlind = roundToPokerChips(startingStack * 0.005, chipset);
+  let bigBlind = smallBlind * 2;
+  
+  for (let level = 1; level <= targetLevels; level++) {
+    // Add break every X levels
+    if (level > 1 && level % breakIntervalLevels === 0) {
+      levels.push({
+        level: level,
+        smallBlind: 0,
+        bigBlind: 0,
+        ante: 0,
+        duration: 15,
+        isBreak: true
+      });
+    } else {
+      const ante = includeAnte && level >= anteStartLevel 
+        ? roundToPokerChips(bigBlind * 0.1, chipset) 
+        : 0;
+
+      levels.push({
+        level: level,
+        smallBlind: roundToPokerChips(smallBlind, chipset),
+        bigBlind: roundToPokerChips(bigBlind, chipset),
+        ante: ante,
+        duration: levelDurationMinutes,
+        isBreak: false
+      });
+      
+      // Increase blinds for next level
+      smallBlind = Math.round(smallBlind * blindIncreaseFactor);
+      bigBlind = smallBlind * 2;
+    }
+  }
+  
+  return levels;
+};
 
 // Function to generate early game blind structure
 const generateEarlyGameStructure = (includeAnte: boolean = false) => {
@@ -112,7 +195,7 @@ export const generateBlindStructure = (
 
   const adjustedLevels = levels.map(level => ({
     ...level,
-    duration: Math.max(5, Math.round(level.duration * durationRatio)), // Ensure a minimum duration
+    duration: Math.max(5, Math.round(level.duration * durationRatio)),
   }));
 
   return adjustedLevels;
