@@ -1,107 +1,182 @@
 
-import { Player, TournamentSettings, Table } from "@/types/types";
+import { supabase } from "@/integrations/supabase/client";
+import { DatabaseTournament, Player, Table, TournamentSettings } from "@/types/types";
+import { Tables } from "@/integrations/supabase/types";
+import { mapDatabasePlayerToPlayer } from "./playerUtils";
 
-/**
- * Calculates the total prize pool based on player entries
- */
-export function calculatePrizePool(players: Player[], settings: TournamentSettings): number {
-  return players.reduce((total, player) => {
-    let playerTotal = 0;
-    if (player.buyIn) playerTotal += settings.buyInAmount;
-    playerTotal += player.rebuys * settings.rebuyAmount;
-    playerTotal += player.addOns * settings.addOnAmount;
-    return total + playerTotal;
-  }, 0);
-}
-
-/**
- * Assigns players to tables randomly and evenly
- */
-export function assignPlayersToTables(players: Player[], numTables: number): Table[] {
-  const tables: Table[] = Array.from({ length: numTables }, (_, i) => ({
-    id: i + 1,
-    players: [],
-    maxSeats: 9
-  }));
-
-  const shuffledPlayers = [...players]
-    .filter(player => !player.eliminated)
-    .sort(() => Math.random() - 0.5);
+// Calculate prize pool based on players and settings
+export const calculatePrizePool = (players: Player[], settings: TournamentSettings): number => {
+  const totalBuyIns = players.reduce((sum, player) => sum + (player.buy_ins || 1), 0);
+  const totalRebuys = players.reduce((sum, player) => sum + (player.rebuys || 0), 0);
+  const totalAddons = players.reduce((sum, player) => sum + (player.addons || 0), 0);
   
-  shuffledPlayers.forEach((player, index) => {
+  const buyInTotal = totalBuyIns * settings.buyInAmount;
+  const rebuyTotal = totalRebuys * settings.rebuyAmount;
+  const addonTotal = totalAddons * settings.addOnAmount;
+  
+  const grossPrizePool = buyInTotal + rebuyTotal + addonTotal;
+  
+  // Apply house fee if configured
+  let houseFee = 0;
+  if (settings.houseFeeType === 'percentage') {
+    houseFee = grossPrizePool * (settings.houseFeeValue || 0) / 100;
+  } else if (settings.houseFeeType === 'fixed') {
+    houseFee = settings.houseFeeValue || 0;
+  }
+  
+  return Math.max(0, grossPrizePool - houseFee);
+};
+
+// Assign players to tables
+export const assignPlayersToTables = (players: Player[], numTables: number): Table[] => {
+  const activePlayers = players.filter(p => !p.eliminated);
+  const tables: Table[] = [];
+  
+  // Create empty tables
+  for (let i = 0; i < numTables; i++) {
+    tables.push({
+      id: i + 1,
+      players: [],
+      maxSeats: 9
+    });
+  }
+  
+  // Distribute players evenly across tables
+  activePlayers.forEach((player, index) => {
     const tableIndex = index % numTables;
-    const table = tables[tableIndex];
+    const seatNumber = Math.floor(index / numTables) + 1;
     
-    const takenSeats = new Set(table.players.map(p => p.seatNumber));
-    let seatNumber = 1;
-    while (takenSeats.has(seatNumber) && seatNumber <= 9) {
-      seatNumber++;
-    }
-    
-    const updatedPlayer = { 
-      ...player, 
-      tableNumber: table.id, 
-      seatNumber 
+    const updatedPlayer = {
+      ...player,
+      tableNumber: tableIndex + 1,
+      seatNumber: seatNumber
     };
     
     tables[tableIndex].players.push(updatedPlayer);
   });
   
   return tables;
-}
+};
 
-/**
- * Balances table assignments to ensure even distribution
- */
-export function balanceTables(tables: Table[]): Table[] {
-  if (tables.length <= 1) return tables;
+// Balance tables by moving players
+export const balanceTables = (tables: Table[]): Table[] => {
+  const totalPlayers = tables.reduce((sum, table) => sum + table.players.length, 0);
+  const playersPerTable = Math.floor(totalPlayers / tables.length);
+  const extraPlayers = totalPlayers % tables.length;
   
-  const tableCounts = tables.map(table => ({
-    tableId: table.id,
-    count: table.players.filter(p => !p.eliminated).length
-  }));
+  const balancedTables = tables.map((table, index) => {
+    const targetSize = playersPerTable + (index < extraPlayers ? 1 : 0);
+    return {
+      ...table,
+      players: table.players.slice(0, targetSize)
+    };
+  });
   
-  const minTable = tableCounts.reduce((min, table) => 
-    table.count < min.count ? table : min, tableCounts[0]);
+  return balancedTables;
+};
+
+// Create a new tournament with user ownership
+export const createTournamentWithOwnership = async (tournamentData: Partial<Tables<'tournaments'>>) => {
+  const { data: { user } } = await supabase.auth.getUser();
   
-  const maxTable = tableCounts.reduce((max, table) => 
-    table.count > max.count ? table : max, tableCounts[0]);
-  
-  if (maxTable.count - minTable.count > 1) {
-    const playersToMove = Math.floor((maxTable.count - minTable.count) / 2);
-    
-    if (playersToMove > 0) {
-      const maxTableObj = tables.find(t => t.id === maxTable.tableId);
-      const minTableObj = tables.find(t => t.id === minTable.tableId);
-      
-      if (maxTableObj && minTableObj) {
-        const playersToReassign = maxTableObj.players
-          .filter(p => !p.eliminated)
-          .slice(0, playersToMove);
-        
-        maxTableObj.players = maxTableObj.players
-          .filter(p => !playersToReassign.includes(p));
-        
-        const takenSeats = new Set(minTableObj.players.map(p => p.seatNumber));
-        
-        playersToReassign.forEach(player => {
-          let seat = 1;
-          while (takenSeats.has(seat) && seat <= 9) {
-            seat++;
-          }
-          takenSeats.add(seat);
-          
-          const updatedPlayer = {
-            ...player,
-            tableNumber: minTableObj.id,
-            seatNumber: seat
-          };
-          
-          minTableObj.players.push(updatedPlayer);
-        });
-      }
-    }
+  if (!user) {
+    throw new Error('User must be authenticated to create tournaments');
   }
-  
-  return tables;
-}
+
+  const tournamentWithOwnership = {
+    ...tournamentData,
+    user_id: user.id,
+    name: tournamentData.name || 'Untitled Tournament', // Ensure name is provided
+  };
+
+  const { data, error } = await supabase
+    .from('tournaments')
+    .insert(tournamentWithOwnership)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+// Get tournaments for the current user (respects RLS)
+export const getUserTournaments = async () => {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+// Update tournament (only if user owns it or is admin - handled by RLS)
+export const updateTournament = async (tournamentId: string, updates: Partial<Tables<'tournaments'>>) => {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .update(updates)
+    .eq('id', tournamentId)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+// Delete tournament (only if user owns it or is admin - handled by RLS)
+export const deleteTournament = async (tournamentId: string) => {
+  const { error } = await supabase
+    .from('tournaments')
+    .delete()
+    .eq('id', tournamentId);
+
+  if (error) {
+    throw error;
+  }
+};
+
+// Get tournament by ID (only if user owns it or is admin - handled by RLS)
+export const getTournamentById = async (tournamentId: string) => {
+  const { data, error } = await supabase
+    .from('tournaments')
+    .select('*')
+    .eq('id', tournamentId)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
+
+// Get tournament players with proper typing
+export const getTournamentPlayers = async (tournamentId: string): Promise<Player[]> => {
+  const { data, error } = await supabase
+    .from('players')
+    .select('*')
+    .eq('tournament_id', tournamentId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map(mapDatabasePlayerToPlayer);
+};
+
+// Utility to safely convert JSON fields to strings
+export const safeJsonToString = (value: any): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return value.toString();
+  if (value === null || value === undefined) return '';
+  return JSON.stringify(value);
+};

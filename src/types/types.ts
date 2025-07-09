@@ -20,6 +20,15 @@ export interface TournamentState {
  playerCount?: number;
  desiredDuration?: number;
  includeAnte?: boolean;
+ // Add the missing properties that are being accessed
+ buyInAmount?: number;
+ rebuyAmount?: number;
+ addOnAmount?: number;
+ maxAddOns?: number;
+ lastRebuyLevel?: number;
+ lastAddOnLevel?: number;
+ payoutStructure?: PayoutStructure;
+ user_id?: string;
 }
 
 export type TournamentAction =
@@ -174,4 +183,59 @@ export interface TournamentSettings {
  chipset: string;
  format: string;
  desiredDuration: number;
+ // Add the missing blind properties
+ smallBlind?: number;
+ bigBlind?: number;
+}
+
+// Add user role types
+export type UserRole = 'admin' | 'user';
+
+export interface UserRoleData {
+ id: string;
+ user_id: string;
+ role: UserRole;
+ created_at?: string;
+ updated_at?: string;
+}
+
+// Extended tournament interface with database fields
+export interface DatabaseTournament {
+ id: string;
+ name: string;
+ start_date: string;
+ end_date?: string;
+ buy_in: number;
+ rebuy_amount: number;
+ addon_amount: number;
+ starting_chips: number;
+ blind_levels?: any;
+ created_at?: string;
+ updated_at?: string;
+ no_of_players?: number;
+ desired_duration?: number;
+ allow_rebuy?: boolean;
+ allow_addon?: boolean;
+ total_money?: number;
+ house_rake?: number;
+ max_rebuys?: number;
+ max_addons?: number;
+ last_rebuy_level?: number;
+ last_addon_level?: number;
+ house_payment?: number;
+ is_house_percentage?: boolean;
+ include_ante?: boolean;
+ addon_chips?: number;
+ rebuy_chips?: number;
+ payout_structure?: any;
+ chipset?: string;
+ format?: string;
+ winner?: string;
+ status: string;
+ user_id?: string;
+ // Tournament runtime fields
+ current_level?: number;
+ time_remaining?: number;
+ house_fee_type?: string;
+ house_fee_value?: number;
 }

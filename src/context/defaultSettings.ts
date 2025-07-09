@@ -22,6 +22,13 @@ export const defaultSettings: TournamentSettings = {
   lastAddOnLevel: 6,
   houseFeeType: 'none',
   houseFeeValue: 0,
+  allowRebuy: DEFAULT_ALLOW_REBUY,
+  allowAddon: DEFAULT_ALLOW_ADDON,
+  includeAnte: false,
+  playerCount: DEFAULT_PLAYER_COUNT,
+  chipset: "25,100,500,1000,5000",
+  format: "rebuy",
+  desiredDuration: DEFAULT_TOURNAMENT_DURATION,
   payoutStructure: {
     places: [
       { position: 1, percentage: 50 },
