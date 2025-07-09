@@ -249,11 +249,10 @@ const useBlindStructureLogic = ({
               }
             }
 
-            // Immediately generate blinds based on the new initial stack and parameters
-            // Wrap in setTimeout to allow state updates (initialChips, smallBlind, bigBlind) to potentially finish
-             setTimeout(() => {
-                handleGenerateBlindStructure();
-             }, 0); // Use 0ms delay to defer until current state updates are processed
+            // Don't automatically generate blinds - let user click the button
+            // setTimeout(() => {
+            //    handleGenerateBlindStructure();
+            // }, 0);
 
           } else {
              console.warn("Stack calculation returned no result (invalid inputs?).");
