@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import ReCaptcha from './ReCaptcha';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -16,11 +17,58 @@ const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [recaptchaToken, setRecaptchaToken] = useState('');
+  const [recaptchaError, setRecaptchaError] = useState(false);
+  const loginRecaptchaRef = useRef<{ reset: () => void; getResponse: () => string }>(null);
+  const signupRecaptchaRef = useRef<{ reset: () => void; getResponse: () => string }>(null);
   const navigate = useNavigate();
+
+  const RECAPTCHA_SITE_KEY = '6Lf62HwrAAAAAOc8NLxr4FuIIuYyZV_yVY6cd4SD';
+
+  const handleRecaptchaVerify = (token: string) => {
+    setRecaptchaToken(token);
+    setRecaptchaError(false);
+  };
+
+  const handleRecaptchaExpire = () => {
+    setRecaptchaToken('');
+    setRecaptchaError(true);
+    toast.error('reCAPTCHA expired. Please try again.');
+  };
+
+  const handleRecaptchaError = () => {
+    setRecaptchaToken('');
+    setRecaptchaError(true);
+    toast.error('reCAPTCHA error. Please try again.');
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setRecaptchaError(false);
+    setRecaptchaToken('');
+    // Reset reCAPTCHA when switching tabs
+    setTimeout(() => {
+      if (value === 'login') {
+        loginRecaptchaRef.current?.reset();
+      } else {
+        signupRecaptchaRef.current?.reset();
+      }
+    }, 100);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if reCAPTCHA is completed
+    const recaptchaResponse = loginRecaptchaRef.current?.getResponse();
+    if (!recaptchaResponse) {
+      toast.error('Please complete the reCAPTCHA verification');
+      setRecaptchaError(true);
+      return;
+    }
+
     setLoading(true);
+    setRecaptchaError(false);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -30,6 +78,7 @@ const LoginForm: React.FC = () => {
 
       if (error) {
         toast.error(error.message);
+        loginRecaptchaRef.current?.reset();
         return;
       }
 
@@ -40,6 +89,7 @@ const LoginForm: React.FC = () => {
     } catch (error) {
       toast.error('An unexpected error occurred');
       console.error('Login error:', error);
+      loginRecaptchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -58,7 +108,16 @@ const LoginForm: React.FC = () => {
       return;
     }
 
+    // Check if reCAPTCHA is completed
+    const recaptchaResponse = signupRecaptchaRef.current?.getResponse();
+    if (!recaptchaResponse) {
+      toast.error('Please complete the reCAPTCHA verification');
+      setRecaptchaError(true);
+      return;
+    }
+
     setLoading(true);
+    setRecaptchaError(false);
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -68,6 +127,7 @@ const LoginForm: React.FC = () => {
 
       if (error) {
         toast.error(error.message);
+        signupRecaptchaRef.current?.reset();
         return;
       }
 
@@ -76,10 +136,12 @@ const LoginForm: React.FC = () => {
         setActiveTab('login');
         setPassword('');
         setConfirmPassword('');
+        signupRecaptchaRef.current?.reset();
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
       console.error('Sign up error:', error);
+      signupRecaptchaRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -118,7 +180,7 @@ const LoginForm: React.FC = () => {
           <p className="text-muted-foreground">Sign in to manage your tournaments</p>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -166,6 +228,23 @@ const LoginForm: React.FC = () => {
                       )}
                     </Button>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <ReCaptcha
+                    key="login-recaptcha"
+                    ref={loginRecaptchaRef}
+                    siteKey={RECAPTCHA_SITE_KEY}
+                    onVerify={handleRecaptchaVerify}
+                    onExpire={handleRecaptchaExpire}
+                    onError={handleRecaptchaError}
+                    className="flex justify-center"
+                  />
+                  {recaptchaError && (
+                    <p className="text-sm text-red-500 text-center">
+                      Please complete the reCAPTCHA verification
+                    </p>
+                  )}
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -248,6 +327,23 @@ const LoginForm: React.FC = () => {
                     disabled={loading}
                     minLength={6}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <ReCaptcha
+                    key="signup-recaptcha"
+                    ref={signupRecaptchaRef}
+                    siteKey={RECAPTCHA_SITE_KEY}
+                    onVerify={handleRecaptchaVerify}
+                    onExpire={handleRecaptchaExpire}
+                    onError={handleRecaptchaError}
+                    className="flex justify-center"
+                  />
+                  {recaptchaError && (
+                    <p className="text-sm text-red-500 text-center">
+                      Please complete the reCAPTCHA verification
+                    </p>
+                  )}
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>
