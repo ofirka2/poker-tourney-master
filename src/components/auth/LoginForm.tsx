@@ -19,25 +19,21 @@ const LoginForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [recaptchaToken, setRecaptchaToken] = useState('');
   const [recaptchaError, setRecaptchaError] = useState(false);
-  const [recaptchaKey, setRecaptchaKey] = useState(0);
+  const [isRecaptchaReady, setIsRecaptchaReady] = useState(false);
   const navigate = useNavigate();
 
-  const RECAPTCHA_SITE_KEY = '6Lf62HwrAAAAAOc8NLxr4FuIIuYyZV_yVY6cd4SD';
+  const RECAPTCHA_SITE_KEY = '6LcK-nwrAAAAABbbPmPTm2DzpnbJz1aREHyuDMoB';
 
   const handleRecaptchaVerify = (token: string) => {
     setRecaptchaToken(token);
     setRecaptchaError(false);
-  };
-
-  const handleRecaptchaExpire = () => {
-    setRecaptchaToken('');
-    setRecaptchaError(true);
-    toast.error('reCAPTCHA expired. Please try again.');
+    setIsRecaptchaReady(true);
   };
 
   const handleRecaptchaError = () => {
     setRecaptchaToken('');
     setRecaptchaError(true);
+    setIsRecaptchaReady(false);
     toast.error('reCAPTCHA error. Please try again.');
   };
 
@@ -45,8 +41,7 @@ const LoginForm: React.FC = () => {
     setActiveTab(value);
     setRecaptchaError(false);
     setRecaptchaToken('');
-    // Force re-render of reCAPTCHA when switching tabs
-    setRecaptchaKey(prev => prev + 1);
+    setIsRecaptchaReady(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -71,7 +66,7 @@ const LoginForm: React.FC = () => {
       if (error) {
         toast.error(error.message);
         setRecaptchaToken('');
-        setRecaptchaKey(prev => prev + 1);
+        setIsRecaptchaReady(false);
         return;
       }
 
@@ -83,7 +78,7 @@ const LoginForm: React.FC = () => {
       toast.error('An unexpected error occurred');
       console.error('Login error:', error);
       setRecaptchaToken('');
-      setRecaptchaKey(prev => prev + 1);
+      setIsRecaptchaReady(false);
     } finally {
       setLoading(false);
     }
@@ -121,7 +116,7 @@ const LoginForm: React.FC = () => {
       if (error) {
         toast.error(error.message);
         setRecaptchaToken('');
-        setRecaptchaKey(prev => prev + 1);
+        setIsRecaptchaReady(false);
         return;
       }
 
@@ -131,13 +126,13 @@ const LoginForm: React.FC = () => {
         setPassword('');
         setConfirmPassword('');
         setRecaptchaToken('');
-        setRecaptchaKey(prev => prev + 1);
+        setIsRecaptchaReady(false);
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
       console.error('Sign up error:', error);
       setRecaptchaToken('');
-      setRecaptchaKey(prev => prev + 1);
+      setIsRecaptchaReady(false);
     } finally {
       setLoading(false);
     }
@@ -228,16 +223,15 @@ const LoginForm: React.FC = () => {
 
                 <div className="space-y-2">
                   <ReCaptcha
-                    key={`login-recaptcha-${recaptchaKey}`}
                     siteKey={RECAPTCHA_SITE_KEY}
                     onVerify={handleRecaptchaVerify}
-                    onExpire={handleRecaptchaExpire}
                     onError={handleRecaptchaError}
+                    action="LOGIN"
                     className="flex justify-center"
                   />
                   {recaptchaError && (
                     <p className="text-sm text-red-500 text-center">
-                      Please complete the reCAPTCHA verification
+                      reCAPTCHA verification failed. Please try again.
                     </p>
                   )}
                 </div>
@@ -326,16 +320,15 @@ const LoginForm: React.FC = () => {
 
                 <div className="space-y-2">
                   <ReCaptcha
-                    key={`signup-recaptcha-${recaptchaKey}`}
                     siteKey={RECAPTCHA_SITE_KEY}
                     onVerify={handleRecaptchaVerify}
-                    onExpire={handleRecaptchaExpire}
                     onError={handleRecaptchaError}
+                    action="SIGNUP"
                     className="flex justify-center"
                   />
                   {recaptchaError && (
                     <p className="text-sm text-red-500 text-center">
-                      Please complete the reCAPTCHA verification
+                      reCAPTCHA verification failed. Please try again.
                     </p>
                   )}
                 </div>

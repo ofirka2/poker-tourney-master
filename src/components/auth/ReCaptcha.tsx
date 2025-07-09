@@ -3,171 +3,107 @@ import React, { useEffect, useRef, useCallback } from 'react';
 interface ReCaptchaProps {
   siteKey: string;
   onVerify: (token: string) => void;
-  onExpire: () => void;
-  onError: () => void;
+  onExpire?: () => void;
+  onError?: () => void;
+  action?: string;
   className?: string;
-}
-
-interface ReCaptchaOptions {
-  sitekey: string;
-  callback: (token: string) => void;
-  'expired-callback': () => void;
-  'error-callback': () => void;
-  theme?: 'light' | 'dark';
-  size?: 'normal' | 'compact' | 'invisible';
 }
 
 declare global {
   interface Window {
     grecaptcha: {
-      render: (container: string | HTMLElement, options: ReCaptchaOptions) => number;
-      reset: (widgetId: number) => void;
-      getResponse: (widgetId: number) => string;
+      enterprise: {
+        ready: (callback: () => void) => void;
+        execute: (siteKey: string, options: { action: string }) => Promise<string>;
+      };
     };
   }
 }
 
 interface ReCaptchaRef {
-  reset: () => void;
-  getResponse: () => string;
+  execute: () => Promise<string>;
 }
-
-// Global registry to track rendered reCAPTCHA instances
-const recaptchaRegistry = new Map<HTMLElement, number>();
 
 const ReCaptcha = React.forwardRef<ReCaptchaRef, ReCaptchaProps>(({
   siteKey,
   onVerify,
   onExpire,
   onError,
+  action = 'LOGIN',
   className = ''
 }, ref) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<number | null>(null);
-  const isRenderedRef = useRef(false);
+  const isReadyRef = useRef(false);
 
-  const loadReCaptcha = useCallback(() => {
-    if (!window.grecaptcha || !containerRef.current || isRenderedRef.current) {
-      return;
+  const execute = useCallback(async (): Promise<string> => {
+    if (!window.grecaptcha || !window.grecaptcha.enterprise) {
+      throw new Error('reCAPTCHA Enterprise not loaded');
     }
 
-    // Check if this container already has a reCAPTCHA instance
-    if (recaptchaRegistry.has(containerRef.current)) {
-      const existingWidgetId = recaptchaRegistry.get(containerRef.current);
-      if (existingWidgetId !== undefined) {
-        widgetIdRef.current = existingWidgetId;
-        isRenderedRef.current = true;
-        return;
-      }
-    }
-
-    // Clear the container first
-    containerRef.current.innerHTML = '';
-
-    try {
-      const widgetId = window.grecaptcha.render(containerRef.current, {
-        sitekey: siteKey,
-        callback: onVerify,
-        'expired-callback': onExpire,
-        'error-callback': onError,
-        theme: 'light',
-        size: 'normal'
+    return new Promise((resolve, reject) => {
+      window.grecaptcha.enterprise.ready(async () => {
+        try {
+          const token = await window.grecaptcha.enterprise.execute(siteKey, { action });
+          resolve(token);
+        } catch (error) {
+          console.error('reCAPTCHA execution error:', error);
+          reject(error);
+        }
       });
+    });
+  }, [siteKey, action]);
 
-      widgetIdRef.current = widgetId;
-      isRenderedRef.current = true;
-      recaptchaRegistry.set(containerRef.current, widgetId);
-    } catch (error) {
-      console.error('Error rendering reCAPTCHA:', error);
-      isRenderedRef.current = false;
-    }
-  }, [siteKey, onVerify, onExpire, onError]);
+  // Expose execute method to parent component
+  React.useImperativeHandle(ref, () => ({
+    execute
+  }));
 
   useEffect(() => {
-    let checkInterval: NodeJS.Timeout;
+    // Check if grecaptcha is loaded
+    const checkGrecaptcha = () => {
+      if (window.grecaptcha && window.grecaptcha.enterprise) {
+        isReadyRef.current = true;
+        return true;
+      }
+      return false;
+    };
 
-    // Check if grecaptcha is already loaded
-    if (window.grecaptcha) {
-      loadReCaptcha();
-    } else {
+    if (!checkGrecaptcha()) {
       // Wait for grecaptcha to load
-      checkInterval = setInterval(() => {
-        if (window.grecaptcha) {
-          clearInterval(checkInterval);
-          loadReCaptcha();
+      const interval = setInterval(() => {
+        if (checkGrecaptcha()) {
+          clearInterval(interval);
         }
       }, 100);
 
       // Cleanup interval after 10 seconds
-      setTimeout(() => {
-        if (checkInterval) {
-          clearInterval(checkInterval);
-        }
-      }, 10000);
+      setTimeout(() => clearInterval(interval), 10000);
     }
 
     return () => {
-      if (checkInterval) {
-        clearInterval(checkInterval);
-      }
-    };
-  }, [loadReCaptcha]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (containerRef.current && recaptchaRegistry.has(containerRef.current)) {
-        recaptchaRegistry.delete(containerRef.current);
-      }
-      isRenderedRef.current = false;
+      isReadyRef.current = false;
     };
   }, []);
 
-  const reset = () => {
-    if (widgetIdRef.current !== null && window.grecaptcha) {
-      try {
-        window.grecaptcha.reset(widgetIdRef.current);
-      } catch (error) {
-        console.error('Error resetting reCAPTCHA:', error);
-        // If reset fails, clear the registry and re-render
-        if (containerRef.current) {
-          recaptchaRegistry.delete(containerRef.current);
-          containerRef.current.innerHTML = '';
-          widgetIdRef.current = null;
-          isRenderedRef.current = false;
-          // Trigger a re-render
-          setTimeout(() => {
-            loadReCaptcha();
-          }, 100);
-        }
-      }
+  // Auto-execute when component mounts (for invisible reCAPTCHA)
+  useEffect(() => {
+    if (isReadyRef.current) {
+      execute()
+        .then(token => {
+          onVerify(token);
+        })
+        .catch(error => {
+          console.error('Auto-execute reCAPTCHA error:', error);
+          onError?.();
+        });
     }
-  };
+  }, [execute, onVerify, onError]);
 
-  const getResponse = (): string => {
-    if (widgetIdRef.current !== null && window.grecaptcha) {
-      return window.grecaptcha.getResponse(widgetIdRef.current);
-    }
-    return '';
-  };
-
-  // Expose methods to parent component
-  React.useImperativeHandle(ref, () => ({
-    reset,
-    getResponse
-  }));
-
+  // reCAPTCHA Enterprise v3 is invisible, so we don't render anything visible
   return (
     <div 
-      ref={containerRef} 
-      className={`recaptcha-container flex justify-center ${className}`}
-      style={{
-        minHeight: '78px', // Height of reCAPTCHA widget
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-      data-testid="recaptcha-widget"
+      className={`recaptcha-enterprise ${className}`}
+      style={{ display: 'none' }}
+      data-testid="recaptcha-enterprise"
     />
   );
 });
