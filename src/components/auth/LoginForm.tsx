@@ -17,47 +17,39 @@ const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
-  const [recaptchaToken, setRecaptchaToken] = useState('');
   const [recaptchaError, setRecaptchaError] = useState(false);
-  const [isRecaptchaReady, setIsRecaptchaReady] = useState(false);
+  const loginRecaptchaRef = useRef<{ execute: () => Promise<string> }>(null);
+  const signupRecaptchaRef = useRef<{ execute: () => Promise<string> }>(null);
   const navigate = useNavigate();
 
   const RECAPTCHA_SITE_KEY = '6LcK-nwrAAAAABbbPmPTm2DzpnbJz1aREHyuDMoB';
 
-  const handleRecaptchaVerify = (token: string) => {
-    setRecaptchaToken(token);
-    setRecaptchaError(false);
-    setIsRecaptchaReady(true);
-  };
-
   const handleRecaptchaError = () => {
-    setRecaptchaToken('');
     setRecaptchaError(true);
-    setIsRecaptchaReady(false);
     toast.error('reCAPTCHA error. Please try again.');
   };
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setRecaptchaError(false);
-    setRecaptchaToken('');
-    setIsRecaptchaReady(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if reCAPTCHA is completed
-    if (!recaptchaToken) {
-      toast.error('Please complete the reCAPTCHA verification');
-      setRecaptchaError(true);
-      return;
-    }
-
     setLoading(true);
     setRecaptchaError(false);
 
     try {
+      // Execute reCAPTCHA
+      const token = await loginRecaptchaRef.current?.execute();
+      if (!token) {
+        toast.error('reCAPTCHA verification failed');
+        setRecaptchaError(true);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -65,8 +57,6 @@ const LoginForm: React.FC = () => {
 
       if (error) {
         toast.error(error.message);
-        setRecaptchaToken('');
-        setIsRecaptchaReady(false);
         return;
       }
 
@@ -77,8 +67,6 @@ const LoginForm: React.FC = () => {
     } catch (error) {
       toast.error('An unexpected error occurred');
       console.error('Login error:', error);
-      setRecaptchaToken('');
-      setIsRecaptchaReady(false);
     } finally {
       setLoading(false);
     }
@@ -97,17 +85,19 @@ const LoginForm: React.FC = () => {
       return;
     }
 
-    // Check if reCAPTCHA is completed
-    if (!recaptchaToken) {
-      toast.error('Please complete the reCAPTCHA verification');
-      setRecaptchaError(true);
-      return;
-    }
-
     setLoading(true);
     setRecaptchaError(false);
 
     try {
+      // Execute reCAPTCHA
+      const token = await signupRecaptchaRef.current?.execute();
+      if (!token) {
+        toast.error('reCAPTCHA verification failed');
+        setRecaptchaError(true);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -115,8 +105,6 @@ const LoginForm: React.FC = () => {
 
       if (error) {
         toast.error(error.message);
-        setRecaptchaToken('');
-        setIsRecaptchaReady(false);
         return;
       }
 
@@ -125,14 +113,10 @@ const LoginForm: React.FC = () => {
         setActiveTab('login');
         setPassword('');
         setConfirmPassword('');
-        setRecaptchaToken('');
-        setIsRecaptchaReady(false);
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
       console.error('Sign up error:', error);
-      setRecaptchaToken('');
-      setIsRecaptchaReady(false);
     } finally {
       setLoading(false);
     }
@@ -223,11 +207,12 @@ const LoginForm: React.FC = () => {
 
                 <div className="space-y-2">
                   <ReCaptcha
+                    ref={loginRecaptchaRef}
                     siteKey={RECAPTCHA_SITE_KEY}
-                    onVerify={handleRecaptchaVerify}
+                    onVerify={() => {}} // We don't need this for manual execution
                     onError={handleRecaptchaError}
                     action="LOGIN"
-                    className="flex justify-center"
+                    className="hidden"
                   />
                   {recaptchaError && (
                     <p className="text-sm text-red-500 text-center">
@@ -320,11 +305,12 @@ const LoginForm: React.FC = () => {
 
                 <div className="space-y-2">
                   <ReCaptcha
+                    ref={signupRecaptchaRef}
                     siteKey={RECAPTCHA_SITE_KEY}
-                    onVerify={handleRecaptchaVerify}
+                    onVerify={() => {}} // We don't need this for manual execution
                     onError={handleRecaptchaError}
                     action="SIGNUP"
-                    className="flex justify-center"
+                    className="hidden"
                   />
                   {recaptchaError && (
                     <p className="text-sm text-red-500 text-center">

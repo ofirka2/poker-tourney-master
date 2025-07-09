@@ -33,6 +33,7 @@ const ReCaptcha = React.forwardRef<ReCaptchaRef, ReCaptchaProps>(({
   className = ''
 }, ref) => {
   const isReadyRef = useRef(false);
+  const hasExecutedRef = useRef(false);
 
   const execute = useCallback(async (): Promise<string> => {
     if (!window.grecaptcha || !window.grecaptcha.enterprise) {
@@ -84,19 +85,7 @@ const ReCaptcha = React.forwardRef<ReCaptchaRef, ReCaptchaProps>(({
     };
   }, []);
 
-  // Auto-execute when component mounts (for invisible reCAPTCHA)
-  useEffect(() => {
-    if (isReadyRef.current) {
-      execute()
-        .then(token => {
-          onVerify(token);
-        })
-        .catch(error => {
-          console.error('Auto-execute reCAPTCHA error:', error);
-          onError?.();
-        });
-    }
-  }, [execute, onVerify, onError]);
+  // No auto-execute - we'll execute manually when needed
 
   // reCAPTCHA Enterprise v3 is invisible, so we don't render anything visible
   return (
