@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 
 interface ReCaptchaProps {
   siteKey: string;
@@ -32,6 +32,9 @@ interface ReCaptchaRef {
   getResponse: () => string;
 }
 
+// Global registry to track rendered reCAPTCHA instances
+const recaptchaRegistry = new Map<HTMLElement, number>();
+
 const ReCaptcha = React.forwardRef<ReCaptchaRef, ReCaptchaProps>(({
   siteKey,
   onVerify,
@@ -41,42 +44,47 @@ const ReCaptcha = React.forwardRef<ReCaptchaRef, ReCaptchaProps>(({
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<number | null>(null);
+  const isRenderedRef = useRef(false);
+
+  const loadReCaptcha = useCallback(() => {
+    if (!window.grecaptcha || !containerRef.current || isRenderedRef.current) {
+      return;
+    }
+
+    // Check if this container already has a reCAPTCHA instance
+    if (recaptchaRegistry.has(containerRef.current)) {
+      const existingWidgetId = recaptchaRegistry.get(containerRef.current);
+      if (existingWidgetId !== undefined) {
+        widgetIdRef.current = existingWidgetId;
+        isRenderedRef.current = true;
+        return;
+      }
+    }
+
+    // Clear the container first
+    containerRef.current.innerHTML = '';
+
+    try {
+      const widgetId = window.grecaptcha.render(containerRef.current, {
+        sitekey: siteKey,
+        callback: onVerify,
+        'expired-callback': onExpire,
+        'error-callback': onError,
+        theme: 'light',
+        size: 'normal'
+      });
+
+      widgetIdRef.current = widgetId;
+      isRenderedRef.current = true;
+      recaptchaRegistry.set(containerRef.current, widgetId);
+    } catch (error) {
+      console.error('Error rendering reCAPTCHA:', error);
+      isRenderedRef.current = false;
+    }
+  }, [siteKey, onVerify, onExpire, onError]);
 
   useEffect(() => {
     let checkInterval: NodeJS.Timeout;
-    
-    const loadReCaptcha = () => {
-      if (window.grecaptcha && containerRef.current && widgetIdRef.current === null) {
-        try {
-          widgetIdRef.current = window.grecaptcha.render(containerRef.current, {
-            sitekey: siteKey,
-            callback: onVerify,
-            'expired-callback': onExpire,
-            'error-callback': onError,
-            theme: 'light',
-            size: 'normal'
-          });
-        } catch (error) {
-          console.error('Error rendering reCAPTCHA:', error);
-          // If there's an error, try to reset and render again
-          if (containerRef.current) {
-            containerRef.current.innerHTML = '';
-            try {
-              widgetIdRef.current = window.grecaptcha.render(containerRef.current, {
-                sitekey: siteKey,
-                callback: onVerify,
-                'expired-callback': onExpire,
-                'error-callback': onError,
-                theme: 'light',
-                size: 'normal'
-              });
-            } catch (retryError) {
-              console.error('Error on reCAPTCHA retry:', retryError);
-            }
-          }
-        }
-      }
-    };
 
     // Check if grecaptcha is already loaded
     if (window.grecaptcha) {
@@ -102,16 +110,18 @@ const ReCaptcha = React.forwardRef<ReCaptchaRef, ReCaptchaProps>(({
       if (checkInterval) {
         clearInterval(checkInterval);
       }
-      if (widgetIdRef.current !== null && window.grecaptcha) {
-        try {
-          window.grecaptcha.reset(widgetIdRef.current);
-        } catch (error) {
-          console.error('Error resetting reCAPTCHA:', error);
-        }
-      }
-      widgetIdRef.current = null;
     };
-  }, [siteKey, onVerify, onExpire, onError]);
+  }, [loadReCaptcha]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (containerRef.current && recaptchaRegistry.has(containerRef.current)) {
+        recaptchaRegistry.delete(containerRef.current);
+      }
+      isRenderedRef.current = false;
+    };
+  }, []);
 
   const reset = () => {
     if (widgetIdRef.current !== null && window.grecaptcha) {
@@ -119,26 +129,15 @@ const ReCaptcha = React.forwardRef<ReCaptchaRef, ReCaptchaProps>(({
         window.grecaptcha.reset(widgetIdRef.current);
       } catch (error) {
         console.error('Error resetting reCAPTCHA:', error);
-        // If reset fails, try to re-render
+        // If reset fails, clear the registry and re-render
         if (containerRef.current) {
+          recaptchaRegistry.delete(containerRef.current);
           containerRef.current.innerHTML = '';
           widgetIdRef.current = null;
-          // Trigger a re-render by calling loadReCaptcha
+          isRenderedRef.current = false;
+          // Trigger a re-render
           setTimeout(() => {
-            if (window.grecaptcha && containerRef.current) {
-              try {
-                widgetIdRef.current = window.grecaptcha.render(containerRef.current, {
-                  sitekey: siteKey,
-                  callback: onVerify,
-                  'expired-callback': onExpire,
-                  'error-callback': onError,
-                  theme: 'light',
-                  size: 'normal'
-                });
-              } catch (renderError) {
-                console.error('Error re-rendering reCAPTCHA:', renderError);
-              }
-            }
+            loadReCaptcha();
           }, 100);
         }
       }

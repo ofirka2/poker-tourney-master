@@ -19,8 +19,7 @@ const LoginForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [recaptchaToken, setRecaptchaToken] = useState('');
   const [recaptchaError, setRecaptchaError] = useState(false);
-  const loginRecaptchaRef = useRef<{ reset: () => void; getResponse: () => string }>(null);
-  const signupRecaptchaRef = useRef<{ reset: () => void; getResponse: () => string }>(null);
+  const [recaptchaKey, setRecaptchaKey] = useState(0);
   const navigate = useNavigate();
 
   const RECAPTCHA_SITE_KEY = '6Lf62HwrAAAAAOc8NLxr4FuIIuYyZV_yVY6cd4SD';
@@ -46,22 +45,15 @@ const LoginForm: React.FC = () => {
     setActiveTab(value);
     setRecaptchaError(false);
     setRecaptchaToken('');
-    // Reset reCAPTCHA when switching tabs
-    setTimeout(() => {
-      if (value === 'login') {
-        loginRecaptchaRef.current?.reset();
-      } else {
-        signupRecaptchaRef.current?.reset();
-      }
-    }, 100);
+    // Force re-render of reCAPTCHA when switching tabs
+    setRecaptchaKey(prev => prev + 1);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Check if reCAPTCHA is completed
-    const recaptchaResponse = loginRecaptchaRef.current?.getResponse();
-    if (!recaptchaResponse) {
+    if (!recaptchaToken) {
       toast.error('Please complete the reCAPTCHA verification');
       setRecaptchaError(true);
       return;
@@ -78,7 +70,8 @@ const LoginForm: React.FC = () => {
 
       if (error) {
         toast.error(error.message);
-        loginRecaptchaRef.current?.reset();
+        setRecaptchaToken('');
+        setRecaptchaKey(prev => prev + 1);
         return;
       }
 
@@ -89,7 +82,8 @@ const LoginForm: React.FC = () => {
     } catch (error) {
       toast.error('An unexpected error occurred');
       console.error('Login error:', error);
-      loginRecaptchaRef.current?.reset();
+      setRecaptchaToken('');
+      setRecaptchaKey(prev => prev + 1);
     } finally {
       setLoading(false);
     }
@@ -109,8 +103,7 @@ const LoginForm: React.FC = () => {
     }
 
     // Check if reCAPTCHA is completed
-    const recaptchaResponse = signupRecaptchaRef.current?.getResponse();
-    if (!recaptchaResponse) {
+    if (!recaptchaToken) {
       toast.error('Please complete the reCAPTCHA verification');
       setRecaptchaError(true);
       return;
@@ -127,7 +120,8 @@ const LoginForm: React.FC = () => {
 
       if (error) {
         toast.error(error.message);
-        signupRecaptchaRef.current?.reset();
+        setRecaptchaToken('');
+        setRecaptchaKey(prev => prev + 1);
         return;
       }
 
@@ -136,12 +130,14 @@ const LoginForm: React.FC = () => {
         setActiveTab('login');
         setPassword('');
         setConfirmPassword('');
-        signupRecaptchaRef.current?.reset();
+        setRecaptchaToken('');
+        setRecaptchaKey(prev => prev + 1);
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
       console.error('Sign up error:', error);
-      signupRecaptchaRef.current?.reset();
+      setRecaptchaToken('');
+      setRecaptchaKey(prev => prev + 1);
     } finally {
       setLoading(false);
     }
@@ -232,8 +228,7 @@ const LoginForm: React.FC = () => {
 
                 <div className="space-y-2">
                   <ReCaptcha
-                    key="login-recaptcha"
-                    ref={loginRecaptchaRef}
+                    key={`login-recaptcha-${recaptchaKey}`}
                     siteKey={RECAPTCHA_SITE_KEY}
                     onVerify={handleRecaptchaVerify}
                     onExpire={handleRecaptchaExpire}
@@ -331,8 +326,7 @@ const LoginForm: React.FC = () => {
 
                 <div className="space-y-2">
                   <ReCaptcha
-                    key="signup-recaptcha"
-                    ref={signupRecaptchaRef}
+                    key={`signup-recaptcha-${recaptchaKey}`}
                     siteKey={RECAPTCHA_SITE_KEY}
                     onVerify={handleRecaptchaVerify}
                     onExpire={handleRecaptchaExpire}
