@@ -28,7 +28,7 @@ export const calculatePrizePool = (players: Player[], settings: TournamentSettin
 };
 
 // Assign players to tables
-export const assignPlayersToTables = (players: Player[], numTables: number): Table[] => {
+export const assignPlayersToTables = (players: Player[], numTables: number, maxPlayersPerTable: number = 9): Table[] => {
   const activePlayers = players.filter(p => !p.eliminated);
   const tables: Table[] = [];
   
@@ -37,22 +37,33 @@ export const assignPlayersToTables = (players: Player[], numTables: number): Tab
     tables.push({
       id: i + 1,
       players: [],
-      maxSeats: 9
+      maxSeats: maxPlayersPerTable
     });
   }
   
-  // Distribute players evenly across tables
-  activePlayers.forEach((player, index) => {
+  // Randomly shuffle players for assignment
+  const shuffledPlayers = [...activePlayers].sort(() => Math.random() - 0.5);
+  
+  // Distribute players across tables with random seat assignment
+  shuffledPlayers.forEach((player, index) => {
     const tableIndex = index % numTables;
-    const seatNumber = Math.floor(index / numTables) + 1;
     
-    const updatedPlayer = {
-      ...player,
-      tableNumber: tableIndex + 1,
-      seatNumber: seatNumber
-    };
-    
-    tables[tableIndex].players.push(updatedPlayer);
+    if (tables[tableIndex]) {
+      // Randomly assign seat within the table
+      const availableSeats = Array.from({ length: maxPlayersPerTable }, (_, i) => i + 1);
+      const usedSeats = tables[tableIndex].players.map(p => p.seatNumber || 0);
+      const availableSeatsFiltered = availableSeats.filter(seat => !usedSeats.includes(seat));
+      
+      const randomSeat = availableSeatsFiltered[Math.floor(Math.random() * availableSeatsFiltered.length)] || 1;
+      
+      const updatedPlayer = {
+        ...player,
+        tableNumber: tableIndex + 1,
+        seatNumber: randomSeat
+      };
+      
+      tables[tableIndex].players.push(updatedPlayer);
+    }
   });
   
   return tables;

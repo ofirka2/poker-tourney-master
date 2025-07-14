@@ -247,32 +247,43 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
         totalPrizePool: state.totalPrizePool + state.settings.addOnAmount, // Update prize pool
       };
 
-    case 'ASSIGN_TABLES':
+    case 'ASSIGN_TABLES': {
       const playersToAssign = state.players.filter(p => !p.eliminated);
-      const playersPerTable = 9; // Standard poker table size, can be dynamic
-      const numTables = Math.ceil(playersToAssign.length / playersPerTable);
+      const maxPlayersPerTable = action.payload?.maxPlayersPerTable || 9;
+      const numTables = Math.ceil(playersToAssign.length / maxPlayersPerTable);
 
       const newTables: Table[] = Array.from({ length: numTables }, (_, i) => ({
         id: i + 1,
         players: [],
-        maxSeats: playersPerTable
+        maxSeats: maxPlayersPerTable
       }));
 
       // Randomly shuffle players for assignment
       const shuffledPlayers = [...playersToAssign].sort(() => Math.random() - 0.5);
 
-      // Assign players to tables
+      // Assign players to tables with random seat assignment
       const assignedPlayers = shuffledPlayers.map((player, index) => {
-        const tableIndex = Math.floor(index / playersPerTable);
-        const seatIndex = index % playersPerTable;
+        const tableIndex = Math.floor(index / maxPlayersPerTable);
+        const seatIndex = index % maxPlayersPerTable;
+        
         if (newTables[tableIndex]) {
-          newTables[tableIndex].players.push(player);
+          // Randomly assign seat within the table
+          const availableSeats = Array.from({ length: maxPlayersPerTable }, (_, i) => i + 1);
+          const usedSeats = newTables[tableIndex].players.map(p => p.seatNumber || 0);
+          const availableSeatsFiltered = availableSeats.filter(seat => !usedSeats.includes(seat));
+          
+          const randomSeat = availableSeatsFiltered[Math.floor(Math.random() * availableSeatsFiltered.length)] || seatIndex + 1;
+          
+          const playerWithAssignment = {
+            ...player,
+            tableNumber: tableIndex + 1,
+            seatNumber: randomSeat
+          };
+          
+          newTables[tableIndex].players.push(playerWithAssignment);
+          return playerWithAssignment;
         }
-        return {
-          ...player,
-          tableNumber: tableIndex + 1,
-          seatNumber: seatIndex + 1
-        };
+        return player;
       });
 
       // Update all players in state, including eliminated ones that were not assigned
@@ -286,6 +297,7 @@ const tournamentReducer = (state: TournamentState, action: TournamentAction): To
         players: finalPlayers,
         tables: newTables
       };
+    }
 
     case 'BALANCE_TABLES':
       // Basic re-balancing: collect active players, re-assign seats, keep same number of tables

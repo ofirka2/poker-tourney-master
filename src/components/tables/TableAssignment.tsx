@@ -2,10 +2,20 @@
 import React, { useState } from "react";
 import { 
   Shuffle, Users, LayoutGrid, ArrowDownUp, 
-  Undo, RefreshCw, UserMinus 
+  Undo, RefreshCw, UserMinus, Settings 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
 import { useTournament } from "@/context/TournamentContext";
 import { toast } from "sonner";
 import { Table as TableType, Player } from "@/types/types";
@@ -13,15 +23,28 @@ import { Table as TableType, Player } from "@/types/types";
 export const TableAssignment: React.FC = () => {
   const { state, dispatch } = useTournament();
   const [showEliminatedPlayers, setShowEliminatedPlayers] = useState(false);
+  const [maxPlayersPerTable, setMaxPlayersPerTable] = useState(9);
+  const [showSettings, setShowSettings] = useState(false);
   
   const { players, tables } = state;
   const activePlayers = players.filter(p => !p.eliminated);
   const eliminatedPlayers = players.filter(p => p.eliminated);
   
+  // Check if table assignment is allowed (more than 9 players)
+  const canAssignTables = activePlayers.length > 9;
+  
   // Handle randomizing table assignments
   const handleAssignTables = () => {
-    dispatch({ type: 'ASSIGN_TABLES' });
-    toast.success("Players assigned to tables");
+    if (!canAssignTables) {
+      toast.error("Table assignment requires more than 9 players");
+      return;
+    }
+    
+    dispatch({ 
+      type: 'ASSIGN_TABLES', 
+      payload: { maxPlayersPerTable } 
+    });
+    toast.success(`Players randomly assigned to tables (max ${maxPlayersPerTable} per table)`);
   };
   
   // Handle balancing tables
@@ -105,10 +128,29 @@ export const TableAssignment: React.FC = () => {
   
   // Group tables into rows of 2 or 3 depending on screen size
   const renderTables = () => {
+    if (activePlayers.length === 0) {
+      return (
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="text-lg font-medium mb-2">No Players Available</p>
+          <p>Add players to the tournament before assigning tables.</p>
+        </div>
+      );
+    }
+    
     if (tables.length === 0) {
       return (
         <div className="text-center py-12 text-muted-foreground">
-          No tables assigned yet. Click "Assign Tables" to create table assignments.
+          {canAssignTables ? (
+            <>
+              <p className="text-lg font-medium mb-2">Ready to Assign Tables</p>
+              <p>Click "Assign Tables" to randomly assign {activePlayers.length} players to tables.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-medium mb-2">Not Enough Players</p>
+              <p>Table assignment requires more than 9 players (currently {activePlayers.length}).</p>
+            </>
+          )}
         </div>
       );
     }
@@ -129,6 +171,11 @@ export const TableAssignment: React.FC = () => {
           <h2 className="text-2xl font-bold tracking-tight">Table Assignments</h2>
           <p className="text-muted-foreground">
             {activePlayers.length} active players, {eliminatedPlayers.length} eliminated
+            {!canAssignTables && activePlayers.length > 0 && (
+              <span className="block text-orange-600 font-medium">
+                ⚠️ Table assignment requires more than 9 players (currently {activePlayers.length})
+              </span>
+            )}
           </p>
         </div>
         
@@ -150,6 +197,40 @@ export const TableAssignment: React.FC = () => {
             )}
           </Button>
           
+          <Dialog open={showSettings} onOpenChange={setShowSettings}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Table Assignment Settings</DialogTitle>
+                <DialogDescription>
+                  Configure how players are assigned to tables.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="maxPlayersPerTable">Maximum Players per Table</Label>
+                  <Input
+                    id="maxPlayersPerTable"
+                    type="number"
+                    min="6"
+                    max="10"
+                    value={maxPlayersPerTable}
+                    onChange={(e) => setMaxPlayersPerTable(Number(e.target.value))}
+                    placeholder="9"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Recommended: 6-10 players per table for optimal gameplay
+                  </p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
           <Button 
             variant="outline"
             onClick={handleBalanceTables}
@@ -162,7 +243,7 @@ export const TableAssignment: React.FC = () => {
           <Button 
             variant="default"
             onClick={handleAssignTables}
-            disabled={activePlayers.length === 0}
+            disabled={!canAssignTables}
           >
             <Shuffle className="mr-2 h-4 w-4" />
             Assign Tables

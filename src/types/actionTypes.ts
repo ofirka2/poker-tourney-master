@@ -16,7 +16,7 @@ export type TournamentAction =
   | { type: 'MARK_ELIMINATED'; payload: string }
   | { type: 'ADD_REBUY'; payload: string }
   | { type: 'ADD_ADDON'; payload: string }
-  | { type: 'ASSIGN_TABLES' }
+  | { type: 'ASSIGN_TABLES'; payload?: { maxPlayersPerTable: number } }
   | { type: 'BALANCE_TABLES' }
   | { 
       type: 'UPDATE_CURRENT_LEVEL_DURATION'; 
