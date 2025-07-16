@@ -24,22 +24,23 @@ export const mapDatabasePlayerToPlayer = (dbPlayer: DatabasePlayer): Player => {
     addons: dbPlayer.addons,
     current_chips: dbPlayer.current_chips,
     status: dbPlayer.status as 'registered' | 'active' | 'eliminated',
-    table_id: dbPlayer.table_id,
-    seat_number: dbPlayer.seat_number,
-    starting_position: dbPlayer.starting_position,
-    finish_position: dbPlayer.finish_position,
+    table_id: dbPlayer.table_id || undefined,
+    table_number: dbPlayer.table_number || undefined,
+    seat_number: dbPlayer.seat_number || undefined,
+    starting_position: dbPlayer.starting_position || undefined,
+    finish_position: dbPlayer.finish_position || undefined,
     created_at: dbPlayer.created_at || undefined,
     updated_at: dbPlayer.updated_at || undefined,
     
-    // Computed properties for backward compatibility
+    // Computed properties
     name: fullName,
     buyIn: dbPlayer.buy_ins > 0,
     addOns: dbPlayer.addons,
-    tableNumber: dbPlayer.table_id ? parseInt(dbPlayer.table_id) : null,
-    seatNumber: dbPlayer.seat_number,
+    tableNumber: dbPlayer.table_number || undefined,
+    seatNumber: dbPlayer.seat_number || undefined,
     eliminated: dbPlayer.status === 'eliminated',
-    eliminationPosition: dbPlayer.finish_position,
-    chips: dbPlayer.current_chips || 0,
+    eliminationPosition: dbPlayer.finish_position || undefined,
+    chips: dbPlayer.current_chips || 0
   };
 };
 
@@ -62,6 +63,7 @@ export const mapPlayerToDatabase = (player: Player): Omit<DatabasePlayer, 'creat
     current_chips: player.current_chips || player.chips || 0,
     status: player.eliminated ? 'eliminated' : (player.status || 'active'),
     table_id: player.table_id || null,
+    table_number: player.table_number || player.tableNumber || null,
     seat_number: player.seat_number || player.seatNumber || null,
     starting_position: player.starting_position || null,
     finish_position: player.finish_position || player.eliminationPosition || null,
@@ -85,6 +87,7 @@ export const createEmptyPlayer = (name: string, tournamentId: string): Player =>
     current_chips: 0,
     status: 'registered',
     table_id: null,
+    table_number: null,
     seat_number: null,
     starting_position: null,
     finish_position: null,

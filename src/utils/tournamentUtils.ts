@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DatabaseTournament, Player, Table, TournamentSettings } from "@/types/types";
 import { Tables } from "@/integrations/supabase/types";
 import { mapDatabasePlayerToPlayer } from "./playerUtils";
+import { toast } from "sonner";
 
 // Calculate prize pool based on players and settings
 export const calculatePrizePool = (players: Player[], settings: TournamentSettings): number => {
@@ -41,31 +42,67 @@ export const assignPlayersToTables = (players: Player[], numTables: number, maxP
     });
   }
   
-  // Randomly shuffle players for assignment
-  const shuffledPlayers = [...activePlayers].sort(() => Math.random() - 0.5);
+  // Separate players who are already assigned vs unassigned
+  const alreadyAssignedPlayers = activePlayers.filter(p => p.tableNumber && p.seatNumber);
+  const unassignedPlayers = activePlayers.filter(p => !p.tableNumber || !p.seatNumber);
   
-  // Distribute players across tables with random seat assignment
-  shuffledPlayers.forEach((player, index) => {
+  // First, place already assigned players in their existing positions
+  alreadyAssignedPlayers.forEach(player => {
+    const tableIndex = (player.tableNumber || 1) - 1;
+    if (tableIndex >= 0 && tableIndex < tables.length) {
+      // Ensure the name property is set correctly
+      const playerWithName = {
+        ...player,
+        name: player.name || `${player.first_name} ${player.last_name}`.trim() || 'Unknown Player'
+      };
+      
+      tables[tableIndex].players.push(playerWithName);
+    }
+  });
+  
+  // Randomly shuffle unassigned players for assignment
+  const shuffledUnassignedPlayers = [...unassignedPlayers].sort(() => Math.random() - 0.5);
+  
+  // Distribute unassigned players across tables with random seat assignment
+  shuffledUnassignedPlayers.forEach((player, index) => {
     const tableIndex = index % numTables;
+    const table = tables[tableIndex];
     
-    if (tables[tableIndex]) {
-      // Randomly assign seat within the table
-      const availableSeats = Array.from({ length: maxPlayersPerTable }, (_, i) => i + 1);
-      const usedSeats = tables[tableIndex].players.map(p => p.seatNumber || 0);
-      const availableSeatsFiltered = availableSeats.filter(seat => !usedSeats.includes(seat));
-      
-      const randomSeat = availableSeatsFiltered[Math.floor(Math.random() * availableSeatsFiltered.length)] || 1;
-      
-      // Always set a valid name property
-      const name = player.name || `${player.first_name || ''} ${player.last_name || ''}`.trim() || 'Unknown';
+    // Find an available seat at this table
+    const usedSeats = new Set(table.players.map(p => p.seatNumber));
+    let randomSeat = 1;
+    while (usedSeats.has(randomSeat) && randomSeat <= maxPlayersPerTable) {
+      randomSeat++;
+    }
+    
+    // If no seat available at this table, try the next table
+    if (randomSeat > maxPlayersPerTable) {
+      for (let i = 0; i < numTables; i++) {
+        const nextTable = tables[i];
+        const nextUsedSeats = new Set(nextTable.players.map(p => p.seatNumber));
+        let nextSeat = 1;
+        while (nextUsedSeats.has(nextSeat) && nextSeat <= maxPlayersPerTable) {
+          nextSeat++;
+        }
+        if (nextSeat <= maxPlayersPerTable) {
+          const updatedPlayer = {
+            ...player,
+            tableNumber: i + 1,
+            seatNumber: nextSeat,
+            name: player.name || `${player.first_name} ${player.last_name}`.trim() || 'Unknown Player'
+          };
+          nextTable.players.push(updatedPlayer);
+          break;
+        }
+      }
+    } else {
       const updatedPlayer = {
         ...player,
         tableNumber: tableIndex + 1,
         seatNumber: randomSeat,
-        name,
+        name: player.name || `${player.first_name} ${player.last_name}`.trim() || 'Unknown Player'
       };
-      
-      tables[tableIndex].players.push(updatedPlayer);
+      table.players.push(updatedPlayer);
     }
   });
   
@@ -204,6 +241,67 @@ export const getTournamentPlayers = async (tournamentId: string): Promise<Player
   }
 
   return (data || []).map(mapDatabasePlayerToPlayer);
+};
+
+// Save table assignments to database
+export const saveTableAssignmentsToDatabase = async (players: Player[], tournamentId: string): Promise<boolean> => {
+  try {
+    // Filter players with table assignments
+    const playersWithAssignments = players.filter(player => player.tableNumber && player.seatNumber);
+
+    if (playersWithAssignments.length === 0) {
+      return true; // No assignments to save
+    }
+
+    // Update each player individually
+    const updatePromises = playersWithAssignments.map(player => 
+      supabase
+        .from('players')
+        .update({ 
+          table_number: player.tableNumber,
+          seat_number: player.seatNumber 
+        })
+        .eq('id', player.id)
+    );
+
+    const results = await Promise.all(updatePromises);
+    const errors = results.filter(result => result.error);
+
+    if (errors.length > 0) {
+      console.error('Error saving table assignments:', errors);
+      toast.error('Failed to save some table assignments');
+      return false;
+    }
+
+    toast.success(`Table assignments saved for ${playersWithAssignments.length} players`);
+    return true;
+  } catch (error) {
+    console.error('Error saving table assignments:', error);
+    toast.error('Failed to save table assignments');
+    return false;
+  }
+};
+
+// Load table assignments from database
+export const loadTableAssignmentsFromDatabase = async (tournamentId: string): Promise<Player[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .eq('tournament_id', tournamentId)
+      .not('table_number', 'is', null)
+      .not('seat_number', 'is', null);
+
+    if (error) {
+      console.error('Error loading table assignments:', error);
+      return [];
+    }
+
+    return (data || []).map(mapDatabasePlayerToPlayer);
+  } catch (error) {
+    console.error('Error loading table assignments:', error);
+    return [];
+  }
 };
 
 // Utility to safely convert JSON fields to strings

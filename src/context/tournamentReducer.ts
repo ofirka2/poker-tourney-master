@@ -1,7 +1,6 @@
 
-import { TournamentState, TournamentSettings, Player } from "@/types/types";
-import { TournamentAction } from "@/types/actionTypes";
-import { calculatePrizePool, assignPlayersToTables, balanceTables } from "@/utils/tournamentUtils";
+import { TournamentState, TournamentAction, Player, TournamentSettings, PayoutPlace } from '@/types/types';
+import { calculatePrizePool, assignPlayersToTables, balanceTables, saveTableAssignmentsToDatabase } from "@/utils/tournamentUtils";
 import { toast } from "sonner";
 
 export function tournamentReducer(state: TournamentState, action: TournamentAction): TournamentState {
@@ -195,6 +194,11 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
         return player;
       });
       
+      // Save assignments to database
+      if (state.id) {
+        saveTableAssignmentsToDatabase(updatedPlayers, state.id);
+      }
+      
       return {
         ...state,
         players: updatedPlayers,
@@ -223,6 +227,11 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
         }
         return player;
       });
+      
+      // Save assignments to database
+      if (state.id) {
+        saveTableAssignmentsToDatabase(updatedPlayers, state.id);
+      }
       
       return {
         ...state,

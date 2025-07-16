@@ -120,6 +120,7 @@ export interface Player {
  current_chips: number | null;
  status: 'registered' | 'active' | 'eliminated';
  table_id?: string | null;
+ table_number?: number | null;
  seat_number?: number | null;
  starting_position?: number | null;
  finish_position?: number | null;

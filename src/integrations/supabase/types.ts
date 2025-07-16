@@ -237,6 +237,7 @@ export type Database = {
           starting_position: number | null
           status: string
           table_id: string | null
+          table_number: number | null
           tournament_id: string
           updated_at: string | null
         }
@@ -256,6 +257,7 @@ export type Database = {
           starting_position?: number | null
           status?: string
           table_id?: string | null
+          table_number?: number | null
           tournament_id: string
           updated_at?: string | null
         }
@@ -275,6 +277,7 @@ export type Database = {
           starting_position?: number | null
           status?: string
           table_id?: string | null
+          table_number?: number | null
           tournament_id?: string
           updated_at?: string | null
         }
