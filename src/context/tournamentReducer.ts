@@ -1,6 +1,6 @@
 
 import { TournamentState, TournamentAction, Player, TournamentSettings, PayoutPlace } from '@/types/types';
-import { calculatePrizePool, assignPlayersToTables, balanceTables, saveTableAssignmentsToDatabase } from "@/utils/tournamentUtils";
+import { calculatePrizePool, assignPlayersToTables, balanceTables, saveTableAssignmentsToDatabase, clearTableAssignmentsForEliminatedPlayers } from "@/utils/tournamentUtils";
 import { toast } from "sonner";
 
 export function tournamentReducer(state: TournamentState, action: TournamentAction): TournamentState {
@@ -92,24 +92,29 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
     }
     
     case 'MARK_ELIMINATED': {
-      const eliminationCounter = state.eliminationCounter + 1;
-      
-      const newPlayers = state.players.map(player => 
-        player.id === action.payload 
-          ? { 
-              ...player, 
-              eliminated: true, 
-              tableNumber: null, 
-              seatNumber: null,
-              eliminationPosition: eliminationCounter 
-            } 
-          : player
-      );
-      
+      const updatedPlayers = state.players.map(player => {
+        if (player.id === action.payload) {
+          return {
+            ...player,
+            status: 'eliminated' as const,
+            eliminated: true,
+            tableNumber: null, // Clear table assignment when eliminated
+            seatNumber: null,  // Clear seat assignment when eliminated
+            eliminationPosition: state.eliminationCounter + 1
+          };
+        }
+        return player;
+      });
+
+      // Clear table assignments for eliminated players in database
+      if (state.id) {
+        clearTableAssignmentsForEliminatedPlayers(updatedPlayers, state.id);
+      }
+
       return {
         ...state,
-        players: newPlayers,
-        eliminationCounter
+        players: updatedPlayers,
+        eliminationCounter: state.eliminationCounter + 1
       };
     }
     
@@ -177,9 +182,21 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
       
       const numTables = Math.max(1, Math.ceil(activePlayers.length / maxPlayersPerTable));
       
+      // Create new tables with only active players
       const newTables = assignPlayersToTables(state.players, numTables, maxPlayersPerTable);
       
+      // Update all players with their new table assignments (or clear them if eliminated)
       const updatedPlayers = state.players.map(player => {
+        if (player.eliminated) {
+          // Keep eliminated players without table assignments
+          return {
+            ...player,
+            tableNumber: null,
+            seatNumber: null
+          };
+        }
+        
+        // Find the player in the new table assignments
         for (const table of newTables) {
           const tablePlayer = table.players.find(p => p.id === player.id);
           if (tablePlayer) {
@@ -191,7 +208,13 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
             };
           }
         }
-        return player;
+        
+        // If not found in any table, clear assignments
+        return {
+          ...player,
+          tableNumber: null,
+          seatNumber: null
+        };
       });
       
       // Save assignments to database
@@ -213,7 +236,18 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
       
       const balancedTables = balanceTables([...state.tables]);
       
+      // Update all players with their new table assignments (or clear them if eliminated)
       const updatedPlayers = state.players.map(player => {
+        if (player.eliminated) {
+          // Keep eliminated players without table assignments
+          return {
+            ...player,
+            tableNumber: null,
+            seatNumber: null
+          };
+        }
+        
+        // Find the player in the balanced table assignments
         for (const table of balancedTables) {
           const tablePlayer = table.players.find(p => p.id === player.id);
           if (tablePlayer) {
@@ -225,7 +259,13 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
             };
           }
         }
-        return player;
+        
+        // If not found in any table, clear assignments
+        return {
+          ...player,
+          tableNumber: null,
+          seatNumber: null
+        };
       });
       
       // Save assignments to database

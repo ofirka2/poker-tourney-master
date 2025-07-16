@@ -124,7 +124,14 @@ const TableAssignment: React.FC = () => {
           {/* Assignment Status */}
           {unassignedPlayers.length > 0 && (
             <div className="mt-4">
-              <h4 className="font-medium mb-2">Unassigned Players ({unassignedPlayers.length})</h4>
+              <h4 className="font-medium mb-2">
+                Unassigned Players ({unassignedPlayers.length})
+                {unassignedPlayers.length > 0 && (
+                  <span className="text-sm text-muted-foreground ml-2">
+                    - Click "Assign Unassigned Players" to assign them to tables
+                  </span>
+                )}
+              </h4>
               <div className="flex flex-wrap gap-2">
                 {unassignedPlayers.map(player => (
                   <Badge key={player.id} variant="secondary">
@@ -149,6 +156,18 @@ const TableAssignment: React.FC = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Eliminated Players Info */}
+          {state.players.filter(p => p.eliminated).length > 0 && (
+            <div className="mt-4">
+              <h4 className="font-medium mb-2 text-muted-foreground">
+                Eliminated Players ({state.players.filter(p => p.eliminated).length})
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                Eliminated players are automatically removed from table assignments.
+              </p>
             </div>
           )}
 

@@ -42,7 +42,7 @@ export const assignPlayersToTables = (players: Player[], numTables: number, maxP
     });
   }
   
-  // Separate players who are already assigned vs unassigned
+  // Separate players who are already assigned vs unassigned (only active players)
   const alreadyAssignedPlayers = activePlayers.filter(p => p.tableNumber && p.seatNumber);
   const unassignedPlayers = activePlayers.filter(p => !p.tableNumber || !p.seatNumber);
   
@@ -301,6 +301,41 @@ export const loadTableAssignmentsFromDatabase = async (tournamentId: string): Pr
   } catch (error) {
     console.error('Error loading table assignments:', error);
     return [];
+  }
+};
+
+// Clear table assignments for eliminated players
+export const clearTableAssignmentsForEliminatedPlayers = async (players: Player[], tournamentId: string): Promise<boolean> => {
+  try {
+    const eliminatedPlayers = players.filter(p => p.eliminated && (p.tableNumber || p.seatNumber));
+    
+    if (eliminatedPlayers.length === 0) {
+      return true; // No eliminated players with assignments to clear
+    }
+
+    // Clear table assignments for eliminated players
+    const clearPromises = eliminatedPlayers.map(player => 
+      supabase
+        .from('players')
+        .update({ 
+          table_number: null,
+          seat_number: null 
+        })
+        .eq('id', player.id)
+    );
+
+    const results = await Promise.all(clearPromises);
+    const errors = results.filter(result => result.error);
+
+    if (errors.length > 0) {
+      console.error('Error clearing table assignments for eliminated players:', errors);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error clearing table assignments for eliminated players:', error);
+    return false;
   }
 };
 
