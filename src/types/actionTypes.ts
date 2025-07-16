@@ -1,5 +1,5 @@
 
-import { Player, TournamentSettings, PayoutPlace } from "./types";
+import { Player, TournamentSettings, PayoutPlace, Table } from './types';
 
 export type TournamentAction =
   | { type: 'START_TOURNAMENT' }
@@ -18,6 +18,7 @@ export type TournamentAction =
   | { type: 'ADD_ADDON'; payload: string }
   | { type: 'ASSIGN_TABLES'; payload?: { maxPlayersPerTable: number } }
   | { type: 'BALANCE_TABLES' }
+  | { type: 'MANUAL_SEAT_CHANGE'; payload: { playerId: string; tableNumber: number; seatNumber: number } }
   | { 
       type: 'UPDATE_CURRENT_LEVEL_DURATION'; 
       payload: { levelIndex: number; duration: number } 
@@ -27,14 +28,23 @@ export type TournamentAction =
   | { 
       type: 'CREATE_TOURNAMENT'; 
       payload: { 
+        id?: string;
         name: string; 
         startDate: string; 
         settings?: TournamentSettings; 
+        allowRebuy: boolean;
+        allowAddon: boolean;
+        format: string;
+        chipset: string;
+        playerCount: number;
+        desiredDuration: number;
+        includeAnte: boolean;
       } 
     }
   | { 
       type: 'LOAD_TOURNAMENT'; 
       payload: { 
+        id?: string;
         name?: string; 
         startDate?: string; 
         settings?: TournamentSettings; 
@@ -42,6 +52,16 @@ export type TournamentAction =
         chipset?: string;
         isRunning?: boolean;
         currentLevel?: number;
+        timeRemaining?: number;
+        totalPrizePool?: number;
+        eliminationCounter?: number;
+        tables?: Table[];
+        allowRebuy?: boolean;
+        allowAddon?: boolean;
+        format?: string;
+        playerCount?: number;
+        desiredDuration?: number;
+        includeAnte?: boolean;
       } 
     }
   | { type: 'UPDATE_TOURNAMENT_NAME'; payload: string }

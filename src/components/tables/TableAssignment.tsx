@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useTournament } from "@/context/TournamentContext";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import ManualSeatManager from "./ManualSeatManager";
 
 const TableAssignment: React.FC = () => {
   const { state, dispatch } = useTournament();
@@ -54,6 +55,17 @@ const TableAssignment: React.FC = () => {
     });
 
     toast.success("All table assignments cleared");
+  };
+
+  const handleManualSeatChange = (playerId: string, newTableNumber: number, newSeatNumber: number) => {
+    dispatch({
+      type: 'MANUAL_SEAT_CHANGE',
+      payload: {
+        playerId,
+        tableNumber: newTableNumber,
+        seatNumber: newSeatNumber
+      }
+    });
   };
 
   return (
@@ -180,6 +192,11 @@ const TableAssignment: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Manual Seat Management */}
+      {activePlayers.length > 0 && (
+        <ManualSeatManager onSeatChange={handleManualSeatChange} />
+      )}
 
       {/* Tables Display */}
       {state.tables.length > 0 && (

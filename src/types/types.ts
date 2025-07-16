@@ -48,6 +48,7 @@ export type TournamentAction =
  | { type: 'ADD_ADDON'; payload: string }
  | { type: 'ASSIGN_TABLES'; payload?: { maxPlayersPerTable: number } }
  | { type: 'BALANCE_TABLES' }
+ | { type: 'MANUAL_SEAT_CHANGE'; payload: { playerId: string; tableNumber: number; seatNumber: number } }
  | { 
      type: 'UPDATE_CURRENT_LEVEL_DURATION'; 
      payload: { levelIndex: number; duration: number } 

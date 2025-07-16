@@ -1,5 +1,5 @@
 
-import { TournamentState, TournamentAction, Player, TournamentSettings, PayoutPlace } from '@/types/types';
+import { TournamentState, Player, TournamentSettings, PayoutPlace, Table, TournamentAction } from '@/types/types';
 import { calculatePrizePool, assignPlayersToTables, balanceTables, saveTableAssignmentsToDatabase, clearTableAssignmentsForEliminatedPlayers } from "@/utils/tournamentUtils";
 import { toast } from "sonner";
 
@@ -430,6 +430,63 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
       return {
         ...state,
         settings: newSettings
+      };
+    }
+
+    case 'MANUAL_SEAT_CHANGE': {
+      const { playerId, tableNumber, seatNumber } = action.payload;
+      
+      // Update the player's table and seat assignment
+      const updatedPlayers = state.players.map(player => {
+        if (player.id === playerId) {
+          return {
+            ...player,
+            tableNumber: tableNumber > 0 ? tableNumber : null,
+            seatNumber: seatNumber > 0 ? seatNumber : null
+          };
+        }
+        return player;
+      });
+
+      // Reconstruct tables based on new assignments
+      const activePlayers = updatedPlayers.filter(p => !p.eliminated);
+      const assignedPlayers = activePlayers.filter(p => p.tableNumber && p.seatNumber);
+      
+      // Group players by table number
+      const tableGroups = new Map<number, Player[]>();
+      assignedPlayers.forEach(player => {
+        const tableNum = player.tableNumber!;
+        if (!tableGroups.has(tableNum)) {
+          tableGroups.set(tableNum, []);
+        }
+        tableGroups.get(tableNum)!.push(player);
+      });
+
+      // Convert to Table objects
+      const newTables: Table[] = [];
+      tableGroups.forEach((tablePlayers, tableNumber) => {
+        newTables.push({
+          id: tableNumber,
+          players: tablePlayers,
+          maxSeats: Math.max(...tablePlayers.map(p => p.seatNumber || 0), 9)
+        });
+      });
+
+      // Sort tables by table number
+      const sortedTables = newTables.sort((a, b) => a.id - b.id);
+
+      // Save changes to database
+      if (state.id) {
+        const changedPlayer = updatedPlayers.find(p => p.id === playerId);
+        if (changedPlayer) {
+          saveTableAssignmentsToDatabase([changedPlayer], state.id);
+        }
+      }
+
+      return {
+        ...state,
+        players: updatedPlayers,
+        tables: sortedTables
       };
     }
       
