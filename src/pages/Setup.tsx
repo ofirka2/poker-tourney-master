@@ -10,6 +10,7 @@ import { suggestPayoutStructure } from "@/utils/payoutCalculator";
 import { PayoutPlace, TournamentSettings } from "@/types/types";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { mapDatabasePlayerToPlayer } from "@/utils/playerUtils";
 
 // Define or import your tournamentDefaults
 const tournamentDefaults: TournamentSettings = {
@@ -121,7 +122,7 @@ const Setup = () => {
           console.error('Error fetching players for setup:', playersError);
           toast.error("Failed to load players for the tournament.");
         } else {
-          tournamentPlayers = playersData || [];
+          tournamentPlayers = playersData ? playersData.map(mapDatabasePlayerToPlayer) : [];
         }
 
         dispatch({

@@ -187,7 +187,8 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
             return {
               ...player,
               tableNumber: tablePlayer.tableNumber,
-              seatNumber: tablePlayer.seatNumber
+              seatNumber: tablePlayer.seatNumber,
+              name: tablePlayer.name // Preserve the name property
             };
           }
         }
@@ -215,7 +216,8 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
             return {
               ...player,
               tableNumber: tablePlayer.tableNumber,
-              seatNumber: tablePlayer.seatNumber
+              seatNumber: tablePlayer.seatNumber,
+              name: tablePlayer.name // Preserve the name property
             };
           }
         }

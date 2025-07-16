@@ -10,6 +10,7 @@ import TimerDisplay from "@/components/timer/TimerDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { PayoutPlace, TournamentSettings, Player as PlayerType } from "@/types/types";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
+import { mapDatabasePlayerToPlayer } from "@/utils/playerUtils";
 
 const tournamentDefaults: Partial<TournamentSettings> = {
  buyInAmount: 100,
@@ -115,7 +116,7 @@ const TournamentView = () => {
          .eq('tournament_id', tournamentData.id);
        if (playersError) console.error("TournamentView: Error fetching players:", playersError);
        
-       const tournamentPlayers: PlayerType[] = playersData || [];
+       const tournamentPlayers: PlayerType[] = (playersData || []).map(mapDatabasePlayerToPlayer);
        const initialTotalPrizePool = tournamentPlayers.reduce((acc, player) => {
            let playerContribution = 0;
            if (player.buyIn) playerContribution += loadedSettings.buyInAmount;

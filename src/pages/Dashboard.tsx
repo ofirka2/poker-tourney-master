@@ -19,6 +19,7 @@ import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { PayoutPlace, TournamentSettings, Player as PlayerType } from "@/types/types";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
+import { mapDatabasePlayerToPlayer } from "@/utils/playerUtils";
 
 const tournamentDefaults: Partial<TournamentSettings> = {
   buyInAmount: 100,
@@ -135,7 +136,7 @@ const Dashboard = () => {
           toast.error("Failed to load players for the tournament.");
         }
 
-        const tournamentPlayers: PlayerType[] = playersData || [];
+        const tournamentPlayers: PlayerType[] = (playersData || []).map(mapDatabasePlayerToPlayer);
         const initialTotalPrizePool = tournamentPlayers.reduce((acc, player) => {
             let c = 0; if (player.buyIn) c += loadedSettings.buyInAmount;
             c += player.rebuys * loadedSettings.rebuyAmount;
