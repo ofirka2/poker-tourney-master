@@ -255,7 +255,7 @@ const MultiStepTournamentForm: React.FC<MultiStepTournamentFormProps> = ({
 
     // Map the format to the generator format
     let generatorFormat;
-    switch (formData.format.toLowerCase()) {
+    switch ((formData.format || '').toLowerCase()) {
       case 'freezeout':
         generatorFormat = 'standard';
         break;

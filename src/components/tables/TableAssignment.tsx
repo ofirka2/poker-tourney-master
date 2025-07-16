@@ -59,7 +59,7 @@ export const TableAssignment: React.FC = () => {
     if (!player) return;
     
     dispatch({ type: 'MARK_ELIMINATED', payload: id });
-    toast.info(`Player ${player.name} eliminated`);
+    toast.info(`Player ${player.name || 'Unknown'} eliminated`);
   };
   
   // Create table component
@@ -90,7 +90,7 @@ export const TableAssignment: React.FC = () => {
                       <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-bold">
                         {player.seatNumber}
                       </div>
-                      <span className="font-medium">{player.name}</span>
+                      <span className="font-medium">{player.name || 'Unknown'}</span>
                     </div>
                     
                     <div className="flex items-center space-x-2">
@@ -261,7 +261,7 @@ export const TableAssignment: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
               {unassignedPlayers.map(player => (
                 <div key={player.id} className="p-2 bg-white rounded shadow-sm">
-                  {player.name}
+                  {player.name || 'Unknown'}
                 </div>
               ))}
             </div>

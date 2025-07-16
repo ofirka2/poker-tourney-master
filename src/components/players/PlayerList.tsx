@@ -245,7 +245,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
 
        setPlayers(prevPlayers => prevPlayers.filter(p => p.id !== id));
 
-       toast.success(`Player ${player.name} removed`);
+       toast.success(`Player ${player.name || 'Unknown'} removed`);
 
    } catch (err) {
        console.error('Unexpected error removing player:', err);
@@ -278,7 +278,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
        const updatedPlayer = mapDatabasePlayerToPlayer(data);
        setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? updatedPlayer : p));
 
-       toast.info(`Player ${player.name} eliminated`);
+       toast.info(`Player ${player.name || 'Unknown'} eliminated`);
 
    } catch (err) {
        console.error('Unexpected error marking player eliminated:', err);
@@ -322,7 +322,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
        const updatedPlayer = mapDatabasePlayerToPlayer(data);
        setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? updatedPlayer : p));
 
-       toast.success(`Rebuy for ${player.name} added`);
+       toast.success(`Rebuy for ${player.name || 'Unknown'} added`);
 
    } catch (err) {
        console.error('Unexpected error adding rebuy:', err);
@@ -364,7 +364,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
        const updatedPlayer = mapDatabasePlayerToPlayer(data);
        setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? updatedPlayer : p));
 
-       toast.success(`Add-on for ${player.name} added`);
+       toast.success(`Add-on for ${player.name || 'Unknown'} added`);
 
    } catch (err) {
        console.error('Unexpected error adding add-on:', err);
@@ -396,7 +396,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
        const updatedPlayer = mapDatabasePlayerToPlayer(data);
        setPlayers(prevPlayers => prevPlayers.map(p => p.id === id ? updatedPlayer : p));
 
-        toast.success(`Chips updated for ${player.name}`);
+        toast.success(`Chips updated for ${player.name || 'Unknown'}`);
 
    } catch (err) {
        console.error('Unexpected error updating chips:', err);

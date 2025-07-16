@@ -7,11 +7,16 @@ type DatabasePlayer = Tables<'players'>;
 
 // Convert database player to frontend Player interface
 export const mapDatabasePlayerToPlayer = (dbPlayer: DatabasePlayer): Player => {
+  // Safely handle potential null values in name fields
+  const firstName = dbPlayer.first_name || '';
+  const lastName = dbPlayer.last_name || '';
+  const fullName = `${firstName} ${lastName}`.trim() || 'Unknown Player';
+  
   return {
     id: dbPlayer.id,
     tournament_id: dbPlayer.tournament_id,
-    first_name: dbPlayer.first_name,
-    last_name: dbPlayer.last_name,
+    first_name: firstName,
+    last_name: lastName,
     email: dbPlayer.email || undefined,
     phone: dbPlayer.phone || undefined,
     buy_ins: dbPlayer.buy_ins,
@@ -27,7 +32,7 @@ export const mapDatabasePlayerToPlayer = (dbPlayer: DatabasePlayer): Player => {
     updated_at: dbPlayer.updated_at || undefined,
     
     // Computed properties for backward compatibility
-    name: `${dbPlayer.first_name} ${dbPlayer.last_name}`,
+    name: fullName,
     buyIn: dbPlayer.buy_ins > 0,
     addOns: dbPlayer.addons,
     tableNumber: dbPlayer.table_id ? parseInt(dbPlayer.table_id) : null,

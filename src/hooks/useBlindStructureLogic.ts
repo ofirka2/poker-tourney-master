@@ -147,7 +147,7 @@ const useBlindStructureLogic = ({
       const targetDurationMinutes = durationHours * 60;
 
       let generatorFormat;
-      switch (tournamentFormat.toLowerCase()) {
+      switch ((tournamentFormat || '').toLowerCase()) {
         case 'freezeout': generatorFormat = 'standard'; break;
         case 'deepstack': generatorFormat = 'deepstack'; break;
         case 'turbo': generatorFormat = 'turbo'; break;

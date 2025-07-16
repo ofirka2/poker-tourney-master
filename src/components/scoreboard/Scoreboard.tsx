@@ -74,7 +74,7 @@ const Scoreboard: React.FC = () => {
                 return (
                   <div key={player.id} className="grid grid-cols-12 py-2 text-sm border-b border-dashed last:border-0">
                     <div className="col-span-3">#{position}</div>
-                    <div className="col-span-6 font-medium">{player.name}</div>
+                    <div className="col-span-6 font-medium">{player.name || 'Unknown'}</div>
                     <div className="col-span-3 text-right">
                       {inTheMoney && payout !== null ? `$${payout.toFixed(2)}` : '-'}
                     </div>

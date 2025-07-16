@@ -16,7 +16,7 @@ const PlayerDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   
   const filteredPlayers = players.filter(player => 
-    player.name.toLowerCase().includes(searchTerm.toLowerCase())
+    player.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEliminatePlayer = (id: string) => {
@@ -24,7 +24,7 @@ const PlayerDashboard: React.FC = () => {
     if (!player) return;
     
     dispatch({ type: 'MARK_ELIMINATED', payload: id });
-    toast.info(`Player ${player.name} eliminated`);
+    toast.info(`Player ${player.name || 'Unknown'} eliminated`);
   };
   
   const handleAddRebuy = (id: string) => {
@@ -38,7 +38,7 @@ const PlayerDashboard: React.FC = () => {
     }
     
     dispatch({ type: 'ADD_REBUY', payload: id });
-    toast.success(`Added rebuy for ${player.name}`);
+    toast.success(`Added rebuy for ${player.name || 'Unknown'}`);
   };
   
   const handleAddAddOn = (id: string) => {
@@ -52,7 +52,7 @@ const PlayerDashboard: React.FC = () => {
     }
     
     dispatch({ type: 'ADD_ADDON', payload: id });
-    toast.success(`Added add-on for ${player.name}`);
+    toast.success(`Added add-on for ${player.name || 'Unknown'}`);
   };
   
   // Create the correct link path based on whether we have a tournament ID
@@ -102,7 +102,7 @@ const PlayerDashboard: React.FC = () => {
             <div className="max-h-[400px] overflow-y-auto pr-2">
               {filteredPlayers.map((player) => (
                 <div key={player.id} className={`grid grid-cols-12 py-2 text-sm border-b border-dashed last:border-0 items-center ${player.eliminated ? "text-muted-foreground" : ""}`}>
-                  <div className="col-span-4 font-medium">{player.name}</div>
+                  <div className="col-span-4 font-medium">{player.name || 'Unknown'}</div>
                   <div className="col-span-1">{player.tableNumber || "-"}</div>
                   <div className="col-span-2">{player.chips?.toLocaleString() || '0'}</div>
                   <div className="col-span-1 text-center">{player.rebuys}</div>

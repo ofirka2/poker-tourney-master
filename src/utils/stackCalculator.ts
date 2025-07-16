@@ -83,7 +83,7 @@ function getTargetStackToBBRatio(format: string, duration?: number): number {
   };
   
   // Get base ratio or default to 100
-  let ratio = baseRatios[format.toLowerCase()] || 100;
+  let ratio = baseRatios[(format || '').toLowerCase()] || 100;
   
   // Adjust for tournament duration if provided
   if (duration) {
@@ -164,7 +164,7 @@ function determineMinimumStack(denominations: number[], format: string): number 
   }
   
   // Adjust based on format
-  switch(format.toLowerCase()) {
+  switch((format || '').toLowerCase()) {
     case 'deepstack':
       baseMinimum *= 2;  // Deepstack should have at least double the normal minimum
       break;
