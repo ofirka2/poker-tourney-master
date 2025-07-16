@@ -8,7 +8,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import TimerDisplay from "@/components/timer/TimerDisplay";
 import { supabase } from "@/integrations/supabase/client";
-import { PayoutPlace, TournamentSettings, Player as PlayerType } from "@/types/types";
+import { PayoutPlace, TournamentSettings, Player as PlayerType, Table } from "@/types/types";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
 import { mapDatabasePlayerToPlayer } from "@/utils/playerUtils";
 
@@ -78,8 +78,8 @@ const TournamentView = () => {
      if (tournamentError) throw tournamentError;
 
      if (tournamentData) {
-       const blindLevels = tournamentData.blind_levels ? JSON.parse(tournamentData.blind_levels) : [];
-       let payoutStructureDb = tournamentData.payout_structure ? JSON.parse(tournamentData.payout_structure) : null;
+               const blindLevels = tournamentData.blind_levels ? JSON.parse(String(tournamentData.blind_levels)) : [];
+        let payoutStructureDb = tournamentData.payout_structure ? JSON.parse(String(tournamentData.payout_structure)) : null;
        if (!payoutStructureDb || !payoutStructureDb.places || payoutStructureDb.places.length === 0) {
          const expectedPlayers = tournamentData.no_of_players || tournamentDefaults.playerCount!;
          payoutStructureDb = {
@@ -125,6 +125,40 @@ const TournamentView = () => {
            return acc + playerContribution;
        }, 0);
 
+       // Reconstruct tables from existing player assignments
+       const reconstructTables = (players: PlayerType[]): Table[] => {
+         const activePlayers = players.filter(p => !p.eliminated && p.tableNumber && p.seatNumber);
+         
+         if (activePlayers.length === 0) {
+           return [];
+         }
+
+         // Group players by table number
+         const tableGroups = new Map<number, PlayerType[]>();
+         activePlayers.forEach(player => {
+           const tableNum = player.tableNumber!;
+           if (!tableGroups.has(tableNum)) {
+             tableGroups.set(tableNum, []);
+           }
+           tableGroups.get(tableNum)!.push(player);
+         });
+
+         // Convert to Table objects
+         const tables: Table[] = [];
+         tableGroups.forEach((tablePlayers, tableNumber) => {
+           tables.push({
+             id: tableNumber,
+             players: tablePlayers,
+             maxSeats: Math.max(...tablePlayers.map(p => p.seatNumber || 0), 9) // Default to 9 if no seat info
+           });
+         });
+
+         // Sort tables by table number
+         return tables.sort((a, b) => a.id - b.id);
+       };
+
+       const existingTables = reconstructTables(tournamentPlayers);
+
        dispatch({
          type: 'LOAD_TOURNAMENT',
          payload: {
@@ -139,7 +173,7 @@ const TournamentView = () => {
            timeRemaining: tournamentData.time_remaining ?? (loadedSettings.levels[tournamentData.current_level || 0]?.duration * 60 || 0),
            totalPrizePool: initialTotalPrizePool,
            eliminationCounter: tournamentPlayers.filter(p => p.eliminated).length,
-           tables: [],
+           tables: existingTables, // Use reconstructed tables instead of empty array
          }
        });
        setTournamentNameForDisplay(tournamentData.name);

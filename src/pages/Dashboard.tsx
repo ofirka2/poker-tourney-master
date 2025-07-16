@@ -17,7 +17,7 @@ import { useTournament } from "@/context/TournamentContext";
 import { toast } from "sonner";
 import PlayerDashboard from "@/components/dashboard/PlayerDashboard";
 import { supabase } from "@/integrations/supabase/client";
-import { PayoutPlace, TournamentSettings, Player as PlayerType } from "@/types/types";
+import { PayoutPlace, TournamentSettings, Player as PlayerType, Table } from "@/types/types";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
 import { mapDatabasePlayerToPlayer } from "@/utils/playerUtils";
 
@@ -93,8 +93,8 @@ const Dashboard = () => {
           throw tournamentError;
         }
       } else if (tournamentData) {
-        const blindLevels = tournamentData.blind_levels ? JSON.parse(tournamentData.blind_levels) : [];
-        let payoutStructureDb = tournamentData.payout_structure ? JSON.parse(tournamentData.payout_structure) : null;
+        const blindLevels = tournamentData.blind_levels ? JSON.parse(String(tournamentData.blind_levels)) : [];
+        let payoutStructureDb = tournamentData.payout_structure ? JSON.parse(String(tournamentData.payout_structure)) : null;
         if (!payoutStructureDb || !payoutStructureDb.places || payoutStructureDb.places.length === 0) {
           const expectedPlayers = tournamentData.no_of_players || tournamentDefaults.playerCount!;
           payoutStructureDb = {
@@ -138,10 +138,46 @@ const Dashboard = () => {
 
         const tournamentPlayers: PlayerType[] = (playersData || []).map(mapDatabasePlayerToPlayer);
         const initialTotalPrizePool = tournamentPlayers.reduce((acc, player) => {
-            let c = 0; if (player.buyIn) c += loadedSettings.buyInAmount;
-            c += player.rebuys * loadedSettings.rebuyAmount;
-            c += player.addOns * loadedSettings.addOnAmount; return acc + c;
+            let playerContribution = 0;
+            if (player.buyIn) playerContribution += loadedSettings.buyInAmount;
+            playerContribution += player.rebuys * loadedSettings.rebuyAmount;
+            playerContribution += player.addOns * loadedSettings.addOnAmount;
+            return acc + playerContribution;
         }, 0);
+
+        // Reconstruct tables from existing player assignments
+        const reconstructTables = (players: PlayerType[]): Table[] => {
+          const activePlayers = players.filter(p => !p.eliminated && p.tableNumber && p.seatNumber);
+          
+          if (activePlayers.length === 0) {
+            return [];
+          }
+
+          // Group players by table number
+          const tableGroups = new Map<number, PlayerType[]>();
+          activePlayers.forEach(player => {
+            const tableNum = player.tableNumber!;
+            if (!tableGroups.has(tableNum)) {
+              tableGroups.set(tableNum, []);
+            }
+            tableGroups.get(tableNum)!.push(player);
+          });
+
+          // Convert to Table objects
+          const tables: Table[] = [];
+          tableGroups.forEach((tablePlayers, tableNumber) => {
+            tables.push({
+              id: tableNumber,
+              players: tablePlayers,
+              maxSeats: Math.max(...tablePlayers.map(p => p.seatNumber || 0), 9) // Default to 9 if no seat info
+            });
+          });
+
+          // Sort tables by table number
+          return tables.sort((a, b) => a.id - b.id);
+        };
+
+        const existingTables = reconstructTables(tournamentPlayers);
 
         dispatch({
           type: 'LOAD_TOURNAMENT',
@@ -150,15 +186,15 @@ const Dashboard = () => {
             name: tournamentData.name,
             startDate: tournamentData.start_date,
             settings: loadedSettings,
-            chipset: tournamentData.chipset || '',
+            chipset: tournamentData.chipset || tournamentDefaults.chipset,
             players: tournamentPlayers,
             isRunning: tournamentData.status === 'In Progress',
             currentLevel: tournamentData.current_level || 0,
             timeRemaining: tournamentData.time_remaining ?? (loadedSettings.levels[tournamentData.current_level || 0]?.duration * 60 || 0),
             totalPrizePool: initialTotalPrizePool,
             eliminationCounter: tournamentPlayers.filter(p => p.eliminated).length,
-            tables: [],
-           }
+            tables: existingTables, // Use reconstructed tables instead of empty array
+          }
         });
         setTournamentNameForDisplay(tournamentData.name);
       } else {

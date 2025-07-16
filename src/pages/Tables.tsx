@@ -7,7 +7,7 @@ import { useTournament } from "@/context/TournamentContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { mapDatabasePlayerToPlayer } from "@/utils/playerUtils";
-import { PayoutPlace, TournamentSettings, Player as PlayerType } from "@/types/types";
+import { PayoutPlace, TournamentSettings, Player as PlayerType, Table } from "@/types/types";
 import { suggestPayoutStructure } from "@/utils/payoutCalculator";
 
 const tournamentDefaults: Partial<TournamentSettings> = {
@@ -75,10 +75,10 @@ const Tables = () => {
       }
 
       if (data) {
-        const blindLevels = data.blind_levels ? JSON.parse(data.blind_levels) : [];
+        const blindLevels = data.blind_levels ? JSON.parse(String(data.blind_levels)) : [];
         const expectedPlayers = data.no_of_players || tournamentDefaults.playerCount;
 
-        let payoutStructureDb = data.payout_structure ? JSON.parse(data.payout_structure) : null;
+        let payoutStructureDb = data.payout_structure ? JSON.parse(String(data.payout_structure)) : null;
         if (!payoutStructureDb || !payoutStructureDb.places || payoutStructureDb.places.length === 0) {
            payoutStructureDb = {
              places: suggestPayoutStructure(expectedPlayers) as PayoutPlace[]
@@ -122,6 +122,40 @@ const Tables = () => {
           tournamentPlayers = playersData ? playersData.map(mapDatabasePlayerToPlayer) : [];
         }
 
+        // Reconstruct tables from existing player assignments
+        const reconstructTables = (players: PlayerType[]): Table[] => {
+          const activePlayers = players.filter(p => !p.eliminated && p.tableNumber && p.seatNumber);
+          
+          if (activePlayers.length === 0) {
+            return [];
+          }
+
+          // Group players by table number
+          const tableGroups = new Map<number, PlayerType[]>();
+          activePlayers.forEach(player => {
+            const tableNum = player.tableNumber!;
+            if (!tableGroups.has(tableNum)) {
+              tableGroups.set(tableNum, []);
+            }
+            tableGroups.get(tableNum)!.push(player);
+          });
+
+          // Convert to Table objects
+          const tables: Table[] = [];
+          tableGroups.forEach((tablePlayers, tableNumber) => {
+            tables.push({
+              id: tableNumber,
+              players: tablePlayers,
+              maxSeats: Math.max(...tablePlayers.map(p => p.seatNumber || 0), 9) // Default to 9 if no seat info
+            });
+          });
+
+          // Sort tables by table number
+          return tables.sort((a, b) => a.id - b.id);
+        };
+
+        const existingTables = reconstructTables(tournamentPlayers);
+
         dispatch({
           type: 'LOAD_TOURNAMENT',
           payload: {
@@ -136,7 +170,7 @@ const Tables = () => {
             timeRemaining: data.time_remaining ?? (loadedSettings.levels[data.current_level || 0]?.duration * 60 || 0),
             totalPrizePool: 0,
             eliminationCounter: tournamentPlayers.filter(p => p.eliminated).length,
-            tables: [],
+            tables: existingTables, // Use reconstructed tables instead of empty array
           }
         });
         
