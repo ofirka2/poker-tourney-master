@@ -71,17 +71,36 @@ export const assignPlayersToTables = (players: Player[], numTables: number, maxP
 
 // Balance tables by moving players
 export const balanceTables = (tables: Table[]): Table[] => {
-  const totalPlayers = tables.reduce((sum, table) => sum + table.players.length, 0);
+  if (tables.length <= 1) {
+    return tables;
+  }
+  
+  // Collect all players from all tables
+  const allPlayers = tables.flatMap(table => table.players);
+  const totalPlayers = allPlayers.length;
+  
+  if (totalPlayers === 0) {
+    return tables;
+  }
+  
   const playersPerTable = Math.floor(totalPlayers / tables.length);
   const extraPlayers = totalPlayers % tables.length;
   
-  const balancedTables = tables.map((table, index) => {
-    const targetSize = playersPerTable + (index < extraPlayers ? 1 : 0);
-    return {
-      ...table,
-      players: table.players.slice(0, targetSize)
-    };
-  });
+  // Create new balanced tables
+  const balancedTables: Table[] = [];
+  let playerIndex = 0;
+  
+  for (let i = 0; i < tables.length; i++) {
+    const targetSize = playersPerTable + (i < extraPlayers ? 1 : 0);
+    const tablePlayers = allPlayers.slice(playerIndex, playerIndex + targetSize);
+    
+    balancedTables.push({
+      ...tables[i],
+      players: tablePlayers
+    });
+    
+    playerIndex += targetSize;
+  }
   
   return balancedTables;
 };

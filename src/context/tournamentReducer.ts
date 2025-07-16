@@ -174,10 +174,11 @@ export function tournamentReducer(state: TournamentState, action: TournamentActi
     
     case 'ASSIGN_TABLES': {
       const activePlayers = state.players.filter(p => !p.eliminated);
+      const maxPlayersPerTable = action.payload?.maxPlayersPerTable || 9;
       
-      const numTables = Math.max(1, Math.ceil(activePlayers.length / 9));
+      const numTables = Math.max(1, Math.ceil(activePlayers.length / maxPlayersPerTable));
       
-      const newTables = assignPlayersToTables(state.players, numTables);
+      const newTables = assignPlayersToTables(state.players, numTables, maxPlayersPerTable);
       
       const updatedPlayers = state.players.map(player => {
         for (const table of newTables) {

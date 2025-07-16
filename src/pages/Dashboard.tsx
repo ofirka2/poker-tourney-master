@@ -331,7 +331,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex justify-between">
                       <div className="text-muted-foreground">Avg Stack</div>
-                      <div className="font-medium">{averageStack.toLocaleString()}</div>
+                      <div className="font-medium">{(averageStack || 0).toLocaleString()}</div>
                     </div>
                     {settings.levels && currentLevel < settings.levels.length - 1 && settings.levels[currentLevel+1] && (
                       <>

@@ -95,7 +95,7 @@ export const TableAssignment: React.FC = () => {
                     
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-muted-foreground">
-                        {player.chips.toLocaleString()}
+                        {(player.chips || 0).toLocaleString()}
                       </span>
                       
                       {!player.eliminated && (

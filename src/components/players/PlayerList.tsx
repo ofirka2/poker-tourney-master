@@ -501,14 +501,14 @@ export const PlayerList: React.FC<PlayerListProps> = ({ tournamentId }) => {
          <Card>
            <CardContent className="p-4 flex flex-col justify-center h-full">
              <div className="text-muted-foreground text-sm">Total Chips</div>
-             <div className="text-2xl font-bold mt-1">{totalChips.toLocaleString()}</div>
+             <div className="text-2xl font-bold mt-1">{(totalChips || 0).toLocaleString()}</div>
            </CardContent>
          </Card>
 
          <Card>
            <CardContent className="p-4 flex flex-col justify-center h-full">
              <div className="text-muted-foreground text-sm">Average Stack</div>
-             <div className="text-2xl font-bold mt-1">{averageChips.toLocaleString()}</div>
+             <div className="text-2xl font-bold mt-1">{(averageChips || 0).toLocaleString()}</div>
            </CardContent>
          </Card>
        </div>
