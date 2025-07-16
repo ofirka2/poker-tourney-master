@@ -56,10 +56,13 @@ export const assignPlayersToTables = (players: Player[], numTables: number, maxP
       
       const randomSeat = availableSeatsFiltered[Math.floor(Math.random() * availableSeatsFiltered.length)] || 1;
       
+      // Always set a valid name property
+      const name = player.name || `${player.first_name || ''} ${player.last_name || ''}`.trim() || 'Unknown';
       const updatedPlayer = {
         ...player,
         tableNumber: tableIndex + 1,
-        seatNumber: randomSeat
+        seatNumber: randomSeat,
+        name,
       };
       
       tables[tableIndex].players.push(updatedPlayer);
