@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useTournament } from "@/context/TournamentContext";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import ManualSeatManager from "./ManualSeatManager";
+import DragDropSeatManager from "./DragDropSeatManager";
 
 const TableAssignment: React.FC = () => {
   const { state, dispatch } = useTournament();
@@ -195,7 +195,7 @@ const TableAssignment: React.FC = () => {
 
       {/* Manual Seat Management */}
       {activePlayers.length > 0 && (
-        <ManualSeatManager onSeatChange={handleManualSeatChange} />
+        <DragDropSeatManager onSeatChange={handleManualSeatChange} />
       )}
 
       {/* Tables Display */}
